@@ -9,6 +9,10 @@ import App from "./App";
 import "./index.css";
 import { SOLANA_RPC_PROXY } from "./config";
 
+// Prefer a direct Helius RPC URL when running locally (VITE_HELIUS_RPC_URL set in .env.local).
+// Falls back to the Eitherway proxy when running inside the hosted preview.
+const RPC_ENDPOINT = import.meta.env.VITE_HELIUS_RPC_URL || SOLANA_RPC_PROXY;
+
 const connectionConfig = {
   commitment: "confirmed",
   wsEndpoint: "",
@@ -118,7 +122,7 @@ function WalletContextProvider({ children }) {
   const wallets = useMemo(() => [], []);
 
   return (
-    <ConnectionProvider endpoint={SOLANA_RPC_PROXY} config={connectionConfig}>
+    <ConnectionProvider endpoint={RPC_ENDPOINT} config={connectionConfig}>
       <WalletProvider wallets={wallets} autoConnect={false}>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
@@ -126,7 +130,15 @@ function WalletContextProvider({ children }) {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+const rootElement = document.getElementById("root");
+if (!rootElement) {
+  throw new Error("Root element not found");
+}
+const root =
+  window.__MEV_SHIELD_REACT_ROOT__ ||
+  (window.__MEV_SHIELD_REACT_ROOT__ = ReactDOM.createRoot(rootElement));
+
+root.render(
   <React.StrictMode>
     <WalletContextProvider>
       <App />
