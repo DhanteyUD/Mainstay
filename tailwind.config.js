@@ -20,7 +20,9 @@ export default {
         },
       },
       fontFamily: {
-        mono: ['JetBrains Mono', 'Fira Code', 'Courier New', 'monospace'],
+        sans: ['Syne', 'sans-serif'],
+        display: ['Syne', 'sans-serif'],
+        mono: ['Space Mono', 'Courier New', 'monospace'],
       },
       animation: {
         'pulse-glow': 'pulseGlow 2s ease-in-out infinite',

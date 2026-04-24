@@ -192,14 +192,14 @@ export default function TradeHistory({ walletAddress, trades, loading, error, on
         <StatCard
           icon={<Shield size={11} />}
           label="AVG GRADE"
-          value={stats.avgGrade || '—'}
-          sub={stats.avgGrade ? 'execution quality' : 'no graded trades'}
-          valueClass={gradeC?.text || 'text-terminal-dim'}
+          value={stats.avgGrade || "—"}
+          sub={stats.avgGrade ? "execution quality" : "no graded trades"}
+          valueClass={gradeC?.text || "text-terminal-dim"}
         />
         <StatCard
           icon={<TrendingUp size={11} />}
           label="TOP PAIR"
-          value={stats.topPair || '—'}
+          value={stats.topPair || "—"}
           sub="most traded"
           valueClass="text-terminal-accent"
         />
@@ -207,20 +207,24 @@ export default function TradeHistory({ walletAddress, trades, loading, error, on
 
       {/* Trade list header */}
       <div className="flex items-center justify-between">
-        <span className="font-mono text-xs text-terminal-dim/60 tracking-widest">RECENT TRADES</span>
+        <span className="font-mono text-xs text-terminal-dim/60 tracking-widest">
+          RECENT TRADES
+        </span>
         <button
           onClick={onRefresh}
           disabled={loading}
           className="flex items-center gap-1.5 font-mono text-xs text-terminal-dim hover:text-terminal-accent transition-colors disabled:opacity-40"
         >
-          <RefreshCw size={11} className={loading ? 'animate-spin' : ''} />
+          <RefreshCw size={11} className={loading ? "animate-spin" : ""} />
           Refresh
         </button>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="text-xs font-mono text-terminal-red/70 px-1">{error}</div>
+        <div className="text-xs font-mono text-terminal-red/70 px-1">
+          {error}
+        </div>
       )}
 
       {/* Content */}
@@ -239,7 +243,7 @@ export default function TradeHistory({ walletAddress, trades, loading, error, on
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function TradeRow({ trade: t }) {
