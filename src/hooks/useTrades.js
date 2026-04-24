@@ -1,9 +1,13 @@
 import { useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
+// Whether trade persistence is available in this deployment
+const DB_ENABLED = supabase !== null
+
 /**
  * Persist and fetch trade records for a connected wallet.
  * Uses the public `trades` table — no auth required.
+ * Gracefully degrades when VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are absent.
  */
 export function useTrades(walletAddress) {
   const [trades, setTrades] = useState([])
@@ -11,7 +15,7 @@ export function useTrades(walletAddress) {
   const [error, setError] = useState(null)
 
   const saveTrade = useCallback(async (payload) => {
-    if (!walletAddress) return
+    if (!walletAddress || !DB_ENABLED) return
     const row = {
       wallet_address: walletAddress,
       input_token_symbol: payload.inputToken?.symbol || '?',
@@ -35,6 +39,12 @@ export function useTrades(walletAddress) {
       setTrades([])
       return
     }
+    if (!DB_ENABLED) {
+      // Trade history unavailable — env vars not configured in this deployment
+      setTrades([])
+      setError(null)
+      return
+    }
     setLoading(true)
     setError(null)
     try {
@@ -54,5 +64,5 @@ export function useTrades(walletAddress) {
     }
   }, [walletAddress])
 
-  return { trades, loading, error, saveTrade, fetchTrades }
+  return { trades, loading, error, saveTrade, fetchTrades, dbEnabled: DB_ENABLED }
 }

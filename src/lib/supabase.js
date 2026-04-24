@@ -7,11 +7,16 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Base client - for public/unauthenticated queries only
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Fail gracefully when env vars are missing (e.g. Vercel deployment without vars set).
+// The app will still load and swapping works; trade history is simply disabled.
+export const supabase = (supabaseUrl && supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 // Factory for authenticated client - used by useSupabase() hook
 export function createAuthenticatedClient(accessToken) {
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+
   const client = createClient(supabaseUrl, supabaseAnonKey, {
     global: {
       headers: {

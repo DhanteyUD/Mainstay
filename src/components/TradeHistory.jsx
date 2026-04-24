@@ -137,16 +137,39 @@ function EmptyState({ walletAddress }) {
   )
 }
 
+function DbDisabledState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 gap-3">
+      <div className="w-12 h-12 rounded-full border border-terminal-yellow/30 bg-terminal-yellow/5 flex items-center justify-center">
+        <Shield size={18} className="text-terminal-yellow/60" />
+      </div>
+      <div className="text-center px-2">
+        <div className="font-mono text-sm text-terminal-dim/60">Trade history unavailable</div>
+        <div className="font-mono text-xs text-terminal-dim/40 mt-1 leading-relaxed">
+          Add <span className="text-terminal-accent/70">VITE_SUPABASE_URL</span> and{' '}
+          <span className="text-terminal-accent/70">VITE_SUPABASE_ANON_KEY</span> as Vercel
+          environment variables to enable trade persistence.
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── main component ───────────────────────────────────────────────────────────
 
-export default function TradeHistory({ walletAddress, trades, loading, error, onRefresh }) {
+export default function TradeHistory({ walletAddress, trades, loading, error, onRefresh, dbEnabled = true }) {
   const stats = useMemo(() => computeStats(trades), [trades])
 
   useEffect(() => {
-    if (walletAddress) onRefresh?.()
+    if (walletAddress && dbEnabled) onRefresh?.()
   }, [walletAddress])
 
   const gradeC = stats.avgGrade ? (GRADE_COLORS[stats.avgGrade] || GRADE_COLORS['C']) : null
+
+  // When database is not configured, show a helpful notice and skip stats
+  if (!dbEnabled) {
+    return <DbDisabledState />
+  }
 
   return (
     <div className="space-y-4">

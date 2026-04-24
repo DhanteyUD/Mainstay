@@ -16,7 +16,7 @@ export default function App() {
   const walletAddress = publicKey?.toBase58() || null
   const { balance, loading: balLoading, refresh: refreshBalance } = useWalletBalance()
 
-  const { trades, loading, error, saveTrade, fetchTrades } = useTrades(walletAddress)
+  const { trades, loading, error, saveTrade, fetchTrades, dbEnabled } = useTrades(walletAddress)
   const [rightTab, setRightTab] = useState(TAB_INFO)
   const { dismissed, dismiss } = useOnboarding()
 
@@ -197,6 +197,7 @@ export default function App() {
                   loading={loading}
                   error={error}
                   onRefresh={fetchTrades}
+                  dbEnabled={dbEnabled}
                 />
               </div>
             )}
