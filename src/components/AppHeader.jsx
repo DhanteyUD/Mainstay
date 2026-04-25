@@ -15,7 +15,7 @@ export default function AppHeader() {
 
   return (
     <motion.header
-      className="border-b border-terminal-border bg-terminal-surface/80 backdrop-blur-sm sticky top-0 z-50"
+      className="border-b border-terminal-border bg-terminal-surface/80 backdrop-blur-sm sticky top-0 z-[1000]"
       initial={{ y: -60, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
