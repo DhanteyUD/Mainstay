@@ -43,6 +43,10 @@ body {
   background: #2a3050;
 }
 
+/* Hide native scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* Wallet adapter overrides */
 .wallet-adapter-button {
   font-family: 'Space Mono', monospace !important;
@@ -128,6 +132,19 @@ input[type='number']::-webkit-outer-spin-button {
 }
 input[type='number'] {
   -moz-appearance: textfield;
+}
+
+/* Mobile wallet button */
+@media (max-width: 480px) {
+  .wallet-adapter-button {
+    font-size: 11px !important;
+    padding: 0 10px !important;
+    height: 36px !important;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 /* Scan line animation */
