@@ -2,15 +2,13 @@
 
 <img width="32" height="32" alt="favicon-32x32" src="https://github.com/user-attachments/assets/49cba721-2e6f-4b3f-abf0-70e82c035316" />
 
-
-
-# ⚓ Mainstay
+# Mainstay
 
 ### The mainstay of clean execution on Solana
 
 **MEV-protected swaps powered by DFlow · Quote → Sign → Execute · Stay clean.**
 
-[![Live App](https://img.shields.io/badge/Live_App-mainstay.vercel.app-00C2A8?style=for-the-badge&logo=vercel&logoColor=white)](https://mainstay.vercel.app)
+[![Live App](https://img.shields.io/badge/Live_App-mainstay.vercel.app-00C2A8?style=for-the-badge&logo=vercel&logoColor=white)](https://main-stay.vercel.app)
 [![Built on Eitherway](https://img.shields.io/badge/Built_on-Eitherway-185FA5?style=for-the-badge)](https://eitherway.ai)
 [![DFlow](https://img.shields.io/badge/Powered_by-DFlow-0A1F35?style=for-the-badge)](https://pond.dflow.net)
 [![Solana](https://img.shields.io/badge/Network-Solana_Mainnet-9945FF?style=for-the-badge&logo=solana&logoColor=white)](https://solana.com)
