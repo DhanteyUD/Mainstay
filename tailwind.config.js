@@ -17,6 +17,7 @@ export default {
           muted: '#4a5568',
           text: '#e2e8f0',
           dim: '#8892a4',
+          bright: '#f8f9fa',
         },
       },
       fontFamily: {

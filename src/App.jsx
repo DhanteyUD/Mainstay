@@ -212,7 +212,7 @@ export default function App() {
             <div className="flex items-center gap-2">
               <Shield size={12} className="text-terminal-accent" />
               <span className="font-mono text-xs text-terminal-dim">
-                MEV Shield — Powered by DFlow Protocol
+                Mainstay — Powered by DFlow Protocol
               </span>
             </div>
             <div className="flex items-center gap-4">
