@@ -214,7 +214,7 @@ export default function OnboardingScreen({ onDismiss }) {
             </div>
 
             <p className="font-mono text-sm text-terminal-dim leading-relaxed mb-5">
-              MEV Shield routes every swap through{' '}
+              Mainstay routes every swap through{' '}
               <span className="text-terminal-accent font-semibold">DFlow's order flow auction</span> —
               a private network where professional market makers compete to fill your order
               at the best possible price, completely bypassing the public mempool.
@@ -265,7 +265,7 @@ export default function OnboardingScreen({ onDismiss }) {
                 </div>
               </div>
               <div className="rounded-lg border border-terminal-green/20 bg-terminal-green/5 p-3">
-                <div className="font-mono text-xs font-bold text-terminal-green mb-2">MEV Shield</div>
+                <div className="font-mono text-xs font-bold text-terminal-green mb-2">Mainstay</div>
                 <div className="space-y-1">
                   {['Private routing', 'Bots blocked', 'Best fill price', 'MEV saved'].map(t => (
                     <div key={t} className="flex items-center gap-1.5">

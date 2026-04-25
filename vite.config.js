@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png', 'android-chrome-192x192.png', 'android-chrome-512x512.png'],
       manifest: {
-        name: 'MEV Shield',
-        short_name: 'MEV Shield',
-        description: 'Protected swaps powered by MEV Shield',
+        name: 'Mainstay',
+        short_name: 'Mainstay',
+        description: 'Protected swaps powered by Mainstay',
         theme_color: '#0f0f1a',
         background_color: '#0f0f1a',
         display: 'standalone',

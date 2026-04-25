@@ -98,7 +98,7 @@ async function generateShareImage({ grade, mevSaved, slippagePct, inputToken, ou
   // Brand
   ctx.fillStyle = '#00ff88'
   ctx.font = 'bold 18px monospace'
-  ctx.fillText('MEV SHIELD', 84, 58)
+  ctx.fillText('Mainstay', 84, 58)
   ctx.fillStyle = 'rgba(0,255,136,0.5)'
   ctx.font = '11px monospace'
   ctx.fillText('PROTECTED BY DFLOW', 84, 74)
@@ -273,7 +273,7 @@ export default function PostTradeCard({
         ? (Number(slippagePct) >= 0 ? '+' : '') + Number(slippagePct).toFixed(3) + '%'
         : 'N/A'
       const tweetText = encodeURIComponent(
-        `🛡️ Just swapped ${inputToken?.symbol} → ${outputToken?.symbol} with MEV Shield!\n\n` +
+        `🛡️ Just swapped ${inputToken?.symbol} → ${outputToken?.symbol} with Mainstay!\n\n` +
         `✅ Execution Grade: ${gradeLabel}\n` +
         `💰 Est. MEV Saved: ${savedStr}\n` +
         `📊 Slippage Delta: ${slipStr}\n\n` +
