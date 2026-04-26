@@ -1,10 +1,13 @@
 import phantomLogo from "../assets/phantom-logo.png";
 import solflareLogo from "../assets/solflare-logo.jpeg";
+import phantomImage from "../assets/phantom.webp";
+import solflareImage from "../assets/solflare.jpg";
 
 export const WALLETS = [
   {
     name: "Phantom",
     logo: phantomLogo,
+    image: phantomImage,
     href: (url) =>
       `https://phantom.app/ul/browse/${url}?ref=${url}`,
     color: "#AB66FF",
@@ -16,6 +19,7 @@ export const WALLETS = [
   {
     name: "Solflare",
     logo: solflareLogo,
+    image: solflareImage,
     href: (url) =>
       `https://solflare.com/ul/v1/browse/${url}?ref=${url}`,
     color: "#FFEF46",
