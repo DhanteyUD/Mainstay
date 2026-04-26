@@ -6,6 +6,7 @@ import {
 } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import App from "./App";
+import "@solana/wallet-adapter-react-ui/styles.css";
 import "./index.css";
 import { SOLANA_RPC_PROXY } from "./config";
 
@@ -36,8 +37,8 @@ function usePhantomRecommended() {
 
         .wallet-adapter-modal-list li.phantom-recommended {
           order: -1;
-          border: 1px solid rgba(171, 102, 255, 0.40) !important;
-          border-radius: 10px;
+          border: 1px solid #AB9FF2 !important;
+          border-radius: 8px;
           background: rgba(171, 102, 255, 0.06);
           position: relative;
           margin-bottom: 10px !important;
