@@ -1,4 +1,4 @@
-@import '@solana/wallet-adapter-react-ui/styles.css';
+@import "@solana/wallet-adapter-react-ui/styles.css";
 
 @tailwind base;
 @tailwind components;
@@ -11,16 +11,16 @@
 body {
   background-color: #0a0b0f;
   color: #e2e8f0;
-  font-family: 'Syne', sans-serif;
+  font-family: "Syne", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 .font-mono {
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
 }
 
 .font-display {
-  font-family: 'Syne', sans-serif;
+  font-family: "Syne", sans-serif;
 }
 
 * {
@@ -44,12 +44,17 @@ body {
 }
 
 /* Hide native scrollbar utility */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 
 /* Wallet adapter overrides */
 .wallet-adapter-button {
-  font-family: 'Space Mono', monospace !important;
+  font-family: "Space Mono", monospace !important;
   font-size: 13px !important;
   background: #141720 !important;
   border: 1px solid #1e2235 !important;
@@ -80,12 +85,12 @@ body {
 }
 
 .wallet-adapter-modal-title {
-  font-family: 'Space Mono', monospace !important;
+  font-family: "Space Mono", monospace !important;
   color: #e2e8f0 !important;
 }
 
 .wallet-adapter-modal-list li button {
-  font-family: 'Space Mono', monospace !important;
+  font-family: "Space Mono", monospace !important;
   background: #141720 !important;
   border: 1px solid transparent !important;
   border-radius: 8px !important;
@@ -105,7 +110,7 @@ body {
   background: #141720 !important;
   border: 1px solid #1e2235 !important;
   border-radius: 12px !important;
-  font-family: 'Space Mono', monospace !important;
+  font-family: "Space Mono", monospace !important;
 }
 
 .wallet-adapter-dropdown-list-item {
@@ -119,20 +124,24 @@ body {
 
 /* Glow effects */
 .glow-cyan {
-  box-shadow: 0 0 20px rgba(0, 229, 255, 0.15), 0 0 40px rgba(0, 229, 255, 0.05);
+  box-shadow:
+    0 0 20px rgba(0, 229, 255, 0.15),
+    0 0 40px rgba(0, 229, 255, 0.05);
 }
 
 .glow-green {
-  box-shadow: 0 0 20px rgba(0, 255, 148, 0.2), 0 0 40px rgba(0, 255, 148, 0.05);
+  box-shadow:
+    0 0 20px rgba(0, 255, 148, 0.2),
+    0 0 40px rgba(0, 255, 148, 0.05);
 }
 
 /* Number input no arrows */
-input[type='number']::-webkit-inner-spin-button,
-input[type='number']::-webkit-outer-spin-button {
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-input[type='number'] {
+input[type="number"] {
   -moz-appearance: textfield;
 }
 
@@ -151,8 +160,12 @@ input[type='number'] {
 
 /* Scan line animation */
 @keyframes scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
 }
 
 .scan-line {
@@ -161,7 +174,11 @@ input[type='number'] {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(transparent, rgba(0, 229, 255, 0.04), transparent);
+  background: linear-gradient(
+    transparent,
+    rgba(0, 229, 255, 0.04),
+    transparent
+  );
   animation: scanline 8s linear infinite;
   pointer-events: none;
   z-index: 0;
