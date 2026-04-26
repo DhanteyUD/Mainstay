@@ -10,7 +10,7 @@ export const WALLETS = [
     image: phantomImage,
     href: (url) =>
       `https://phantom.app/ul/browse/${url}?ref=${url}`,
-    color: "#AB66FF",
+    color: "#AB9FF2",
     glow: "rgba(171,102,255,0.35)",
     bg: "rgba(171,102,255,0.08)",
     border: "rgba(171,102,255,0.3)",
