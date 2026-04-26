@@ -123,7 +123,7 @@ function WalletContextProvider({ children }) {
 
   return (
     <ConnectionProvider endpoint={RPC_ENDPOINT} config={connectionConfig}>
-      <WalletProvider wallets={wallets} autoConnect={false}>
+      <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
