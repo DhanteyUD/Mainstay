@@ -1,7 +1,7 @@
 import phantomLogo from "../assets/phantom-logo.png";
 import solflareLogo from "../assets/solflare-logo.jpeg";
-import phantomImage from "../assets/phantom.webp";
-import solflareImage from "../assets/solflare.jpg";
+import phantomImage from "../assets/phantom-trnsprnt.png";
+import solflareImage from "../assets/solflare-trnsprnt.png";
 
 export const WALLETS = [
   {
