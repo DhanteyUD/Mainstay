@@ -46,6 +46,7 @@ export default function TokenSelector({ selected, onChange, exclude }) {
   const [balances, setBalances] = useState({}); // { mint: uiAmount }
   const [prices, setPrices] = useState({}); // { mint: usdPrice }
   const [balsLoading, setBalsLoading] = useState(false);
+  const [pricesLoading, setPricesLoading] = useState(false);
 
   const { publicKey, connected } = useWallet();
   const { connection } = useConnection();
@@ -65,28 +66,56 @@ export default function TokenSelector({ selected, onChange, exclude }) {
   useEffect(() => {
     if (!open) return;
 
-    // Prices: SOL via proxy (known to work), stables hardcoded, others parallel fetch
+    // Prices: stables hardcoded, rest fetched in one batched request with SOL fallbacks
     setPrices(STABLE_PRICES);
+    setPricesLoading(true);
     const nonStable = TOKEN_LIST.filter((t) => !STABLE_PRICES[t.mint]);
-    Promise.all(
-      nonStable.map((t) =>
-        fetch(`${DIALECT_PROXY}/api.jup.ag/price/v3?ids=${t.mint}`)
-          .then((r) => r.json())
-          .then((data) => ({
-            mint: t.mint,
-            price: data[t.mint]?.usdPrice ?? null,
-          }))
-          .catch(() => ({ mint: t.mint, price: null })),
-      ),
-    ).then((results) => {
-      setPrices((prev) => {
-        const next = { ...prev };
-        for (const { mint, price } of results) {
-          if (price != null) next[mint] = price;
+    const ids = nonStable.map((t) => t.mint).join(",");
+
+    async function fetchPrices() {
+      const next = { ...STABLE_PRICES };
+
+      // Primary: batch via Dialect proxy
+      try {
+        const res = await fetch(`${DIALECT_PROXY}/api.jup.ag/price/v3?ids=${ids}`);
+        if (res.ok) {
+          const data = await res.json();
+          for (const token of nonStable) {
+            const price = data[token.mint]?.usdPrice ?? null;
+            if (price != null) next[token.mint] = price;
+          }
         }
-        return next;
-      });
-    });
+      } catch {}
+
+      // Fallback: CoinGecko for SOL if primary missed it
+      if (next[SOL_MINT] == null) {
+        try {
+          const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd");
+          if (res.ok) {
+            const data = await res.json();
+            const price = data?.solana?.usd;
+            if (price != null) next[SOL_MINT] = price;
+          }
+        } catch {}
+      }
+
+      // Fallback: Binance for SOL if still missing
+      if (next[SOL_MINT] == null) {
+        try {
+          const res = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT");
+          if (res.ok) {
+            const data = await res.json();
+            const price = parseFloat(data?.price);
+            if (!isNaN(price)) next[SOL_MINT] = price;
+          }
+        } catch {}
+      }
+
+      setPrices(next);
+      setPricesLoading(false);
+    }
+
+    fetchPrices();
 
     // Wallet balances
     if (!publicKey || !connected) return;
@@ -291,6 +320,7 @@ export default function TokenSelector({ selected, onChange, exclude }) {
     const price = hasWallet ? prices[token.mint] : null;
     const isLoading = hasWallet && balsLoading && bal == null;
     const usdVal = bal != null && price != null ? bal * price : null;
+    const isUsdLoading = hasWallet && (balsLoading || pricesLoading) && usdVal == null;
 
     return (
       <div className="flex-1 min-w-0 flex flex-col gap-0.5">
@@ -298,10 +328,10 @@ export default function TokenSelector({ selected, onChange, exclude }) {
           <span className={`font-mono font-bold text-base leading-tight ${selected?.mint === token.mint ? 'text-terminal-accent' : 'text-terminal-text'}`}>
             {token.name}
           </span>
-          {isLoading ? (
+          {isUsdLoading ? (
             <div className="w-14 h-3.5 rounded bg-terminal-border animate-pulse shrink-0" />
           ) : usdVal != null ? (
-            <span className="font-mono text-sm font-semibold text-terminal-text shrink-0">{fmtUsdc(usdVal)}</span>
+            <span className="font-mono text-sm font-semibold text-terminal-text shrink-0">${usdVal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           ) : null}
         </div>
         <div className="flex items-center justify-between gap-2">
@@ -325,6 +355,7 @@ export default function TokenSelector({ selected, onChange, exclude }) {
     const price = hasWallet ? prices[token.mint] : null;
     const isLoading = hasWallet && balsLoading && bal == null;
     const usdVal = bal != null && price != null ? bal * price : null;
+    const isUsdLoading = hasWallet && (balsLoading || pricesLoading) && usdVal == null;
 
     return (
       <div className="flex-1 min-w-0 flex flex-col gap-0.5">
@@ -332,7 +363,7 @@ export default function TokenSelector({ selected, onChange, exclude }) {
           <span className={`font-mono font-semibold text-sm leading-tight ${selected?.mint === token.mint ? 'text-terminal-accent' : 'text-terminal-text'}`}>
             {token.name}
           </span>
-          {isLoading ? (
+          {isUsdLoading ? (
             <div className="w-10 h-3 rounded bg-terminal-border animate-pulse shrink-0" />
           ) : usdVal != null ? (
             <span className="font-mono text-xs font-semibold text-terminal-text shrink-0">{fmtUsdc(usdVal)}</span>
