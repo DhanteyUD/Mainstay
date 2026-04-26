@@ -6,12 +6,12 @@ export function MainTabBtn({ active, onClick, icon, label, badge, soon }) {
     <button
       onClick={onClick}
       aria-label={label}
-      className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2.5 px-2 sm:px-3 rounded-lg font-mono text-xs font-bold tracking-wider transition-all duration-150 ${
+      className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2.5 px-2 sm:px-3 rounded-lg font-mono text-xs font-bold tracking-wider transition-all duration-150 border ${
         active
-          ? "bg-terminal-surface border border-terminal-border text-terminal-text"
+          ? "bg-terminal-surface border-terminal-border text-terminal-text"
           : soon
-            ? "text-terminal-dim/40 hover:text-terminal-dim/70"
-            : "text-terminal-dim hover:text-terminal-text"
+            ? "border-transparent text-terminal-dim/40 hover:text-terminal-dim/70"
+            : "border-transparent text-terminal-dim hover:text-terminal-text"
       }`}
     >
       {icon}
@@ -35,6 +35,7 @@ export function MainTabBtn({ active, onClick, icon, label, badge, soon }) {
           </motion.span>
         )}
       </AnimatePresence>
+
       {active && !soon && (
         <motion.div
           className="w-1 h-1 rounded-full bg-terminal-accent"
@@ -50,10 +51,10 @@ export function TabBtn({ active, onClick, icon, label, badge }) {
   return (
     <button
       onClick={onClick}
-      className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg font-mono text-xs font-bold tracking-wider transition-all duration-150 relative ${
+      className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg font-mono text-xs font-bold tracking-wider transition-all duration-150 relative border ${
         active
-          ? "bg-terminal-surface border border-terminal-border text-terminal-text"
-          : "text-terminal-dim hover:text-terminal-text"
+          ? "bg-terminal-surface border-terminal-border text-terminal-text"
+          : "border-transparent text-terminal-dim hover:text-terminal-text"
       }`}
     >
       {icon}
