@@ -269,16 +269,84 @@ export default function TokenSelector({ selected, onChange, exclude }) {
       >
         {usdVal != null && (
           <div
-            className={`font-mono font-semibold leading-tight ${compact ? "text-xs" : "text-sm"} text-terminal-text`}
+            className={`font-mono text-terminal-dim mb-0.5 ${compact ? "text-[10px]" : "text-xs"}`}
           >
             ≈ {fmtUsdc(usdVal)}
           </div>
         )}
         <div
-          className={`font-mono text-terminal-dim mt-0.5 ${compact ? "text-[10px]" : "text-xs"}`}
+          className={`font-mono font-semibold leading-tight ${compact ? "text-xs" : "text-sm"} text-terminal-text`}
         >
           {fmtBal(bal)}{" "}
           <span className="text-terminal-dim font-normal">{token.symbol}</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Two-row layout for mobile: name|USD on top, symbol|balance below
+  function renderMobileTokenInfo(token) {
+    const hasWallet = connected && publicKey;
+    const bal = hasWallet ? balances[token.mint] : null;
+    const price = hasWallet ? prices[token.mint] : null;
+    const isLoading = hasWallet && balsLoading && bal == null;
+    const usdVal = bal != null && price != null ? bal * price : null;
+
+    return (
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className={`font-mono font-bold text-base leading-tight ${selected?.mint === token.mint ? 'text-terminal-accent' : 'text-terminal-text'}`}>
+            {token.name}
+          </span>
+          {isLoading ? (
+            <div className="w-14 h-3.5 rounded bg-terminal-border animate-pulse shrink-0" />
+          ) : usdVal != null ? (
+            <span className="font-mono text-sm font-semibold text-terminal-text shrink-0">{fmtUsdc(usdVal)}</span>
+          ) : null}
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-mono text-xs text-terminal-dim truncate">{token.symbol}</span>
+          {isLoading ? (
+            <div className="w-12 h-3 rounded bg-terminal-border/50 animate-pulse shrink-0" />
+          ) : bal != null ? (
+            <span className="font-mono text-xs text-terminal-dim shrink-0">
+              {fmtBal(bal)} {token.symbol}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  // Compact two-row layout for desktop: name|USD on top, symbol|balance below
+  function renderDesktopTokenInfo(token) {
+    const hasWallet = connected && publicKey;
+    const bal = hasWallet ? balances[token.mint] : null;
+    const price = hasWallet ? prices[token.mint] : null;
+    const isLoading = hasWallet && balsLoading && bal == null;
+    const usdVal = bal != null && price != null ? bal * price : null;
+
+    return (
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className={`font-mono font-semibold text-sm leading-tight ${selected?.mint === token.mint ? 'text-terminal-accent' : 'text-terminal-text'}`}>
+            {token.name}
+          </span>
+          {isLoading ? (
+            <div className="w-10 h-3 rounded bg-terminal-border animate-pulse shrink-0" />
+          ) : usdVal != null ? (
+            <span className="font-mono text-xs font-semibold text-terminal-text shrink-0">{fmtUsdc(usdVal)}</span>
+          ) : null}
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-mono text-[11px] text-terminal-dim truncate">{token.symbol}</span>
+          {isLoading ? (
+            <div className="w-10 h-2.5 rounded bg-terminal-border/50 animate-pulse shrink-0" />
+          ) : bal != null ? (
+            <span className="font-mono text-[11px] text-terminal-dim shrink-0">
+              {fmtBal(bal)} {token.symbol}
+            </span>
+          ) : null}
         </div>
       </div>
     );
@@ -311,7 +379,7 @@ export default function TokenSelector({ selected, onChange, exclude }) {
             if (info.offset.y > 110 || info.velocity.y > 450) close();
           }}
           className="fixed bottom-0 left-0 right-0 z-[999] bg-terminal-card border-t border-terminal-border rounded-t-2xl flex flex-col"
-          style={{ height: "82vh" }}
+          style={{ height: "90vh" }}
           initial={{ y: "100%" }}
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
@@ -323,7 +391,7 @@ export default function TokenSelector({ selected, onChange, exclude }) {
             style={{ touchAction: "none" }}
             onPointerDown={(e) => dragControls.start(e)}
           >
-            <div className="w-10 h-1.5 rounded-full bg-terminal-dim/30" />
+            <div className="w-16 h-1 rounded-full bg-terminal-dim/30" />
           </div>
 
           {/* Search header */}
@@ -422,22 +490,7 @@ export default function TokenSelector({ selected, onChange, exclude }) {
                       e.target.style.display = "none";
                     }}
                   />
-                  <div className="text-left flex-1 min-w-0">
-                    <div
-                      className={`font-mono font-bold text-base leading-tight ${
-                        selected?.mint === token.mint
-                          ? "text-terminal-accent"
-                          : "text-terminal-text"
-                      }`}
-                    >
-                      {token.symbol}
-                    </div>
-                    <div className="font-mono text-xs text-terminal-dim truncate mt-0.5">
-                      {token.name}
-                    </div>
-                  </div>
-
-                  {renderBalanceCol(token)}
+                  {renderMobileTokenInfo(token)}
 
                   {selected?.mint === token.mint && (
                     <motion.div
@@ -571,15 +624,7 @@ export default function TokenSelector({ selected, onChange, exclude }) {
                       e.target.style.display = "none";
                     }}
                   />
-                  <div className="text-left flex-1 min-w-0">
-                    <div className="font-mono font-semibold text-sm">
-                      {token.name}
-                    </div>
-                    <div className="font-mono text-xs text-terminal-dim">
-                      {token.symbol}
-                    </div>
-                  </div>
-                  {renderBalanceCol(token, true)}
+                  {renderDesktopTokenInfo(token)}
                   {selected?.mint === token.mint && (
                     <motion.div
                       className="w-1.5 h-1.5 rounded-full bg-terminal-accent"
