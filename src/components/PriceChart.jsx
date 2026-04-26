@@ -28,8 +28,13 @@ import { RiBarChart2Line } from "react-icons/ri";
 import { BsSliders2Vertical } from "react-icons/bs";
 import { IoAnalyticsOutline } from "react-icons/io5";
 import { PiWaveTriangleDuotone } from "react-icons/pi";
-import { TbWaveSquare,TbChartAreaLineFilled } from "react-icons/tb";
-import { MdCandlestickChart, MdOutlineShowChart, MdOutlineWaterfallChart, MdStackedLineChart } from "react-icons/md";
+import { TbWaveSquare, TbChartAreaLineFilled } from "react-icons/tb";
+import {
+  MdCandlestickChart,
+  MdOutlineShowChart,
+  MdOutlineWaterfallChart,
+  MdStackedLineChart,
+} from "react-icons/md";
 
 const CONTAINER_ID = "mainstay_sol_chart";
 const USD_LIKE = new Set(["USDC", "USDT", "USD"]);
@@ -76,7 +81,11 @@ export default function PriceChart({ solPrice, inputToken, outputToken }) {
   const [styleIndex, setStyleIndex] = useState(1);
   const chartStyle = CHART_STYLES[styleIndex].value;
 
-  const { Icon: ActiveIcon, title: activeTitle, value: activeValue } = CHART_STYLES[styleIndex];
+  const {
+    Icon: ActiveIcon,
+    title: activeTitle,
+    value: activeValue,
+  } = CHART_STYLES[styleIndex];
 
   const prevStyle = () =>
     setStyleIndex((i) => (i - 1 + CHART_STYLES.length) % CHART_STYLES.length);
@@ -210,7 +219,7 @@ export default function PriceChart({ solPrice, inputToken, outputToken }) {
             <div className="flex items-center gap-1 px-2 min-w-[90px] justify-center">
               <ActiveIcon
                 size={13}
-                className={"text-terminal-accent flex-shrink-0", activeValue === "0" ? "rotate-90" : ""}
+                className={`text-terminal-accent flex-shrink-0 ${activeValue === "0" ? "rotate-90" : ""}`}
               />
               <span className="text-[9px] font-mono uppercase tracking-wider text-terminal-text whitespace-nowrap">
                 {activeTitle}
@@ -223,25 +232,13 @@ export default function PriceChart({ solPrice, inputToken, outputToken }) {
               <ChevronRight size={12} />
             </button>
           </div>
-          <span className="text-[9px] uppercase tracking-wider text-terminal-dim font-mono">
-            15m
-          </span>
-          {isSolPair && solPrice != null && (
-            <span
-              className={`font-mono text-[11px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 ${
-                isUp
-                  ? "text-green-400 bg-green-400/10"
-                  : "text-red-400 bg-red-400/10"
-              }`}
-            >
-              {isUp ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-              {Math.abs(change).toFixed(2)}%
-            </span>
-          )}
         </div>
       </div>
 
-      <div className="h-64" style={{ background: "#0d1117" }}>
+      <div className="relative h-64" style={{ background: "#0d1117" }}>
+        <span className="absolute left-2 top-2 text-[9px] uppercase tracking-wider text-terminal-dim font-mono z-50">
+          15m
+        </span>
         <div id={CONTAINER_ID} ref={containerRef} className="w-full h-full" />
       </div>
 
@@ -260,26 +257,45 @@ export default function PriceChart({ solPrice, inputToken, outputToken }) {
               color: "text-red-400",
             },
             {
-              label: "CHG",
-              value:
-                solPrice != null
-                  ? `${isUp ? "+" : ""}${change.toFixed(2)}%`
-                  : "—",
-              color: isUp ? "text-green-400" : "text-red-400",
+              label: "",
+              render:
+                isSolPair && solPrice != null ? (
+                  <span
+                    className={`font-mono text-[11px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 ${
+                      isUp
+                        ? "text-green-400 bg-green-400/10"
+                        : "text-red-400 bg-red-400/10"
+                    }`}
+                  >
+                    {isUp ? (
+                      <TrendingUp size={11} />
+                    ) : (
+                      <TrendingDown size={11} />
+                    )}
+                    {isUp ? "+" : "-"}
+                    {Math.abs(change).toFixed(2)}%
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-mono font-bold text-terminal-text">
+                    —
+                  </span>
+                ),
             },
-          ].map(({ label, value, color }) => (
+          ].map(({ label, value, color, render }) => (
             <div
               key={label}
-              className="flex flex-col items-center py-2 gap-0.5"
+              className="flex flex-col justify-center items-center py-2 gap-0.5"
             >
               <span className="text-[8px] font-mono uppercase tracking-widest text-terminal-dim">
                 {label}
               </span>
-              <span
-                className={`text-[11px] font-mono font-bold ${color ?? "text-terminal-text"}`}
-              >
-                {value}
-              </span>
+              {render ?? (
+                <span
+                  className={`text-[11px] font-mono font-bold ${color ?? "text-terminal-text"}`}
+                >
+                  {value}
+                </span>
+              )}
             </div>
           ))}
         </div>
