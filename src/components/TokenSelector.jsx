@@ -162,7 +162,7 @@ export default function TokenSelector({ selected, onChange, exclude }) {
     const rect = buttonRef.current.getBoundingClientRect();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const PANEL_W = Math.min(280, vw - 16);
+    const PANEL_W = Math.min(320, vw - 16);
     const PANEL_H_APPROX = 380;
 
     let top = rect.bottom + 8;
