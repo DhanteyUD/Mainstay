@@ -374,7 +374,7 @@ function TradeRow({ trade: t, index }) {
       </div>
 
       {/* Slippage delta */}
-      <div className="shrink-0 text-right hidden sm:block">
+      <div className="shrink-0 text-right hidden sm:block mr-2">
         <div className={`flex items-center gap-1 justify-end font-mono text-xs ${slipColor}`}>
           <SlipIcon size={10} />
           {slip != null ? (slip >= 0 ? '+' : '') + slip.toFixed(3) + '%' : '—'}
