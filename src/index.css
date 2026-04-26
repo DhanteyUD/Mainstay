@@ -1,5 +1,3 @@
-@import "@solana/wallet-adapter-react-ui/styles.css";
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -120,6 +118,12 @@ body {
 .wallet-adapter-dropdown-list-item:hover {
   background: #1e2235 !important;
   color: #00e5ff !important;
+}
+
+@media (max-width: 768px) {
+  .wallet-adapter-dropdown-list {
+    display: none !important;
+  }
 }
 
 /* Glow effects */
