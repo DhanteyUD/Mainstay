@@ -1,33 +1,68 @@
-import React from 'react'
-import { TrendingDown, Zap, Route, AlertTriangle, RefreshCw } from 'lucide-react'
+import React from "react";
+import {
+  TrendingDown,
+  Zap,
+  Route,
+  AlertTriangle,
+  RefreshCw,
+} from "lucide-react";
+import { BsCurrencyExchange } from "react-icons/bs";
+import { MdOutlineWaterfallChart } from "react-icons/md";
+import { GrLineChart } from "react-icons/gr";
+import { motion } from "framer-motion";
 
 function formatAmount(raw, decimals, maxDecimals = 6) {
-  if (!raw) return '—'
-  const val = Number(raw) / Math.pow(10, decimals)
-  if (val === 0) return '0'
-  if (val < 0.000001) return val.toExponential(4)
-  if (val < 1) return val.toFixed(Math.min(maxDecimals, 6))
-  if (val >= 1000000) return (val / 1000000).toFixed(2) + 'M'
-  if (val >= 1000) return val.toLocaleString('en-US', { maximumFractionDigits: 2 })
-  return val.toFixed(Math.min(maxDecimals, 4))
+  if (!raw) return "—";
+  const val = Number(raw) / Math.pow(10, decimals);
+  if (val === 0) return "0";
+  if (val < 0.000001) return val.toExponential(4);
+  if (val < 1) return val.toFixed(Math.min(maxDecimals, 6));
+  if (val >= 1000000) return (val / 1000000).toFixed(2) + "M";
+  if (val >= 1000)
+    return val.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  return val.toFixed(Math.min(maxDecimals, 4));
 }
 
-function formatPrice(inputAmount, inputDecimals, outputAmount, outputDecimals, inputSymbol, outputSymbol) {
-  if (!inputAmount || !outputAmount) return '—'
-  const inputVal = Number(inputAmount) / Math.pow(10, inputDecimals)
-  const outputVal = Number(outputAmount) / Math.pow(10, outputDecimals)
-  if (!inputVal || !outputVal) return '—'
-  const rate = outputVal / inputVal
-  return `1 ${inputSymbol} = ${formatAmount(rate * Math.pow(10, outputDecimals), outputDecimals, 4)} ${outputSymbol}`
+function formatPrice(
+  inputAmount,
+  inputDecimals,
+  outputAmount,
+  outputDecimals,
+  inputSymbol,
+  outputSymbol,
+) {
+  if (!inputAmount || !outputAmount) return "—";
+  const inputVal = Number(inputAmount) / Math.pow(10, inputDecimals);
+  const outputVal = Number(outputAmount) / Math.pow(10, outputDecimals);
+  if (!inputVal || !outputVal) return "—";
+  const rate = outputVal / inputVal;
+  return `1 ${inputSymbol} = ${formatAmount(rate * Math.pow(10, outputDecimals), outputDecimals, 4)} ${outputSymbol}`;
 }
 
-export default function QuoteDisplay({ quote, inputToken, outputToken, loading, error, onRetry }) {
+export default function QuoteDisplay({
+  quote,
+  inputToken,
+  outputToken,
+  loading,
+  error,
+  onRetry,
+}) {
   if (error) {
     return (
-      <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-terminal-red/10 border border-terminal-red/30 animate-fade-in">
-        <AlertTriangle size={13} className="text-terminal-red mt-0.5 shrink-0" />
+      <motion.div
+        className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-terminal-red/10 border border-terminal-red/30"
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <AlertTriangle
+          size={13}
+          className="text-terminal-red mt-0.5 shrink-0"
+        />
         <div className="flex-1 min-w-0">
-          <p className="text-terminal-red text-xs font-mono leading-relaxed">{error}</p>
+          <p className="text-terminal-red text-xs font-mono leading-relaxed">
+            {error}
+          </p>
           {onRetry && (
             <button
               onClick={onRetry}
@@ -38,34 +73,44 @@ export default function QuoteDisplay({ quote, inputToken, outputToken, loading, 
             </button>
           )}
         </div>
-      </div>
-    )
+      </motion.div>
+    );
   }
 
   if (loading) {
     return (
-      <div className="space-y-2 animate-fade-in">
+      <motion.div
+        className="space-y-2"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.15 }}
+      >
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex justify-between items-center">
             <div className="h-3 bg-terminal-border rounded w-28 animate-pulse" />
             <div className="h-3 bg-terminal-border rounded w-20 animate-pulse" />
           </div>
         ))}
-      </div>
-    )
+      </motion.div>
+    );
   }
 
-  if (!quote) return null
+  if (!quote) return null;
 
-  const outFormatted = formatAmount(quote.outAmount || quote.outputAmount, outputToken?.decimals || 6)
-  const slippageBps = quote.slippageBps
-  const slippagePercent = slippageBps !== undefined && slippageBps !== null
-    ? (Number(slippageBps) / 100).toFixed(2)
-    : '—'
+  const outFormatted = formatAmount(
+    quote.outAmount || quote.outputAmount,
+    outputToken?.decimals || 6,
+  );
+  const slippageBps = quote.slippageBps;
+  const slippagePercent =
+    slippageBps !== undefined && slippageBps !== null
+      ? (Number(slippageBps) / 100).toFixed(2)
+      : "—";
 
-  const priceImpact = quote.priceImpactPct !== undefined
-    ? (Number(quote.priceImpactPct) * 100).toFixed(3)
-    : null
+  const priceImpact =
+    quote.priceImpactPct !== undefined
+      ? (Number(quote.priceImpactPct) * 100).toFixed(3)
+      : null;
 
   const priceStr = formatPrice(
     quote.inAmount,
@@ -73,25 +118,34 @@ export default function QuoteDisplay({ quote, inputToken, outputToken, loading, 
     quote.outAmount || quote.outputAmount,
     outputToken?.decimals || 6,
     inputToken?.symbol,
-    outputToken?.symbol
-  )
+    outputToken?.symbol,
+  );
 
   return (
-    <div className="space-y-2.5 animate-slide-up">
+    <motion.div
+      className="space-y-2.5"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+    >
       {/* Output amount highlight */}
-      <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-terminal-green/8 border border-terminal-green/20">
+      <div className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-terminal-green/8 border border-terminal-green/20 gap-2">
         <div className="flex items-center gap-2">
           {outputToken && (
             <img
               src={outputToken.logo}
               alt={outputToken.symbol}
               className="w-5 h-5 rounded-full"
-              onError={(e) => { e.target.style.display = 'none' }}
+              onError={(e) => {
+                e.target.style.display = "none";
+              }}
             />
           )}
-          <span className="text-terminal-dim text-xs font-mono">You receive</span>
+          <span className="text-terminal-dim text-xs font-mono">
+            You receive
+          </span>
         </div>
-        <span className="text-terminal-green font-mono font-bold text-base">
+        <span className="text-terminal-green font-mono font-bold text-sm sm:text-base truncate min-w-0 text-right">
           {outFormatted} {outputToken?.symbol}
         </span>
       </div>
@@ -99,49 +153,58 @@ export default function QuoteDisplay({ quote, inputToken, outputToken, loading, 
       {/* Details grid */}
       <div className="grid grid-cols-1 gap-1.5">
         <QuoteRow
-          icon={<TrendingDown size={11} className="text-terminal-dim" />}
+          icon={<BsCurrencyExchange size={11} className="text-terminal-dim" />}
           label="Exchange rate"
           value={priceStr}
           valueClass="text-terminal-text"
         />
         <QuoteRow
-          icon={<Route size={11} className="text-terminal-dim" />}
+          icon={
+            <MdOutlineWaterfallChart size={11} className="text-terminal-dim" />
+          }
           label="Slippage tolerance"
-          value={slippageBps !== undefined ? `${slippagePercent}%` : 'Auto'}
-          valueClass={Number(slippageBps) > 100 ? 'text-terminal-yellow' : 'text-terminal-text'}
+          value={slippageBps !== undefined ? `${slippagePercent}%` : "Auto"}
+          valueClass={
+            Number(slippageBps) > 100
+              ? "text-terminal-yellow"
+              : "text-terminal-text"
+          }
         />
         {priceImpact !== null && (
           <QuoteRow
-            icon={<Zap size={11} className="text-terminal-dim" />}
+            icon={<GrLineChart size={11} className="text-terminal-dim" />}
             label="Price impact"
             value={`${priceImpact}%`}
             valueClass={
               Number(priceImpact) > 1
                 ? Number(priceImpact) > 3
-                  ? 'text-terminal-red'
-                  : 'text-terminal-yellow'
-                : 'text-terminal-green'
+                  ? "text-terminal-red"
+                  : "text-terminal-yellow"
+                : "text-terminal-green"
             }
           />
         )}
         <QuoteRow
+          icon={<Route size={11} className="text-terminal-dim" />}
           label="Route"
           value="DFlow JIT Routing"
           valueClass="text-terminal-accent text-xs"
         />
       </div>
-    </div>
-  )
+    </motion.div>
+  );
 }
 
-function QuoteRow({ icon, label, value, valueClass = 'text-terminal-text' }) {
+function QuoteRow({ icon, label, value, valueClass = "text-terminal-text" }) {
   return (
     <div className="flex items-center justify-between px-3 py-1.5 rounded-md hover:bg-terminal-surface/50 transition-colors">
       <div className="flex items-center gap-1.5">
         {icon}
         <span className="text-terminal-dim text-xs font-mono">{label}</span>
       </div>
-      <span className={`text-xs font-mono font-medium ${valueClass}`}>{value}</span>
+      <span className={`text-xs font-mono font-medium ${valueClass}`}>
+        {value}
+      </span>
     </div>
-  )
+  );
 }
