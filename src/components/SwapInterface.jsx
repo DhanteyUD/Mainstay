@@ -562,7 +562,7 @@ function StatsStrip() {
   const stats = [
     { label: "MEV Protection", value: "Active", color: "text-terminal-green" },
     { label: "Routing", value: "JIT", color: "text-terminal-accent" },
-    { label: "Network", value: "Mainnet", color: "text-terminal-dim" },
+    { label: "Network", value: "Mainnet", color: "text-terminal-bright" },
   ];
 
   return (
