@@ -55,8 +55,8 @@ body {
   border: 1px solid #1e2235 !important;
   border-radius: 8px !important;
   color: #e2e8f0 !important;
-  height: 40px !important;
-  padding: 0 16px !important;
+  height: 60px !important;
+  padding: 16px !important;
   transition: all 0.2s ease !important;
 }
 
@@ -67,7 +67,9 @@ body {
 }
 
 .wallet-adapter-button-trigger {
+  height: 40px !important;
   background: #141720 !important;
+  padding: 0 16px !important;
 }
 
 .wallet-adapter-modal-wrapper {
