@@ -8,10 +8,7 @@ import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import App from "./App";
 import "@solana/wallet-adapter-react-ui/styles.css";
 import "./index.css";
-import { SOLANA_RPC_PROXY } from "./config";
-
-
-const RPC_ENDPOINT = import.meta.env.VITE_HELIUS_RPC_URL || SOLANA_RPC_PROXY;
+import { NetworkContextProvider, useNetwork } from "./contexts/NetworkContext";
 
 const connectionConfig = {
   commitment: "confirmed",
@@ -115,10 +112,11 @@ function usePhantomRecommended() {
 
 function WalletContextProvider({ children }) {
   usePhantomRecommended();
+  const { rpcEndpoint } = useNetwork();
   const wallets = useMemo(() => [], []);
 
   return (
-    <ConnectionProvider endpoint={RPC_ENDPOINT} config={connectionConfig}>
+    <ConnectionProvider endpoint={rpcEndpoint} config={connectionConfig}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
@@ -136,8 +134,10 @@ const root =
 
 root.render(
   <React.StrictMode>
-    <WalletContextProvider>
-      <App />
-    </WalletContextProvider>
+    <NetworkContextProvider>
+      <WalletContextProvider>
+        <App />
+      </WalletContextProvider>
+    </NetworkContextProvider>
   </React.StrictMode>,
 );
