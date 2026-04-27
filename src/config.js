@@ -64,3 +64,63 @@ export const TOKENS = {
 };
 
 export const TOKEN_LIST = Object.values(TOKENS);
+
+// ── Prediction market outcome tokens ──────────────────────────────────────────
+const JITOSOL = {
+  symbol: 'jitoSOL',
+  name: 'Jito Staked SOL',
+  mint: 'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn',
+  decimals: 9,
+  logo: 'https://storage.googleapis.com/token-metadata/JitoSOL-256.png',
+}
+
+const MSOL = {
+  symbol: 'mSOL',
+  name: 'Marinade Staked SOL',
+  mint: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So',
+  decimals: 9,
+  logo: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png',
+}
+
+export const PREDICTION_MARKETS = [
+  {
+    id: 'jito-lst-dominance',
+    question: 'Will Jito maintain liquid staking dominance through Q4 2025?',
+    category: 'DeFi',
+    resolvesAt: '2025-12-31',
+    probability: 0.68,
+    volume24h: 482_000,
+    yesToken: JITOSOL,
+    noToken: MSOL,
+  },
+  {
+    id: 'jupiter-dex-lead',
+    question: 'Will Jupiter remain the #1 Solana DEX by volume through Q3 2025?',
+    category: 'DEX',
+    resolvesAt: '2025-09-30',
+    probability: 0.74,
+    volume24h: 1_240_000,
+    yesToken: TOKENS.JUP,
+    noToken: TOKENS.RAY,
+  },
+  {
+    id: 'memecoin-season',
+    question: 'Will Solana memecoins return to Dec 2024 peak volume by Q3 2025?',
+    category: 'Memecoins',
+    resolvesAt: '2025-09-30',
+    probability: 0.31,
+    volume24h: 218_000,
+    yesToken: TOKENS.BONK,
+    noToken: TOKENS.USDC,
+  },
+  {
+    id: 'wif-ath',
+    question: 'Will WIF reach a new all-time high within 2025?',
+    category: 'Memecoins',
+    resolvesAt: '2025-12-31',
+    probability: 0.42,
+    volume24h: 95_000,
+    yesToken: TOKENS.WIF,
+    noToken: TOKENS.JTO,
+  },
+]

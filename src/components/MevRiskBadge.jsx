@@ -1,5 +1,6 @@
 import React from 'react'
 import { ShieldCheck, ShieldAlert, ShieldX, Loader2 } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 const LEVELS = {
   LOW: {
@@ -28,12 +29,17 @@ const LEVELS = {
 export default function MevRiskBadge({ risk, loading }) {
   if (loading) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-terminal-surface/50 border border-terminal-border animate-fade-in">
+      <motion.div
+        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-terminal-surface/50 border border-terminal-border"
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+      >
         <Loader2 size={11} className="text-terminal-dim animate-spin shrink-0" />
         <span className="text-terminal-dim text-xs font-mono tracking-wide">
-          Analysing MEV risk…
+          Analyzing MEV risk…
         </span>
-      </div>
+      </motion.div>
     )
   }
 
@@ -43,8 +49,11 @@ export default function MevRiskBadge({ risk, loading }) {
   const { Icon } = cfg
 
   return (
-    <div
-      className={`flex flex-col gap-1.5 px-3 py-2.5 rounded-lg border animate-fade-in ${cfg.wrapper}`}
+    <motion.div
+      className={`flex flex-col gap-1.5 px-3 py-2.5 rounded-lg border ${cfg.wrapper}`}
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
     >
       {/* Badge row */}
       <div className="flex items-center gap-2">
@@ -59,6 +68,6 @@ export default function MevRiskBadge({ risk, loading }) {
       <p className="font-mono text-xs opacity-75 leading-relaxed pl-[22px]">
         {risk.explanation}
       </p>
-    </div>
+    </motion.div>
   )
 }

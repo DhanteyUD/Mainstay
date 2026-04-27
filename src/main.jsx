@@ -6,11 +6,11 @@ import {
 } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import App from "./App";
+import "@solana/wallet-adapter-react-ui/styles.css";
 import "./index.css";
 import { SOLANA_RPC_PROXY } from "./config";
 
-// Prefer a direct Helius RPC URL when running locally (VITE_HELIUS_RPC_URL set in .env.local).
-// Falls back to the Eitherway proxy when running inside the hosted preview.
+
 const RPC_ENDPOINT = import.meta.env.VITE_HELIUS_RPC_URL || SOLANA_RPC_PROXY;
 
 const connectionConfig = {
@@ -25,9 +25,8 @@ function usePhantomRecommended() {
       const style = document.createElement("style");
       style.id = STYLE_ID;
       style.textContent = `
-        /* Give the modal list even internal padding */
         .wallet-adapter-modal-list {
-          padding: 8px 16px 12px !important;
+          padding: 16px !important;
         }
         .wallet-adapter-modal-list li {
           margin-bottom: 6px !important;
@@ -36,22 +35,19 @@ function usePhantomRecommended() {
           margin-bottom: 0 !important;
         }
 
-        /* Recommended wallet item — Phantom purple accent */
         .wallet-adapter-modal-list li.phantom-recommended {
           order: -1;
-          border: 1px solid rgba(171, 102, 255, 0.40) !important;
-          border-radius: 10px;
+          border: 1px solid #AB9FF2 !important;
+          border-radius: 8px;
           background: rgba(171, 102, 255, 0.06);
           position: relative;
           margin-bottom: 10px !important;
         }
 
-        /* Badge sits on the right inside the li, vertically centred — pointer-events:none so
-           clicks pass through to the button underneath */
         .phantom-recommended-badge {
           position: absolute;
           right: 16px;
-          top: 50%;
+          top: 0;
           transform: translateY(-50%);
           z-index: 20;
           display: inline-flex;
@@ -123,7 +119,7 @@ function WalletContextProvider({ children }) {
 
   return (
     <ConnectionProvider endpoint={RPC_ENDPOINT} config={connectionConfig}>
-      <WalletProvider wallets={wallets} autoConnect={false}>
+      <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
