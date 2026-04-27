@@ -45,7 +45,7 @@ export function useSwap() {
   const debounceRef = useRef(null)
   const lastParamsRef = useRef(null)
 
-  const doFetch = useCallback(async ({ inputMint, outputMint, amount, decimals, walletPublicKey }) => {
+  const doFetch = useCallback(async ({ inputMint, outputMint, amount, decimals, walletPublicKey, feeBps, prioritizationFeeLamports }) => {
     setQuoteLoading(true)
     setQuoteError(null)
     setQuote(null)
@@ -53,19 +53,34 @@ export function useSwap() {
     let lastErr = null
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        if (attempt > 0) await new Promise((r) => setTimeout(r, 800))
+        if (attempt > 0) await new Promise((r) => setTimeout(r, 1000))
         const rawAmount = Math.floor(Number(amount) * Math.pow(10, decimals))
         const params = new URLSearchParams({
           inputMint,
           outputMint,
           amount: rawAmount.toString(),
           slippageBps: 'auto',
-          prioritizationFeeLamports: 'auto',
+          prioritizationFeeLamports: prioritizationFeeLamports ?? 'auto',
           wrapAndUnwrapSol: 'true',
         })
         if (walletPublicKey) params.set('userPublicKey', walletPublicKey)
+        if (feeBps != null) params.set('feeBps', String(feeBps))
 
-        const res = await fetch(`${DFLOW_PROXY}/e.quote-api.dflow.net/order?${params}`)
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 14000)
+
+        let res
+        try {
+          res = await fetch(`${DFLOW_PROXY}/e.quote-api.dflow.net/order?${params}`, {
+            method: 'GET',
+            mode: 'cors',
+            credentials: 'omit',
+            signal: controller.signal,
+          })
+        } finally {
+          clearTimeout(timeoutId)
+        }
+
         if (!res.ok) {
           const errText = await res.text()
           throw new Error(`Quote failed (${res.status}): ${errText.slice(0, 120)}`)
@@ -235,6 +250,12 @@ function humanizeError(msg) {
   }
   if (m.includes('no route') || m.includes('no routes') || m.includes('no_routes')) {
     return 'No route found for this pair. Try a different amount or token.'
+  }
+  if (m.includes('aborted') || m.includes('abort')) {
+    return 'Request timed out. Check your connection and retry.'
+  }
+  if (m.includes('failed to fetch') || m.includes('networkerror') || m.includes('network request failed') || m.includes('load failed')) {
+    return 'Network error — could not reach the quote server. Check your connection or try opening in a browser.'
   }
   if (m.includes('timeout')) {
     return 'Transaction timed out. It may have still gone through — check your wallet.'

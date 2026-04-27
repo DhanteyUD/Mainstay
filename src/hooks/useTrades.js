@@ -18,6 +18,9 @@ export function useTrades(walletAddress) {
     if (!walletAddress || !DB_ENABLED) return
     const row = {
       wallet_address: walletAddress,
+      // 'spot' for normal swaps, 'prediction' for prediction market outcome token trades.
+      // Requires a `trade_type TEXT DEFAULT 'spot'` column in the trades table.
+      trade_type: payload.tradeType || 'spot',
       input_token_symbol: payload.inputToken?.symbol || '?',
       output_token_symbol: payload.outputToken?.symbol || '?',
       input_amount_raw: String(payload.result?.inputAmount || '0'),

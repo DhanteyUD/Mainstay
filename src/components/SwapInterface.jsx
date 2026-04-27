@@ -222,7 +222,7 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
   return (
     <>
       <motion.div
-        className="w-full max-w-lg mx-auto"
+        className="w-full mx-auto"
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
