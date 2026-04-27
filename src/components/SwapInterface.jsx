@@ -33,6 +33,7 @@ const fadeSlide = {
 export default function SwapInterface({ onSaveTrade, onTokensChange }) {
   const wallet = useWallet();
   const { publicKey, connected } = wallet;
+  const isSolflare = wallet.wallet?.adapter?.name === "Solflare";
 
   const [inputToken, setInputToken] = useState(TOKENS.SOL);
   const [outputToken, setOutputToken] = useState(TOKENS.USDC);
@@ -417,7 +418,7 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
 
             {/* Solflare false-positive notice */}
             <AnimatePresence>
-              {swapStatus === "signing" && (
+              {swapStatus === "signing" && isSolflare && (
                 <motion.div
                   className="flex items-start gap-2.5 px-3 py-3 rounded-lg border"
                   style={{
