@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import TokenSelector from './TokenSelector'
 import { fetchTokenPriceUsd } from '../hooks/useLimitOrders'
 import { TOKENS } from '../config'
+import { useNetwork } from '../contexts/NetworkContext'
 
 const fadeSlide = {
   initial: { opacity: 0, y: -6 },
@@ -23,6 +24,7 @@ const fadeSlide = {
 
 export default function LimitOrderForm({ onAddOrder }) {
   const { connected } = useWallet()
+  const { isDevnet, networkLabel } = useNetwork()
 
   const [inputToken, setInputToken] = useState(TOKENS.SOL)
   const [outputToken, setOutputToken] = useState(TOKENS.USDC)
@@ -111,8 +113,8 @@ export default function LimitOrderForm({ onAddOrder }) {
               <span className="font-mono font-bold text-terminal-text text-sm tracking-wider">
                 LIMIT ORDER
               </span>
-              <span className="font-mono text-xs text-terminal-dim tracking-widest hidden sm:inline">
-                / MAINNET
+              <span className={`font-mono text-xs tracking-widest hidden sm:inline ${isDevnet ? 'text-terminal-yellow' : 'text-terminal-dim'}`}>
+                / {networkLabel}
               </span>
             </div>
             <div className="shrink-0 max-w-[180px] sm:max-w-none overflow-hidden">
@@ -291,7 +293,7 @@ export default function LimitOrderForm({ onAddOrder }) {
         {[
           { label: 'MEV Protection', value: 'Active', color: 'text-terminal-green' },
           { label: 'Monitoring', value: '30s', color: 'text-terminal-yellow' },
-          { label: 'Network', value: 'Mainnet', color: 'text-terminal-bright' },
+          { label: 'Network', value: isDevnet ? 'Devnet' : 'Mainnet', color: isDevnet ? 'text-terminal-yellow' : 'text-terminal-bright' },
         ].map((s, i) => (
           <motion.div
             key={s.label}
