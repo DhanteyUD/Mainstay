@@ -36,7 +36,7 @@ function formatPrice(
   const outputVal = Number(outputAmount) / Math.pow(10, outputDecimals);
   if (!inputVal || !outputVal) return "—";
   const rate = outputVal / inputVal;
-  return `1 ${inputSymbol} = ${formatAmount(rate * Math.pow(10, outputDecimals), outputDecimals, 4)} ${outputSymbol}`;
+  return `1 ${inputSymbol} ≈ ${formatAmount(rate * Math.pow(10, outputDecimals), outputDecimals, 4)} ${outputSymbol}`;
 }
 
 export default function QuoteDisplay({
