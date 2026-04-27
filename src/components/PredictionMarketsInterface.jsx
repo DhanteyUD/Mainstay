@@ -22,6 +22,7 @@ import { useSwap } from '../hooks/useSwap'
 import { useMevRisk } from '../hooks/useMevRisk'
 import { useWalletBalance } from '../hooks/useWalletBalance'
 import { TOKENS, PREDICTION_MARKETS } from '../config'
+import { useNetwork } from '../contexts/NetworkContext'
 
 const fadeSlide = {
   initial: { opacity: 0, y: -6 },
@@ -42,6 +43,7 @@ function priorityFeeFromRisk(risk) {
 export default function PredictionMarketsInterface({ onSaveTrade }) {
   const wallet = useWallet()
   const { publicKey, connected } = wallet
+  const { isDevnet } = useNetwork()
 
   const [selectedMarket, setSelectedMarket] = useState(PREDICTION_MARKETS[0])
   const [side, setSide] = useState('YES')
@@ -435,9 +437,9 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
               )}
             </AnimatePresence>
 
-            {/* MEV risk badge */}
+            {/* MEV risk badge — mainnet only */}
             <AnimatePresence>
-              {(mevRisk || mevRiskLoading) && (
+              {!isDevnet && (mevRisk || mevRiskLoading) && (
                 <motion.div key="mev-badge" {...fadeSlide}>
                   <MevRiskBadge risk={mevRisk} loading={mevRiskLoading} />
                 </motion.div>
@@ -624,13 +626,22 @@ function BuyButton({ label, variant, disabled, onClick, isLoading }) {
 }
 
 function PredictStatsStrip({ market, side, outputToken, mevRisk }) {
+  const { isDevnet } = useNetwork()
   const priorityFee = priorityFeeFromRisk(mevRisk)
   const priorityLabel =
     priorityFee === 'auto' ? 'Auto' : priorityFee >= 100_000 ? 'High' : priorityFee >= 50_000 ? 'Med' : 'Low'
 
   const stats = [
-    { label: 'MEV Protection', value: 'Active', color: 'text-terminal-green' },
-    { label: 'Priority Fee', value: priorityLabel, color: mevRisk?.level === 'HIGH' ? 'text-terminal-red' : mevRisk?.level === 'MEDIUM' ? 'text-terminal-yellow' : 'text-terminal-accent' },
+    {
+      label: 'MEV Protection',
+      value: isDevnet ? 'Disabled' : 'Active',
+      color: isDevnet ? 'text-terminal-dim' : 'text-terminal-green',
+    },
+    {
+      label: isDevnet ? 'Routing' : 'Priority Fee',
+      value: isDevnet ? 'Jupiter' : priorityLabel,
+      color: isDevnet ? 'text-terminal-yellow' : (mevRisk?.level === 'HIGH' ? 'text-terminal-red' : mevRisk?.level === 'MEDIUM' ? 'text-terminal-yellow' : 'text-terminal-accent'),
+    },
     {
       label: 'Outcome Token',
       value: outputToken.symbol,
