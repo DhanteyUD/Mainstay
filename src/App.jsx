@@ -25,7 +25,9 @@ import MobileWalletBanner from "./components/MobileWalletBanner";
 import StatCard from "./components/StatCard";
 import ProtectionPanel from "./components/ProtectionPanel";
 import PredictionComingSoon from "./components/PredictionComingSoon";
+import PredictionMarketsInterface from "./components/PredictionMarketsInterface";
 import { MainTabBtn, TabBtn } from "./components/TabButtons";
+import { useNetwork } from "./contexts/NetworkContext";
 
 import { isMobile, isWalletBrowser } from "./lib/device";
 import { useTrades } from "./hooks/useTrades";
@@ -45,6 +47,7 @@ import {
 import { TOKENS } from "./config";
 
 export default function App() {
+  const { isDevnet } = useNetwork();
   const { publicKey, connected } = useWallet();
   const walletAddress = publicKey?.toBase58() || null;
 
@@ -65,7 +68,7 @@ export default function App() {
 
   useEffect(() => {
     if (connected && walletAddress) fetchTrades();
-  }, [connected, walletAddress]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [connected, walletAddress, isDevnet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!dismissed) return <OnboardingScreen onDismiss={dismiss} />;
 
@@ -156,25 +159,38 @@ export default function App() {
               sublabel={connected ? "this wallet" : "connect wallet"}
             />
             <StatCard
-              icon={<AlertTriangle size={14} className={risk.accent} />}
+              icon={
+                <AlertTriangle
+                  size={14}
+                  className={isDevnet ? "text-terminal-dim/30" : risk.accent}
+                />
+              }
               label="Risk Level"
               value={riskLevel ?? "···"}
-              accent={risk.accent}
-              border={risk.border}
-              bg={risk.bg}
-              sublabel="MEV protection + TPS"
+              accent={isDevnet ? "text-terminal-dim/30" : risk.accent}
+              border={isDevnet ? "border-terminal-dim/20" : risk.border}
+              bg={isDevnet ? "bg-terminal-dim/5" : risk.bg}
+              sublabel={isDevnet ? "mainnet MEV + TPS" : "MEV protection + TPS"}
               pulse={riskLevel !== null}
-              pulseColor={risk.pulse}
+              pulseColor={isDevnet ? "bg-terminal-dim/30" : risk.pulse}
+              network={isDevnet}
             />
             <StatCard
-              icon={<Server size={14} className={uptime.accent} />}
+              icon={
+                <Server
+                  size={14}
+                  className={isDevnet ? "text-terminal-dim/30" : uptime.accent}
+                />
+              }
               label="Network Uptime"
               value={uptimePct !== null ? `${uptimePct}%` : "···"}
-              accent={uptime.accent}
-              border={uptime.border}
-              bg={uptime.bg}
-              sublabel="DFlow + Helius"
+              accent={isDevnet ? "text-terminal-dim/30" : uptime.accent}
+              border={isDevnet ? "border-terminal-dim/20" : uptime.border}
+              bg={isDevnet ? "bg-terminal-dim/5" : uptime.bg}
+              sublabel={isDevnet ? "mainnet DFlow + Helius" : "DFlow + Helius"}
               pulse={uptimePct !== null}
+              pulseColor={isDevnet ? "bg-terminal-dim/30" : uptime.pulse}
+              network={isDevnet}
             />
           </motion.div>
         </AnimatePresence>
@@ -217,7 +233,7 @@ export default function App() {
             onClick={() => setMainTab(TAB_MAIN_PREDICT)}
             icon={<Target size={13} />}
             label="Prediction Market"
-            soon
+            soon={!isDevnet}
           />
         </motion.div>
 
@@ -256,7 +272,11 @@ export default function App() {
                   exit={{ opacity: 0, x: 12 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <PredictionComingSoon />
+                  {isDevnet ? (
+                    <PredictionMarketsInterface onSaveTrade={undefined} />
+                  ) : (
+                    <PredictionComingSoon />
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -300,29 +320,31 @@ export default function App() {
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {/* Tab bar */}
-                  <div className="flex gap-1 mb-4 bg-terminal-card border border-terminal-border rounded-xl p-1">
-                    <TabBtn
-                      active={rightTab === TAB_INFO}
-                      onClick={() => setRightTab(TAB_INFO)}
-                      icon={<Info size={12} />}
-                      label="Protection"
-                    />
-                    <TabBtn
-                      active={rightTab === TAB_HISTORY}
-                      onClick={() => {
-                        setRightTab(TAB_HISTORY);
-                        fetchTrades();
-                      }}
-                      icon={<Clock size={12} />}
-                      label="History"
-                      badge={trades.length > 0 ? trades.length : null}
-                    />
-                  </div>
+                  {/* Tab bar — hidden on devnet (no Protection panel) */}
+                  {!isDevnet && (
+                    <div className="flex gap-1 mb-4 bg-terminal-card border border-terminal-border rounded-xl p-1">
+                      <TabBtn
+                        active={rightTab === TAB_INFO}
+                        onClick={() => setRightTab(TAB_INFO)}
+                        icon={<Info size={12} />}
+                        label="Protection"
+                      />
+                      <TabBtn
+                        active={rightTab === TAB_HISTORY}
+                        onClick={() => {
+                          setRightTab(TAB_HISTORY);
+                          fetchTrades();
+                        }}
+                        icon={<Clock size={12} />}
+                        label="History"
+                        badge={trades.length > 0 ? trades.length : null}
+                      />
+                    </div>
+                  )}
 
                   {/* Tab content */}
                   <AnimatePresence mode="wait">
-                    {rightTab === TAB_INFO ? (
+                    {!isDevnet && rightTab === TAB_INFO ? (
                       <motion.div
                         key={`info-${mainTab}`}
                         initial={{ opacity: 0, y: 8 }}
