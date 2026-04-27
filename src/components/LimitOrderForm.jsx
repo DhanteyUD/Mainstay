@@ -291,7 +291,7 @@ export default function LimitOrderForm({ onAddOrder }) {
         {[
           { label: 'MEV Protection', value: 'Active', color: 'text-terminal-green' },
           { label: 'Monitoring', value: '30s', color: 'text-terminal-yellow' },
-          { label: 'Network', value: 'Mainnet', color: 'text-terminal-dim' },
+          { label: 'Network', value: 'Mainnet', color: 'text-terminal-bright' },
         ].map((s, i) => (
           <motion.div
             key={s.label}
