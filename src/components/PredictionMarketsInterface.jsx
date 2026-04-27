@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { useWallet } from '@solana/wallet-adapter-react'
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import {
   TrendingUp,
   TrendingDown,
@@ -13,77 +13,96 @@ import {
   ChevronDown,
   Target,
   Info,
-} from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import QuoteDisplay from './QuoteDisplay'
-import PostTradeCard from './PostTradeCard'
-import MevRiskBadge from './MevRiskBadge'
-import { useSwap } from '../hooks/useSwap'
-import { useMevRisk } from '../hooks/useMevRisk'
-import { useWalletBalance } from '../hooks/useWalletBalance'
-import { TOKENS, PREDICTION_MARKETS } from '../config'
-import { useNetwork } from '../contexts/NetworkContext'
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import QuoteDisplay from "./QuoteDisplay";
+import PostTradeCard from "./PostTradeCard";
+import MevRiskBadge from "./MevRiskBadge";
+import cn from "../functions/cn";
+
+import { useSwap } from "../hooks/useSwap";
+import { useMevRisk } from "../hooks/useMevRisk";
+import { useWalletBalance } from "../hooks/useWalletBalance";
+import { TOKENS, PREDICTION_MARKETS } from "../config";
+import { useNetwork } from "../contexts/NetworkContext";
 
 const fadeSlide = {
   initial: { opacity: 0, y: -6 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.2 } },
   exit: { opacity: 0, y: -6, transition: { duration: 0.15 } },
-}
+};
 
-const PAY_TOKENS = [TOKENS.USDC, TOKENS.SOL, TOKENS.USDT]
+const PAY_TOKENS = [TOKENS.USDC, TOKENS.SOL, TOKENS.USDT];
 
 // Lamport priority fee scaled to MEV risk level
 function priorityFeeFromRisk(risk) {
-  if (!risk) return 'auto'
-  if (risk.level === 'HIGH') return 200_000
-  if (risk.level === 'MEDIUM') return 50_000
-  return 10_000
+  if (!risk) return "auto";
+  if (risk.level === "HIGH") return 200_000;
+  if (risk.level === "MEDIUM") return 50_000;
+  return 10_000;
 }
 
 export default function PredictionMarketsInterface({ onSaveTrade }) {
-  const wallet = useWallet()
-  const { publicKey, connected } = wallet
-  const { isDevnet } = useNetwork()
+  const wallet = useWallet();
+  const { publicKey, connected } = wallet;
+  const { isDevnet } = useNetwork();
 
-  const [selectedMarket, setSelectedMarket] = useState(PREDICTION_MARKETS[0])
-  const [side, setSide] = useState('YES')
-  const [payToken, setPayToken] = useState(TOKENS.USDC)
-  const [inputAmount, setInputAmount] = useState('')
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [savedQuote, setSavedQuote] = useState(null)
-  const [showMarketDropdown, setShowMarketDropdown] = useState(false)
-  const [postSwapCooldown, setPostSwapCooldown] = useState(false)
-  const cooldownTimerRef = useRef(null)
-  const lastFetchParamsRef = useRef(null)
+  const [selectedMarket, setSelectedMarket] = useState(PREDICTION_MARKETS[0]);
+  const [side, setSide] = useState("YES");
+  const [payToken, setPayToken] = useState(TOKENS.USDC);
+  const [inputAmount, setInputAmount] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [savedQuote, setSavedQuote] = useState(null);
+  const [showMarketDropdown, setShowMarketDropdown] = useState(false);
+  const [postSwapCooldown, setPostSwapCooldown] = useState(false);
+  const cooldownTimerRef = useRef(null);
+  const lastFetchParamsRef = useRef(null);
   // Prevents infinite loop: re-fetch with risk-based priority fee only once per input change
-  const priorityFeeAppliedRef = useRef(false)
+  const priorityFeeAppliedRef = useRef(false);
 
-  const outputToken = side === 'YES' ? selectedMarket.yesToken : selectedMarket.noToken
+  const outputToken =
+    side === "YES" ? selectedMarket.yesToken : selectedMarket.noToken;
 
   const {
-    quote, quoteLoading, quoteError,
-    fetchQuote, clearQuote, executeSwap,
-    swapStatus, swapResult, swapError, swapWarning,
-    clearWarning, resetSwap,
-  } = useSwap()
+    quote,
+    quoteLoading,
+    quoteError,
+    fetchQuote,
+    clearQuote,
+    executeSwap,
+    swapStatus,
+    swapResult,
+    swapError,
+    swapWarning,
+    clearWarning,
+    resetSwap,
+  } = useSwap();
 
-  const { refresh: refreshBalance } = useWalletBalance()
+  const { refresh: refreshBalance } = useWalletBalance();
 
   const { risk: mevRisk, loading: mevRiskLoading } = useMevRisk({
     quote,
     inputToken: payToken,
     outputToken,
-  })
+  });
 
   // Wrap onSaveTrade to stamp every record with tradeType: 'prediction'
-  const handleSaveTrade = useCallback((payload) => {
-    onSaveTrade?.({ ...payload, tradeType: 'prediction' })
-  }, [onSaveTrade])
+  const handleSaveTrade = useCallback(
+    (payload) => {
+      onSaveTrade?.({ ...payload, tradeType: "prediction" });
+    },
+    [onSaveTrade],
+  );
 
   // ── Quote fetch: reset priority flag and fetch with feeBps:8 ──────────────
   useEffect(() => {
-    priorityFeeAppliedRef.current = false
-    if (payToken && outputToken && payToken.mint !== outputToken.mint && inputAmount) {
+    priorityFeeAppliedRef.current = false;
+    if (
+      payToken &&
+      outputToken &&
+      payToken.mint !== outputToken.mint &&
+      inputAmount
+    ) {
       const params = {
         inputMint: payToken.mint,
         outputMint: outputToken.mint,
@@ -91,138 +110,191 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
         decimals: payToken.decimals,
         walletPublicKey: publicKey?.toBase58() || null,
         feeBps: 8,
-        prioritizationFeeLamports: 'auto',
-      }
-      lastFetchParamsRef.current = params
-      fetchQuote(params)
+        prioritizationFeeLamports: "auto",
+      };
+      lastFetchParamsRef.current = params;
+      fetchQuote(params);
     } else {
-      clearQuote()
-      lastFetchParamsRef.current = null
+      clearQuote();
+      lastFetchParamsRef.current = null;
     }
-  }, [payToken, outputToken, inputAmount, publicKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [payToken, outputToken, inputAmount, publicKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── After MEV risk is computed, re-fetch with risk-scaled priority fee ────
   useEffect(() => {
-    if (!mevRisk || !lastFetchParamsRef.current || priorityFeeAppliedRef.current) return
-    priorityFeeAppliedRef.current = true
+    if (
+      !mevRisk ||
+      !lastFetchParamsRef.current ||
+      priorityFeeAppliedRef.current
+    )
+      return;
+    priorityFeeAppliedRef.current = true;
     const updatedParams = {
       ...lastFetchParamsRef.current,
       feeBps: 8,
       prioritizationFeeLamports: priorityFeeFromRisk(mevRisk),
-    }
-    lastFetchParamsRef.current = updatedParams
-    fetchQuote(updatedParams)
-  }, [mevRisk]) // eslint-disable-line react-hooks/exhaustive-deps
+    };
+    lastFetchParamsRef.current = updatedParams;
+    fetchQuote(updatedParams);
+  }, [mevRisk]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Reset on wallet disconnect ────────────────────────────────────────────
   useEffect(() => {
     if (!connected) {
-      clearQuote()
-      resetSwap()
-      setInputAmount('')
-      setSavedQuote(null)
-      setShowConfirm(false)
-      setPostSwapCooldown(false)
-      if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current)
+      clearQuote();
+      resetSwap();
+      setInputAmount("");
+      setSavedQuote(null);
+      setShowConfirm(false);
+      setPostSwapCooldown(false);
+      if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
     }
-  }, [connected]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [connected]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Post-swap cooldown + balance refresh ──────────────────────────────────
   useEffect(() => {
-    if (swapStatus === 'success' && swapResult) {
-      setShowConfirm(true)
-      setPostSwapCooldown(true)
-      refreshBalance()
-      if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current)
+    if (swapStatus === "success" && swapResult) {
+      setShowConfirm(true);
+      setPostSwapCooldown(true);
+      refreshBalance();
+      if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
       cooldownTimerRef.current = setTimeout(() => {
-        setPostSwapCooldown(false)
-        if (lastFetchParamsRef.current) fetchQuote(lastFetchParamsRef.current)
-      }, 3000)
+        setPostSwapCooldown(false);
+        if (lastFetchParamsRef.current) fetchQuote(lastFetchParamsRef.current);
+      }, 3000);
     }
-    return () => {}
-  }, [swapStatus, swapResult]) // eslint-disable-line react-hooks/exhaustive-deps
+    return () => {};
+  }, [swapStatus, swapResult]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    return () => { if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current) }
-  }, [])
+    return () => {
+      if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
+    };
+  }, []);
 
   const handleSwap = async () => {
-    if (!quote || !connected || postSwapCooldown) return
-    setSavedQuote(quote)
-    await executeSwap({ quote, wallet, inputToken: payToken, outputToken })
-  }
+    if (!quote || !connected || postSwapCooldown) return;
+    setSavedQuote(quote);
+    await executeSwap({ quote, wallet, inputToken: payToken, outputToken });
+  };
 
   const handleRetryQuote = useCallback(() => {
-    if (lastFetchParamsRef.current) fetchQuote(lastFetchParamsRef.current)
-  }, [fetchQuote])
+    if (lastFetchParamsRef.current) fetchQuote(lastFetchParamsRef.current);
+  }, [fetchQuote]);
 
   const handleNewSwap = () => {
-    setShowConfirm(false)
-    setInputAmount('')
-    clearQuote()
-    resetSwap()
-    setSavedQuote(null)
-  }
+    setShowConfirm(false);
+    setInputAmount("");
+    clearQuote();
+    resetSwap();
+    setSavedQuote(null);
+  };
 
   const handleMarketSelect = (market) => {
-    setSelectedMarket(market)
-    setShowMarketDropdown(false)
-    clearQuote()
-    setInputAmount('')
-    resetSwap()
-    priorityFeeAppliedRef.current = false
-  }
+    setSelectedMarket(market);
+    setShowMarketDropdown(false);
+    clearQuote();
+    setInputAmount("");
+    resetSwap();
+    priorityFeeAppliedRef.current = false;
+  };
 
   const handleSideChange = (newSide) => {
-    if (newSide === side) return
-    setSide(newSide)
-    clearQuote()
-    setInputAmount('')
-    priorityFeeAppliedRef.current = false
-  }
+    if (newSide === side) return;
+    setSide(newSide);
+    clearQuote();
+    setInputAmount("");
+    priorityFeeAppliedRef.current = false;
+  };
 
   const handlePayTokenChange = (token) => {
-    setPayToken(token)
-    clearQuote()
-    setInputAmount('')
-    priorityFeeAppliedRef.current = false
-  }
+    setPayToken(token);
+    clearQuote();
+    setInputAmount("");
+    priorityFeeAppliedRef.current = false;
+  };
 
-  const isSwapping = swapStatus === 'signing' || swapStatus === 'confirming'
-  const canSwap = connected && quote && !isSwapping && !quoteLoading && inputAmount && !postSwapCooldown
+  const isSwapping = swapStatus === "signing" || swapStatus === "confirming";
+  const canSwap =
+    connected &&
+    quote &&
+    !isSwapping &&
+    !quoteLoading &&
+    inputAmount &&
+    !postSwapCooldown;
 
   const getButtonContent = () => {
-    if (!connected) return { text: 'Connect Wallet', disabled: true, variant: 'secondary' }
-    if (!inputAmount) return { text: 'Enter Amount', disabled: true, variant: 'secondary' }
-    if (postSwapCooldown) return { text: 'Refreshing balance…', disabled: true, variant: 'loading' }
-    if (quoteLoading) return { text: 'Fetching Quote…', disabled: true, variant: 'loading' }
-    if (quoteError) return { text: 'No Route Available', disabled: true, variant: 'error' }
-    if (swapStatus === 'signing') return { text: 'Waiting for Signature…', disabled: true, variant: 'loading' }
-    if (swapStatus === 'confirming') return { text: 'Confirming on Solana…', disabled: true, variant: 'loading' }
-    if (!quote) return { text: `Buy ${side} Tokens`, disabled: true, variant: 'secondary' }
-    return { text: `Buy ${side} — ${outputToken.symbol}`, disabled: false, variant: side === 'YES' ? 'yes' : 'no' }
-  }
+    if (!connected)
+      return { text: "Connect Wallet", disabled: true, variant: "secondary" };
+    if (!inputAmount)
+      return { text: "Enter Amount", disabled: true, variant: "secondary" };
+    if (postSwapCooldown)
+      return {
+        text: "Refreshing balance…",
+        disabled: true,
+        variant: "loading",
+      };
+    if (quoteLoading)
+      return { text: "Fetching Quote…", disabled: true, variant: "loading" };
+    if (quoteError)
+      return { text: "No Route Available", disabled: true, variant: "error" };
+    if (swapStatus === "signing")
+      return {
+        text: "Waiting for Signature…",
+        disabled: true,
+        variant: "loading",
+      };
+    if (swapStatus === "confirming")
+      return {
+        text: "Confirming on Solana…",
+        disabled: true,
+        variant: "loading",
+      };
+    if (!quote)
+      return {
+        text: `Buy ${side} Tokens`,
+        disabled: true,
+        variant: "secondary",
+      };
+    return {
+      text: `Buy ${side} — ${outputToken.symbol}`,
+      disabled: false,
+      variant: side === "YES" ? "yes" : "no",
+    };
+  };
 
-  const btn = getButtonContent()
-  const pct = Math.round(selectedMarket.probability * 100)
+  const btn = getButtonContent();
+  const pct = Math.round(selectedMarket.probability * 100);
 
   return (
     <>
       <motion.div
-        className="w-full max-w-md mx-auto"
+        className="w-full mx-auto"
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: 'easeOut' }}
+        transition={{ duration: 0.45, ease: "easeOut" }}
       >
         <div className="bg-terminal-card border border-terminal-border rounded-2xl overflow-hidden shadow-2xl">
           {/* Header */}
           <div className="px-4 py-3 border-b border-terminal-border">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 shrink-0">
-                <div className="w-2 h-2 rounded-full bg-terminal-accent animate-pulse" />
-                <span className="font-mono font-bold text-terminal-text text-sm tracking-wider">PREDICT</span>
-                <span className="font-mono text-xs text-terminal-dim tracking-widest hidden sm:inline">
-                  / DFLOW ROUTING
+                <div
+                  className={cn(
+                    "w-2 h-2 rounded-full animate-pulse",
+                    isDevnet ? "bg-terminal-yellow" : "bg-terminal-accent",
+                  )}
+                />
+                <span className="font-mono font-bold text-terminal-text text-sm tracking-wider">
+                  PREDICT
+                </span>
+                <span
+                  className={cn(
+                    "font-mono text-xs tracking-widest hidden sm:inline",
+                    isDevnet ? "text-terminal-yellow" : "text-terminal-dim",
+                  )}
+                >
+                  / {isDevnet ? "DEVNET" : "DFLOW ROUTING"}
                 </span>
               </div>
               <div className="shrink-0 max-w-[180px] sm:max-w-none overflow-hidden">
@@ -279,7 +351,9 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
                           key={market.id}
                           onClick={() => handleMarketSelect(market)}
                           className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-terminal-surface transition-colors text-left border-b border-terminal-border/50 last:border-0 ${
-                            selectedMarket.id === market.id ? 'bg-terminal-accent/5' : ''
+                            selectedMarket.id === market.id
+                              ? "bg-terminal-accent/5"
+                              : ""
                           }`}
                         >
                           <div className="flex-1 min-w-0">
@@ -287,7 +361,9 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
                               {market.question}
                             </div>
                             <div className="flex items-center gap-3 mt-1.5">
-                              <span className="font-mono text-xs text-terminal-dim">{market.category}</span>
+                              <span className="font-mono text-xs text-terminal-dim">
+                                {market.category}
+                              </span>
                               <span className="font-mono text-xs font-bold text-terminal-green">
                                 {Math.round(market.probability * 100)}% YES
                               </span>
@@ -310,7 +386,9 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
             {/* Probability meter */}
             <div className="rounded-xl bg-terminal-surface border border-terminal-border px-4 py-3 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs text-terminal-dim tracking-wider">MARKET PROBABILITY</span>
+                <span className="font-mono text-xs text-terminal-dim tracking-wider">
+                  MARKET PROBABILITY
+                </span>
                 <span className="font-mono text-xs text-terminal-dim/60">
                   ${(selectedMarket.volume24h / 1000).toFixed(0)}K / 24h
                 </span>
@@ -321,23 +399,27 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
                   className="h-full rounded-full bg-gradient-to-r from-terminal-green to-terminal-accent"
                   initial={{ width: 0 }}
                   animate={{ width: `${pct}%` }}
-                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
                 />
               </div>
               <div className="flex items-center justify-between">
-                <span className="font-mono text-sm font-bold text-terminal-green">{pct}% YES</span>
-                <span className="font-mono text-sm font-bold text-terminal-red">{100 - pct}% NO</span>
+                <span className="font-mono text-sm font-bold text-terminal-green">
+                  {pct}% YES
+                </span>
+                <span className="font-mono text-sm font-bold text-terminal-red">
+                  {100 - pct}% NO
+                </span>
               </div>
             </div>
 
             {/* YES / NO toggle */}
             <div className="grid grid-cols-2 gap-2">
               <motion.button
-                onClick={() => handleSideChange('YES')}
+                onClick={() => handleSideChange("YES")}
                 className={`flex items-center justify-center gap-2 py-3 rounded-xl font-mono font-bold text-sm tracking-wider border transition-all duration-200 ${
-                  side === 'YES'
-                    ? 'bg-terminal-green/15 border-terminal-green/60 text-terminal-green glow-green'
-                    : 'bg-terminal-surface border-terminal-border text-terminal-dim hover:border-terminal-green/30 hover:text-terminal-green/70'
+                  side === "YES"
+                    ? "bg-terminal-green/15 border-terminal-green/60 text-terminal-green glow-green"
+                    : "bg-terminal-surface border-terminal-border text-terminal-dim hover:border-terminal-green/30 hover:text-terminal-green/70"
                 }`}
                 whileTap={{ scale: 0.97 }}
               >
@@ -345,11 +427,11 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
                 BUY YES
               </motion.button>
               <motion.button
-                onClick={() => handleSideChange('NO')}
+                onClick={() => handleSideChange("NO")}
                 className={`flex items-center justify-center gap-2 py-3 rounded-xl font-mono font-bold text-sm tracking-wider border transition-all duration-200 ${
-                  side === 'NO'
-                    ? 'bg-terminal-red/15 border-terminal-red/50 text-terminal-red'
-                    : 'bg-terminal-surface border-terminal-border text-terminal-dim hover:border-terminal-red/30 hover:text-terminal-red/70'
+                  side === "NO"
+                    ? "bg-terminal-red/15 border-terminal-red/50 text-terminal-red"
+                    : "bg-terminal-surface border-terminal-border text-terminal-dim hover:border-terminal-red/30 hover:text-terminal-red/70"
                 }`}
                 whileTap={{ scale: 0.97 }}
               >
@@ -372,13 +454,19 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
                   src={outputToken.logo}
                   alt={outputToken.symbol}
                   className="w-5 h-5 rounded-full shrink-0"
-                  onError={(e) => { e.target.style.display = 'none' }}
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                  }}
                 />
                 <span className="font-mono text-xs text-terminal-dim">
-                  You receive{' '}
-                  <span className="text-terminal-text font-semibold">{outputToken.symbol}</span>
-                  {' '}—{' '}
-                  <span className="text-terminal-dim/70">{outputToken.name}</span>
+                  You receive{" "}
+                  <span className="text-terminal-text font-semibold">
+                    {outputToken.symbol}
+                  </span>{" "}
+                  —{" "}
+                  <span className="text-terminal-dim/70">
+                    {outputToken.name}
+                  </span>
                 </span>
               </motion.div>
             </AnimatePresence>
@@ -386,9 +474,13 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
             {/* Amount input */}
             <div className="rounded-xl bg-terminal-surface border border-terminal-border focus-within:border-terminal-accent/40 transition-colors">
               <div className="flex items-center justify-between px-4 pt-3 pb-1">
-                <span className="text-terminal-dim text-xs font-mono">You pay</span>
+                <span className="text-terminal-dim text-xs font-mono">
+                  You pay
+                </span>
                 {connected && (
-                  <span className="text-terminal-dim text-xs font-mono">Wallet connected</span>
+                  <span className="text-terminal-dim text-xs font-mono">
+                    Wallet connected
+                  </span>
                 )}
               </div>
               <div className="flex items-center gap-3 px-4 pb-3">
@@ -407,8 +499,8 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
                       onClick={() => handlePayTokenChange(t)}
                       className={`px-2 py-1 rounded-lg font-mono text-xs font-bold transition-colors ${
                         payToken.mint === t.mint
-                          ? 'bg-terminal-accent/20 text-terminal-accent border border-terminal-accent/40'
-                          : 'bg-terminal-card border border-terminal-border text-terminal-dim hover:border-terminal-accent/30 hover:text-terminal-accent/70'
+                          ? "bg-terminal-accent/20 text-terminal-accent border border-terminal-accent/40"
+                          : "bg-terminal-card border border-terminal-border text-terminal-dim hover:border-terminal-accent/30 hover:text-terminal-accent/70"
                       }`}
                     >
                       {t.symbol}
@@ -448,17 +540,25 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
 
             {/* Swap error */}
             <AnimatePresence>
-              {swapError && swapStatus === 'error' && (
+              {swapError && swapStatus === "error" && (
                 <motion.div
                   className="flex items-start gap-2 px-4 py-3 rounded-lg bg-terminal-red/10 border border-terminal-red/30"
                   {...fadeSlide}
                 >
-                  <AlertCircle size={14} className="text-terminal-red mt-0.5 shrink-0" />
+                  <AlertCircle
+                    size={14}
+                    className="text-terminal-red mt-0.5 shrink-0"
+                  />
                   <div className="flex-1 min-w-0">
-                    <p className="text-terminal-red text-xs font-mono leading-relaxed">{swapError}</p>
-                    {swapError !== 'Transaction cancelled in wallet.' && (
+                    <p className="text-terminal-red text-xs font-mono leading-relaxed">
+                      {swapError}
+                    </p>
+                    {swapError !== "Transaction cancelled in wallet." && (
                       <button
-                        onClick={() => { resetSwap(); handleRetryQuote() }}
+                        onClick={() => {
+                          resetSwap();
+                          handleRetryQuote();
+                        }}
                         className="mt-1.5 flex items-center gap-1 text-terminal-red/70 hover:text-terminal-red text-xs font-mono transition-colors"
                       >
                         <RefreshCw size={10} />
@@ -477,9 +577,14 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
                   className="flex items-start gap-2.5 px-3 py-3 rounded-lg bg-terminal-yellow/10 border border-terminal-yellow/30"
                   {...fadeSlide}
                 >
-                  <Shield size={13} className="text-terminal-yellow mt-0.5 shrink-0" />
+                  <Shield
+                    size={13}
+                    className="text-terminal-yellow mt-0.5 shrink-0"
+                  />
                   <div className="flex-1 min-w-0">
-                    <p className="text-terminal-yellow text-xs font-mono leading-relaxed">{swapWarning}</p>
+                    <p className="text-terminal-yellow text-xs font-mono leading-relaxed">
+                      {swapWarning}
+                    </p>
                     <div className="mt-1.5 flex items-center gap-3">
                       <button
                         onClick={handleSwap}
@@ -503,17 +608,20 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
 
             {/* Solflare false-positive notice */}
             <AnimatePresence>
-              {swapStatus === 'signing' && (
+              {swapStatus === "signing" && (
                 <motion.div
                   className="flex items-start gap-2.5 px-3 py-3 rounded-lg border"
-                  style={{ background: 'rgba(251,191,36,0.07)', borderColor: 'rgba(251,191,36,0.35)' }}
+                  style={{
+                    background: "rgba(251,191,36,0.07)",
+                    borderColor: "rgba(251,191,36,0.35)",
+                  }}
                   {...fadeSlide}
                 >
                   <svg
                     viewBox="0 0 20 20"
                     fill="none"
                     className="w-4 h-4 mt-0.5 shrink-0"
-                    style={{ color: '#fbbf24' }}
+                    style={{ color: "#fbbf24" }}
                     aria-hidden="true"
                   >
                     <path
@@ -523,10 +631,14 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
                       fill="currentColor"
                     />
                   </svg>
-                  <p className="font-mono text-xs leading-relaxed" style={{ color: '#fde68a' }}>
-                    You may see a Solflare security warning — this is a known false positive for
-                    DFlow-routed transactions. Click{' '}
-                    <span className="font-bold text-amber-300">Confirm</span> to proceed safely.
+                  <p
+                    className="font-mono text-xs leading-relaxed"
+                    style={{ color: "#fde68a" }}
+                  >
+                    You may see a Solflare security warning — this is a known
+                    false positive for DFlow-routed transactions. Click{" "}
+                    <span className="font-bold text-amber-300">Confirm</span> to
+                    proceed safely.
                   </p>
                 </motion.div>
               )}
@@ -539,15 +651,21 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
                   className="flex items-center gap-2 px-4 py-3 rounded-lg bg-terminal-accent/10 border border-terminal-accent/30"
                   {...fadeSlide}
                 >
-                  {swapStatus === 'signing' ? (
-                    <Clock size={14} className="text-terminal-accent shrink-0 animate-pulse" />
+                  {swapStatus === "signing" ? (
+                    <Clock
+                      size={14}
+                      className="text-terminal-accent shrink-0 animate-pulse"
+                    />
                   ) : (
-                    <Loader2 size={14} className="text-terminal-accent shrink-0 animate-spin" />
+                    <Loader2
+                      size={14}
+                      className="text-terminal-accent shrink-0 animate-spin"
+                    />
                   )}
                   <p className="text-terminal-accent text-xs font-mono">
-                    {swapStatus === 'signing'
-                      ? 'Approve the transaction in your wallet…'
-                      : 'Broadcasting to Solana validators…'}
+                    {swapStatus === "signing"
+                      ? "Approve the transaction in your wallet…"
+                      : "Broadcasting to Solana validators…"}
                   </p>
                 </motion.div>
               )}
@@ -563,17 +681,24 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
             />
 
             {/* Footer */}
-            <div className="flex items-center gap-1.5 justify-center pt-1">
-              <Info size={10} className="text-terminal-dim/60" />
-              <span className="text-terminal-dim/60 text-xs font-mono">
-                Outcome tokens routed through DFlow's MEV-resistant network
-              </span>
-            </div>
+            {!isDevnet && (
+              <div className="flex items-center gap-1.5 justify-center pt-1">
+                <Info size={10} className="text-terminal-dim/60" />
+                <span className="text-terminal-dim/60 text-xs font-mono">
+                  Outcome tokens routed through DFlow's MEV-resistant network
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Stats strip */}
-        <PredictStatsStrip market={selectedMarket} side={side} outputToken={outputToken} mevRisk={mevRisk} />
+        <PredictStatsStrip
+          market={selectedMarket}
+          side={side}
+          outputToken={outputToken}
+          mevRisk={mevRisk}
+        />
       </motion.div>
 
       {/* Post-trade analytics modal */}
@@ -591,20 +716,23 @@ export default function PredictionMarketsInterface({ onSaveTrade }) {
         )}
       </AnimatePresence>
     </>
-  )
+  );
 }
 
 function BuyButton({ label, variant, disabled, onClick, isLoading }) {
   const base =
-    'w-full py-4 rounded-xl font-mono font-bold text-sm tracking-wider transition-all duration-200 flex items-center justify-center gap-2.5 relative overflow-hidden'
+    "w-full py-4 rounded-xl font-mono font-bold text-sm tracking-wider transition-all duration-200 flex items-center justify-center gap-2.5 relative overflow-hidden";
 
   const variants = {
-    yes: 'bg-terminal-green/20 border border-terminal-green/60 text-terminal-green hover:bg-terminal-green/30 glow-green disabled:opacity-60 disabled:cursor-not-allowed',
-    no: 'bg-terminal-red/15 border border-terminal-red/40 text-terminal-red hover:bg-terminal-red/25 disabled:opacity-60 disabled:cursor-not-allowed',
-    secondary: 'bg-terminal-surface border border-terminal-border text-terminal-dim cursor-not-allowed',
-    loading: 'bg-terminal-surface border border-terminal-accent/30 text-terminal-accent cursor-not-allowed',
-    error: 'bg-terminal-red/10 border border-terminal-red/30 text-terminal-red cursor-not-allowed',
-  }
+    yes: "bg-terminal-green/20 border border-terminal-green/60 text-terminal-green hover:bg-terminal-green/30 glow-green disabled:opacity-60 disabled:cursor-not-allowed",
+    no: "bg-terminal-red/15 border border-terminal-red/40 text-terminal-red hover:bg-terminal-red/25 disabled:opacity-60 disabled:cursor-not-allowed",
+    secondary:
+      "bg-terminal-surface border border-terminal-border text-terminal-dim cursor-not-allowed",
+    loading:
+      "bg-terminal-surface border border-terminal-accent/30 text-terminal-accent cursor-not-allowed",
+    error:
+      "bg-terminal-red/10 border border-terminal-red/30 text-terminal-red cursor-not-allowed",
+  };
 
   return (
     <motion.button
@@ -615,39 +743,57 @@ function BuyButton({ label, variant, disabled, onClick, isLoading }) {
       whileTap={!disabled ? { scale: 0.98 } : {}}
     >
       {isLoading && <Loader2 size={15} className="animate-spin shrink-0" />}
-      {!isLoading && variant === 'yes' && <TrendingUp size={15} className="shrink-0" />}
-      {!isLoading && variant === 'no' && <TrendingDown size={15} className="shrink-0" />}
+      {!isLoading && variant === "yes" && (
+        <TrendingUp size={15} className="shrink-0" />
+      )}
+      {!isLoading && variant === "no" && (
+        <TrendingDown size={15} className="shrink-0" />
+      )}
       <span>{label}</span>
-      {(variant === 'yes' || variant === 'no') && !isLoading && (
-        <span className="absolute right-4 text-xs font-mono opacity-50 tracking-widest">DFLOW</span>
+      {(variant === "yes" || variant === "no") && !isLoading && (
+        <span className="absolute right-4 text-xs font-mono opacity-50 tracking-widest">
+          DFLOW
+        </span>
       )}
     </motion.button>
-  )
+  );
 }
 
 function PredictStatsStrip({ market, side, outputToken, mevRisk }) {
-  const { isDevnet } = useNetwork()
-  const priorityFee = priorityFeeFromRisk(mevRisk)
+  const { isDevnet } = useNetwork();
+  const priorityFee = priorityFeeFromRisk(mevRisk);
   const priorityLabel =
-    priorityFee === 'auto' ? 'Auto' : priorityFee >= 100_000 ? 'High' : priorityFee >= 50_000 ? 'Med' : 'Low'
+    priorityFee === "auto"
+      ? "Auto"
+      : priorityFee >= 100_000
+        ? "High"
+        : priorityFee >= 50_000
+          ? "Med"
+          : "Low";
 
   const stats = [
     {
-      label: 'MEV Protection',
-      value: isDevnet ? 'Disabled' : 'Active',
-      color: isDevnet ? 'text-terminal-dim' : 'text-terminal-green',
+      label: "MEV Protection",
+      value: isDevnet ? "Disabled" : "Active",
+      color: isDevnet ? "text-terminal-dim" : "text-terminal-green",
     },
     {
-      label: isDevnet ? 'Routing' : 'Priority Fee',
-      value: isDevnet ? 'Jupiter' : priorityLabel,
-      color: isDevnet ? 'text-terminal-yellow' : (mevRisk?.level === 'HIGH' ? 'text-terminal-red' : mevRisk?.level === 'MEDIUM' ? 'text-terminal-yellow' : 'text-terminal-accent'),
+      label: isDevnet ? "Routing" : "Priority Fee",
+      value: isDevnet ? "Jupiter" : priorityLabel,
+      color: isDevnet
+        ? "text-terminal-yellow"
+        : mevRisk?.level === "HIGH"
+          ? "text-terminal-red"
+          : mevRisk?.level === "MEDIUM"
+            ? "text-terminal-yellow"
+            : "text-terminal-accent",
     },
     {
-      label: 'Outcome Token',
+      label: "Outcome Token",
       value: outputToken.symbol,
-      color: side === 'YES' ? 'text-terminal-green' : 'text-terminal-red',
+      color: side === "YES" ? "text-terminal-green" : "text-terminal-red",
     },
-  ]
+  ];
 
   return (
     <div className="mt-3 grid grid-cols-3 gap-2">
@@ -659,10 +805,14 @@ function PredictStatsStrip({ market, side, outputToken, mevRisk }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 + i * 0.07 }}
         >
-          <div className={`font-mono text-xs font-semibold ${s.color}`}>{s.value}</div>
-          <div className="font-mono text-xs text-terminal-dim/60 mt-0.5">{s.label}</div>
+          <div className={`font-mono text-xs font-semibold ${s.color}`}>
+            {s.value}
+          </div>
+          <div className="font-mono text-xs text-terminal-dim/60 mt-0.5">
+            {s.label}
+          </div>
         </motion.div>
       ))}
     </div>
-  )
+  );
 }
