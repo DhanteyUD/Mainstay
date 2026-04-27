@@ -3,6 +3,10 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.eitherway
 export const DIALECT_PROXY = `${API_BASE_URL}/api/dialect`;
 export const DFLOW_PROXY = `${API_BASE_URL}/api/dflow`;
 export const SOLANA_RPC_PROXY = `${API_BASE_URL}/api/solana/rpc`;
+export const SOLANA_DEVNET_RPC = 'https://api.devnet.solana.com';
+
+export const JUPITER_QUOTE_API = 'https://quote-api.jup.ag/v6/quote';
+export const JUPITER_SWAP_API = 'https://quote-api.jup.ag/v6/swap';
 
 export const TOKENS = {
   SOL: {
