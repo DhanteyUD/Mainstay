@@ -144,6 +144,25 @@ export function useSwap() {
       const txBytes = Uint8Array.from(atob(quote.transaction), (c) => c.charCodeAt(0))
       const tx = VersionedTransaction.deserialize(txBytes)
 
+      // Simulate with sigVerify: false before asking Phantom to sign.
+      // Phantom shows "could be malicious" when it can't predict the outcome —
+      // pre-simulating on our RPC first means Phantom's own simulation will match.
+      try {
+        const sim = await connection.simulateTransaction(tx, {
+          sigVerify: false,
+          commitment: 'confirmed',
+        })
+        if (sim.value.err) {
+          throw new Error(`_simfail_:${JSON.stringify(sim.value.err)}`)
+        }
+      } catch (simErr) {
+        // Hard-fail on actual transaction errors; ignore RPC connectivity issues
+        if (simErr.message?.startsWith('_simfail_:')) {
+          const detail = simErr.message.replace('_simfail_:', '')
+          throw new Error(`Simulation failed: ${detail}`)
+        }
+      }
+
       let signedTx
       try {
         signedTx = await wallet.signTransaction(tx)
@@ -259,6 +278,9 @@ function humanizeError(msg) {
   }
   if (m.includes('timeout')) {
     return 'Transaction timed out. It may have still gone through — check your wallet.'
+  }
+  if (msg.startsWith('Simulation failed:')) {
+    return 'Transaction simulation failed. Your balance may be insufficient or the route is stale — try refreshing the quote.'
   }
   if (m.includes('simulation failed') || m.includes('simulat')) {
     return 'Transaction simulation failed. Check your balance and try again.'
