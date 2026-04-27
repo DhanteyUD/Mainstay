@@ -104,10 +104,10 @@ export default function LimitOrderList({ orders, currentPrices, onCancel }) {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-1 py-2 px-2 rounded-lg font-mono text-xs font-bold tracking-wider transition-all duration-150 ${
+              className={`flex-1 flex items-center justify-center gap-1 py-2 px-2 rounded-lg border font-mono text-xs font-bold tracking-wider transition-all duration-150 ${
                 activeTab === tab.id
                   ? "bg-terminal-surface border border-terminal-border text-terminal-text"
-                  : "text-terminal-dim hover:text-terminal-text"
+                  : "text-terminal-dim hover:text-terminal-text border-transparent"
               }`}
             >
               <span>{tab.label}</span>
