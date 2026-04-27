@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { FaSquareXmark } from "react-icons/fa6";
 import {
   ArrowUpDown,
   Shield,
@@ -512,15 +513,35 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
                       fill="currentColor"
                     />
                   </svg>
-                  <p
-                    className="font-mono text-xs leading-relaxed"
+                  <div
+                    className="font-mono text-xs leading-relaxed space-y-1.5"
                     style={{ color: "#fde68a" }}
                   >
-                    You may see a Solflare security warning — this is a known
-                    false positive for DFlow-routed transactions. Click{" "}
-                    <span className="font-bold text-amber-300">Confirm</span> to
-                    proceed safely.
-                  </p>
+                    <p>
+                      If Solflare shows a{" "}
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-terminal-red border-red-400/40 bg-red-400/10 font-semibold">
+                        <FaSquareXmark size={10} />
+                        Security verification failed
+                      </span>{" "}
+                      warning, your wallet network may be set to{" "}
+                      <span className="font-bold text-amber-300">
+                        Devnet
+                      </span>{" "}
+                      or{" "}
+                      <span className="font-bold text-amber-300">Testnet</span>.
+                    </p>
+                    <p>
+                      Open Solflare →{" "}
+                      <span className="font-bold text-amber-300">Settings</span>{" "}
+                      →{" "}
+                      <span className="font-bold text-amber-300">General</span>{" "}
+                      →{" "}
+                      <span className="font-bold text-amber-300">Network</span>{" "}
+                      and switch to{" "}
+                      <span className="font-bold text-amber-300">Mainnet</span>,
+                      then retry your swap.
+                    </p>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
