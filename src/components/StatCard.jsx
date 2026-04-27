@@ -1,4 +1,5 @@
 import React from "react";
+import cn from "../functions/cn";
 
 export default function StatCard({
   icon,
@@ -10,6 +11,7 @@ export default function StatCard({
   sublabel,
   pulse,
   pulseColor,
+  network
 }) {
   return (
     <div
@@ -18,7 +20,7 @@ export default function StatCard({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           {icon}
-          <span className="font-mono text-xs text-terminal-dim tracking-wider uppercase">
+          <span className={cn("font-mono text-xs text-terminal-dim tracking-wider uppercase", network && "text-terminal-dim/30")}>
             {label}
           </span>
         </div>
@@ -32,7 +34,9 @@ export default function StatCard({
         {value}
       </div>
       {sublabel && (
-        <div className="font-mono text-[10px] md:text-xs text-terminal-dim/60">{sublabel}</div>
+        <div className={cn("font-mono text-[10px] md:text-xs text-terminal-dim/60", network && "text-terminal-dim/30")}>
+          {sublabel}
+        </div>
       )}
     </div>
   );
