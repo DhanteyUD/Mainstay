@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { PublicKey } from "@solana/web3.js";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { FaSquareXmark } from "react-icons/fa6";
 import {
   ArrowUpDown,
   Shield,
@@ -24,6 +26,11 @@ import { useMevRisk } from "../hooks/useMevRisk";
 import { useWalletBalance } from "../hooks/useWalletBalance";
 import { TOKENS } from "../config";
 
+const TOKEN_PROGRAM_ID = new PublicKey(
+  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+);
+const SOL_MINT = "So11111111111111111111111111111111111111112";
+
 const fadeSlide = {
   initial: { opacity: 0, y: -6 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.2 } },
@@ -33,11 +40,13 @@ const fadeSlide = {
 export default function SwapInterface({ onSaveTrade, onTokensChange }) {
   const wallet = useWallet();
   const { publicKey, connected } = wallet;
+  const { connection } = useConnection();
   const isSolflare = wallet.wallet?.adapter?.name === "Solflare";
 
   const [inputToken, setInputToken] = useState(TOKENS.SOL);
   const [outputToken, setOutputToken] = useState(TOKENS.USDC);
   const [inputAmount, setInputAmount] = useState("");
+  const [inputTokenBalance, setInputTokenBalance] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [savedQuote, setSavedQuote] = useState(null);
   const [flipRotation, setFlipRotation] = useState(0);
@@ -104,9 +113,42 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
       setSavedQuote(null);
       setShowConfirm(false);
       setPostSwapCooldown(false);
+      setInputTokenBalance(null);
       if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
     }
   }, [connected]);
+
+  useEffect(() => {
+    if (!connected || !publicKey || !inputToken) {
+      setInputTokenBalance(null);
+      return;
+    }
+    async function fetchInputBalance() {
+      try {
+        if (inputToken.mint === SOL_MINT) {
+          const lamports = await connection.getBalance(publicKey, "confirmed");
+          setInputTokenBalance(lamports / 1e9);
+        } else {
+          const accounts = await connection.getParsedTokenAccountsByOwner(
+            publicKey,
+            { programId: TOKEN_PROGRAM_ID },
+          );
+          let bal = 0;
+          for (const { account } of accounts.value) {
+            const info = account.data.parsed?.info;
+            if (info?.mint === inputToken.mint) {
+              bal = parseFloat(info.tokenAmount?.uiAmount || 0);
+              break;
+            }
+          }
+          setInputTokenBalance(bal);
+        }
+      } catch {
+        setInputTokenBalance(null);
+      }
+    }
+    fetchInputBalance();
+  }, [connected, publicKey, inputToken, connection]);
 
   useEffect(() => {
     if (swapStatus === "success" && swapResult) {
@@ -131,6 +173,20 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
       if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
     };
   }, []);
+
+  const handleHalfBalance = () => {
+    if (inputTokenBalance == null || inputTokenBalance === 0) return;
+    const decimals = inputToken?.decimals ?? 9;
+    const half = parseFloat((inputTokenBalance / 2).toFixed(decimals));
+    setInputAmount(String(half));
+  };
+
+  const handleMaxBalance = () => {
+    if (inputTokenBalance == null || inputTokenBalance === 0) return;
+    const decimals = inputToken?.decimals ?? 9;
+    const max = parseFloat(inputTokenBalance.toFixed(decimals));
+    setInputAmount(String(max));
+  };
 
   const handleFlip = useCallback(() => {
     setFlipRotation((r) => r + 180);
@@ -260,7 +316,7 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-3 px-4 pb-3">
+              <div className="flex items-center gap-3 px-4 pb-2">
                 <input
                   type="number"
                   placeholder="0.00"
@@ -275,6 +331,22 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
                   exclude={outputToken}
                 />
               </div>
+              {connected && inputTokenBalance !== null && (
+                <div className="flex justify-end gap-1.5 px-4 pb-3">
+                  <button
+                    onClick={handleHalfBalance}
+                    className="text-xs font-mono text-terminal-accent/70 hover:text-terminal-accent bg-terminal-accent/10 hover:bg-terminal-accent/20 px-2 py-0.5 rounded-lg transition-colors"
+                  >
+                    50%
+                  </button>
+                  <button
+                    onClick={handleMaxBalance}
+                    className="text-xs font-mono text-terminal-accent/70 hover:text-terminal-accent bg-terminal-accent/10 hover:bg-terminal-accent/20 px-2 py-0.5 rounded-lg transition-colors"
+                  >
+                    Max
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Flip button */}
@@ -441,15 +513,35 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
                       fill="currentColor"
                     />
                   </svg>
-                  <p
-                    className="font-mono text-xs leading-relaxed"
+                  <div
+                    className="font-mono text-xs leading-relaxed space-y-1.5"
                     style={{ color: "#fde68a" }}
                   >
-                    You may see a Solflare security warning — this is a known
-                    false positive for DFlow-routed transactions. Click{" "}
-                    <span className="font-bold text-amber-300">Confirm</span> to
-                    proceed safely.
-                  </p>
+                    <p>
+                      If Solflare shows a{" "}
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-terminal-red border-red-400/40 bg-red-400/10 font-semibold">
+                        <FaSquareXmark size={10} />
+                        Security verification failed
+                      </span>{" "}
+                      warning, your wallet network may be set to{" "}
+                      <span className="font-bold text-amber-300">
+                        Devnet
+                      </span>{" "}
+                      or{" "}
+                      <span className="font-bold text-amber-300">Testnet</span>.
+                    </p>
+                    <p>
+                      Open Solflare →{" "}
+                      <span className="font-bold text-amber-300">Settings</span>{" "}
+                      →{" "}
+                      <span className="font-bold text-amber-300">General</span>{" "}
+                      →{" "}
+                      <span className="font-bold text-amber-300">Network</span>{" "}
+                      and switch to{" "}
+                      <span className="font-bold text-amber-300">Mainnet</span>,
+                      then retry your swap.
+                    </p>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
