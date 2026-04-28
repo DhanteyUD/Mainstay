@@ -141,7 +141,11 @@ async function generateShareImage({
 
   ctx.fillStyle = "#00ff88";
   ctx.font = "bold 28px monospace";
-  ctx.fillText("⬡", 48, 68);
+  ctx.fillText(
+    "https://res.cloudinary.com/dhantey/image/upload/v1777367316/Dante/mainstay-logo_vydcnr.png",
+    48,
+    68,
+  );
 
   ctx.fillStyle = "#00ff88";
   ctx.font = "bold 18px monospace";
@@ -455,7 +459,7 @@ export default function PostTradeCard({
                 </div>
               </div>
               <motion.div
-                className="w-12 h-12 rounded-full flex items-center justify-center border-2 font-mono font-black text-xl"
+                className="w-12 h-12 rounded-full flex items-center justify-center border-2 font-mono font-black text-xl -mt-3"
                 style={{
                   borderColor: grade.color,
                   color: grade.color,
