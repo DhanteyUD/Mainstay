@@ -106,7 +106,7 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
       clearQuote();
       lastFetchParamsRef.current = null;
     }
-  }, [inputToken, outputToken, inputAmount, publicKey]);
+  }, [inputToken, outputToken, inputAmount, publicKey, isDevnet]);
 
   useEffect(() => {
     if (!connected) {
