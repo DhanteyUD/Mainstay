@@ -25,6 +25,7 @@ import { useSwap } from "../hooks/useSwap";
 import { useMevRisk } from "../hooks/useMevRisk";
 import { useWalletBalance } from "../hooks/useWalletBalance";
 import { TOKENS } from "../config";
+import { useNetwork } from "../contexts/NetworkContext";
 
 const TOKEN_PROGRAM_ID = new PublicKey(
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
@@ -41,6 +42,8 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
   const wallet = useWallet();
   const { publicKey, connected } = wallet;
   const { connection } = useConnection();
+  const { isDevnet, networkLabel, toggleNetwork } = useNetwork();
+
   const isSolflare = wallet.wallet?.adapter?.name === "Solflare";
 
   const [inputToken, setInputToken] = useState(TOKENS.SOL);
@@ -103,7 +106,7 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
       clearQuote();
       lastFetchParamsRef.current = null;
     }
-  }, [inputToken, outputToken, inputAmount, publicKey]);
+  }, [inputToken, outputToken, inputAmount, publicKey, isDevnet]);
 
   useEffect(() => {
     if (!connected) {
@@ -289,13 +292,23 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
           <div className="px-4 py-3 border-b border-terminal-border">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 shrink-0">
-                <div className="w-2 h-2 rounded-full bg-terminal-green animate-pulse" />
+                <div
+                  className={`w-2 h-2 rounded-full animate-pulse ${isDevnet ? "bg-terminal-yellow" : "bg-terminal-green"}`}
+                />
                 <span className="font-mono font-bold text-terminal-text text-sm tracking-wider">
                   SWAP
                 </span>
-                <span className="font-mono text-xs text-terminal-dim tracking-widest">
-                  / MAINNET
-                </span>
+                <button
+                  onClick={toggleNetwork}
+                  title={`Switch to ${isDevnet ? "mainnet" : "devnet"}`}
+                  className={`font-mono text-xs tracking-widest px-2 py-0.5 rounded border transition-colors ${
+                    isDevnet
+                      ? "text-terminal-yellow border-terminal-yellow/40 bg-terminal-yellow/10 hover:bg-terminal-yellow/20"
+                      : "text-terminal-dim border-terminal-border bg-transparent hover:border-terminal-accent/40 hover:text-terminal-accent"
+                  }`}
+                >
+                  {networkLabel}
+                </button>
               </div>
               <div className="shrink-0 max-w-[180px] sm:max-w-none">
                 <WalletMultiButton />
@@ -411,9 +424,9 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
               )}
             </AnimatePresence>
 
-            {/* MEV risk indicator */}
+            {/* MEV risk indicator — mainnet only */}
             <AnimatePresence>
-              {(mevRisk || mevRiskLoading) && (
+              {!isDevnet && (mevRisk || mevRiskLoading) && (
                 <motion.div key="mev-badge" {...fadeSlide}>
                   <MevRiskBadge risk={mevRisk} loading={mevRiskLoading} />
                 </motion.div>
@@ -441,9 +454,12 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
                           resetSwap();
                           handleRetryQuote();
                         }}
-                        className="mt-1.5 flex items-center gap-1 text-terminal-red/70 hover:text-terminal-red text-xs font-mono transition-colors"
+                        title="Refresh & retry"
+                        className="mt-2 flex items-center gap-2 text-terminal-red/70 hover:text-terminal-red text-xs font-mono transition-colors group"
                       >
-                        <RefreshCw size={10} />
+                        <span className="flex items-center justify-center w-6 h-6 rounded-full border border-terminal-red/40 group-hover:border-terminal-red group-hover:bg-terminal-red/10 transition-all">
+                          <RefreshCw size={12} />
+                        </span>
                         <span>Refresh & retry</span>
                       </button>
                     )}
@@ -583,17 +599,38 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
             />
 
             {/* Info footer */}
-            <div className="flex items-center gap-1.5 justify-center pt-1">
-              <Info size={10} className="text-terminal-dim/60" />
-              <span className="text-terminal-dim/60 text-xs font-mono">
-                Orders routed through DFlow's MEV-resistant network
-              </span>
-            </div>
+            {!isDevnet && (
+              <div className="flex items-center gap-1.5 justify-center pt-1">
+                <Info size={10} className="text-terminal-dim/60" />
+                <span className="text-terminal-dim/60 text-xs font-mono">
+                  Orders routed through DFlow's MEV-resistant network
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Stats strip */}
-        <StatsStrip />
+        {/* Stats strip (mainnet) / Devnet warning */}
+        {isDevnet ? (
+          <div className="mt-3 rounded-xl border border-terminal-yellow/20 bg-terminal-yellow/5 p-4">
+            <div className="flex items-start gap-2">
+              <span className="text-terminal-yellow text-base leading-none">
+                ⚠
+              </span>
+              <div>
+                <div className="font-mono text-xs font-semibold text-terminal-yellow mb-1">
+                  Devnet Mode
+                </div>
+                <p className="font-mono text-xs text-terminal-dim leading-relaxed">
+                  Connected to Solana devnet. Balances reflect your devnet
+                  wallet. Routed via Jupiter — no MEV protection.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <StatsStrip />
+        )}
       </motion.div>
 
       {/* Post-trade analytics modal */}
@@ -652,10 +689,23 @@ function SwapButton({ label, variant, disabled, onClick, isLoading }) {
 }
 
 function StatsStrip() {
+  const { isDevnet } = useNetwork();
   const stats = [
-    { label: "MEV Protection", value: "Active", color: "text-terminal-green" },
-    { label: "Routing", value: "JIT", color: "text-terminal-accent" },
-    { label: "Network", value: "Mainnet", color: "text-terminal-bright" },
+    {
+      label: "MEV Protection",
+      value: isDevnet ? "Disabled" : "Active",
+      color: isDevnet ? "text-terminal-dim" : "text-terminal-green",
+    },
+    {
+      label: "Routing",
+      value: isDevnet ? "N/A" : "JIT",
+      color: isDevnet ? "text-terminal-dim" : "text-terminal-accent",
+    },
+    {
+      label: "Network",
+      value: isDevnet ? "Devnet" : "Mainnet",
+      color: isDevnet ? "text-terminal-yellow" : "text-terminal-bright",
+    },
   ];
 
   return (

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import { useWallet } from '@solana/wallet-adapter-react'
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
+import React, { useState, useEffect } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import {
   Target,
   ArrowDown,
@@ -9,98 +9,118 @@ import {
   CheckCircle2,
   Info,
   RefreshCw,
-} from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import TokenSelector from './TokenSelector'
-import { fetchTokenPriceUsd } from '../hooks/useLimitOrders'
-import { TOKENS } from '../config'
+} from "lucide-react";
+import TokenSelector from "./TokenSelector";
+import { motion, AnimatePresence } from "framer-motion";
+import { fetchTokenPriceUsd } from "../hooks/useLimitOrders";
+import { TOKENS } from "../config";
+import { useNetwork } from "../contexts/NetworkContext";
 
 const fadeSlide = {
   initial: { opacity: 0, y: -6 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.2 } },
   exit: { opacity: 0, y: -6, transition: { duration: 0.15 } },
-}
+};
 
 export default function LimitOrderForm({ onAddOrder }) {
-  const { connected } = useWallet()
+  const { connected } = useWallet();
+  const { isDevnet, networkLabel } = useNetwork();
 
-  const [inputToken, setInputToken] = useState(TOKENS.SOL)
-  const [outputToken, setOutputToken] = useState(TOKENS.USDC)
-  const [inputAmount, setInputAmount] = useState('')
-  const [targetPrice, setTargetPrice] = useState('')
-  const [currentPrice, setCurrentPrice] = useState(null)
-  const [priceLoading, setPriceLoading] = useState(false)
-  const [priceError, setPriceError] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [inputToken, setInputToken] = useState(TOKENS.SOL);
+  const [outputToken, setOutputToken] = useState(TOKENS.USDC);
+  const [inputAmount, setInputAmount] = useState("");
+  const [targetPrice, setTargetPrice] = useState("");
+  const [currentPrice, setCurrentPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(false);
+  const [priceError, setPriceError] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    if (!inputToken) return
-    let cancelled = false
-    setPriceLoading(true)
-    setPriceError(false)
+    if (!inputToken) return;
+    let cancelled = false;
+    setPriceLoading(true);
+    setPriceError(false);
     fetchTokenPriceUsd(inputToken.mint)
-      .then(p => { if (!cancelled) { setCurrentPrice(p); setPriceLoading(false) } })
-      .catch(() => { if (!cancelled) { setCurrentPrice(null); setPriceLoading(false); setPriceError(true) } })
-    return () => { cancelled = true }
-  }, [inputToken])
+      .then((p) => {
+        if (!cancelled) {
+          setCurrentPrice(p);
+          setPriceLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCurrentPrice(null);
+          setPriceLoading(false);
+          setPriceError(true);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [inputToken]);
 
-  const target = parseFloat(targetPrice)
+  const target = parseFloat(targetPrice);
   const direction =
     !isNaN(target) && target > 0 && currentPrice != null
-      ? target >= currentPrice ? 'above' : 'below'
-      : null
+      ? target >= currentPrice
+        ? "above"
+        : "below"
+      : null;
 
   const canSubmit =
     connected &&
     parseFloat(inputAmount) > 0 &&
     !isNaN(parseFloat(inputAmount)) &&
     target > 0 &&
-    !isNaN(target)
+    !isNaN(target);
 
   const handleInputTokenChange = (t) => {
-    if (t.mint === outputToken?.mint) setOutputToken(inputToken)
-    setInputToken(t)
-    setTargetPrice('')
-    setCurrentPrice(null)
-  }
+    if (t.mint === outputToken?.mint) setOutputToken(inputToken);
+    setInputToken(t);
+    setTargetPrice("");
+    setCurrentPrice(null);
+  };
 
   const handleOutputTokenChange = (t) => {
-    if (t.mint === inputToken?.mint) setInputToken(outputToken)
-    setOutputToken(t)
-  }
+    if (t.mint === inputToken?.mint) setInputToken(outputToken);
+    setOutputToken(t);
+  };
 
   const handleSubmit = () => {
-    if (!canSubmit) return
+    if (!canSubmit) return;
     onAddOrder({
       inputToken,
       outputToken,
       inputAmount,
       targetPrice: target,
-      direction: direction ?? 'above',
-    })
-    setInputAmount('')
-    setTargetPrice('')
-    setSubmitted(true)
-    setTimeout(() => setSubmitted(false), 2500)
-  }
+      direction: direction ?? "above",
+    });
+    setInputAmount("");
+    setTargetPrice("");
+    setSubmitted(true);
+    setTimeout(() => setSubmitted(false), 2500);
+  };
 
   const fmtPrice = (p) =>
-    p?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) ?? '—'
+    p?.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4,
+    }) ?? "—";
 
   const btnLabel = !connected
-    ? 'Connect Wallet'
+    ? "Connect Wallet"
     : !inputAmount
-    ? 'Enter Amount'
-    : !targetPrice
-    ? 'Set Target Price'
-    : 'Place Limit Order'
+      ? "Enter Amount"
+      : !targetPrice
+        ? "Set Target Price"
+        : "Place Limit Order";
 
   return (
     <motion.div
       className="w-full mx-auto"
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: 'easeOut' }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
     >
       <div className="bg-terminal-card border border-terminal-border rounded-2xl overflow-hidden shadow-2xl">
         {/* Header */}
@@ -111,8 +131,10 @@ export default function LimitOrderForm({ onAddOrder }) {
               <span className="font-mono font-bold text-terminal-text text-sm tracking-wider">
                 LIMIT ORDER
               </span>
-              <span className="font-mono text-xs text-terminal-dim tracking-widest hidden sm:inline">
-                / MAINNET
+              <span
+                className={`font-mono text-xs tracking-widest hidden sm:inline ${isDevnet ? "text-terminal-yellow" : "text-terminal-dim"}`}
+              >
+                / {networkLabel}
               </span>
             </div>
             <div className="shrink-0 max-w-[180px] sm:max-w-none overflow-hidden">
@@ -125,14 +147,16 @@ export default function LimitOrderForm({ onAddOrder }) {
           {/* Input token */}
           <div className="rounded-xl bg-terminal-surface border border-terminal-border focus-within:border-terminal-yellow/40 transition-colors">
             <div className="flex items-center justify-between px-4 pt-3 pb-1">
-              <span className="text-terminal-dim text-xs font-mono">You pay</span>
+              <span className="text-terminal-dim text-xs font-mono">
+                You pay
+              </span>
             </div>
             <div className="flex items-center gap-3 px-4 pb-3">
               <input
                 type="number"
                 placeholder="0.00"
                 value={inputAmount}
-                onChange={e => setInputAmount(e.target.value)}
+                onChange={(e) => setInputAmount(e.target.value)}
                 className="flex-1 bg-transparent outline-none font-mono text-xl sm:text-2xl font-bold text-terminal-text placeholder-terminal-muted/40 min-w-0"
                 min="0"
               />
@@ -154,10 +178,12 @@ export default function LimitOrderForm({ onAddOrder }) {
           {/* Output token */}
           <div className="rounded-xl bg-terminal-surface border border-terminal-border">
             <div className="px-4 pt-3 pb-1">
-              <span className="text-terminal-dim text-xs font-mono">You receive</span>
+              <span className="text-terminal-dim text-xs font-mono">
+                You receive
+              </span>
             </div>
             <div className="flex items-center gap-3 px-4 pb-3">
-              <span className="flex-1 font-mono text-sm text-terminal-dim/50 italic">
+              <span className="flex-1 font-mono text-xs text-terminal-dim/50 italic">
                 estimated at execution time
               </span>
               <TokenSelector
@@ -180,11 +206,17 @@ export default function LimitOrderForm({ onAddOrder }) {
                 ) : priceError ? (
                   <button
                     onClick={() => {
-                      setPriceError(false)
-                      setPriceLoading(true)
+                      setPriceError(false);
+                      setPriceLoading(true);
                       fetchTokenPriceUsd(inputToken.mint)
-                        .then(p => { setCurrentPrice(p); setPriceLoading(false) })
-                        .catch(() => { setPriceLoading(false); setPriceError(true) })
+                        .then((p) => {
+                          setCurrentPrice(p);
+                          setPriceLoading(false);
+                        })
+                        .catch(() => {
+                          setPriceLoading(false);
+                          setPriceError(true);
+                        });
                     }}
                     className="flex items-center gap-1 text-terminal-red/70 hover:text-terminal-red"
                   >
@@ -192,17 +224,24 @@ export default function LimitOrderForm({ onAddOrder }) {
                     <span>retry</span>
                   </button>
                 ) : currentPrice != null ? (
-                  <>Now: <span className="text-terminal-accent">${fmtPrice(currentPrice)}</span></>
+                  <>
+                    Now:{" "}
+                    <span className="text-terminal-accent">
+                      ${fmtPrice(currentPrice)}
+                    </span>
+                  </>
                 ) : null}
               </span>
             </div>
             <div className="flex items-center gap-1.5 px-4 pb-3">
-              <span className="font-mono text-xl font-bold text-terminal-dim">$</span>
+              <span className="font-mono text-xl font-bold text-terminal-dim">
+                $
+              </span>
               <input
                 type="number"
                 placeholder="0.00"
                 value={targetPrice}
-                onChange={e => setTargetPrice(e.target.value)}
+                onChange={(e) => setTargetPrice(e.target.value)}
                 className="flex-1 bg-transparent outline-none font-mono text-xl sm:text-2xl font-bold text-terminal-text placeholder-terminal-muted/40 min-w-0"
                 min="0"
               />
@@ -214,24 +253,33 @@ export default function LimitOrderForm({ onAddOrder }) {
             {direction && (
               <motion.div
                 className={`flex items-start gap-2.5 px-4 py-3 rounded-lg border ${
-                  direction === 'above'
-                    ? 'bg-terminal-green/10 border-terminal-green/30'
-                    : 'bg-terminal-yellow/10 border-terminal-yellow/30'
+                  direction === "above"
+                    ? "bg-terminal-green/10 border-terminal-green/30"
+                    : "bg-terminal-yellow/10 border-terminal-yellow/30"
                 }`}
                 {...fadeSlide}
               >
-                {direction === 'above' ? (
-                  <TrendingUp size={14} className="text-terminal-green shrink-0 mt-0.5" />
+                {direction === "above" ? (
+                  <TrendingUp
+                    size={14}
+                    className="text-terminal-green shrink-0 mt-0.5"
+                  />
                 ) : (
-                  <TrendingDown size={14} className="text-terminal-yellow shrink-0 mt-0.5" />
+                  <TrendingDown
+                    size={14}
+                    className="text-terminal-yellow shrink-0 mt-0.5"
+                  />
                 )}
-                <p className={`font-mono text-xs leading-relaxed ${direction === 'above' ? 'text-terminal-green' : 'text-terminal-yellow'}`}>
-                  Execute when <strong>{inputToken?.symbol}</strong> reaches{' '}
+                <p
+                  className={`font-mono text-xs leading-relaxed ${direction === "above" ? "text-terminal-green" : "text-terminal-yellow"}`}
+                >
+                  Execute when <strong>{inputToken?.symbol}</strong> reaches{" "}
                   <strong>${fmtPrice(target)}</strong>
                   {currentPrice != null && (
                     <>
-                      {' '}—{' '}
-                      {direction === 'above'
+                      {" "}
+                      —{" "}
+                      {direction === "above"
                         ? `${((target / currentPrice - 1) * 100).toFixed(1)}% above current`
                         : `${((1 - target / currentPrice) * 100).toFixed(1)}% below current`}
                     </>
@@ -248,7 +296,10 @@ export default function LimitOrderForm({ onAddOrder }) {
                 className="flex items-center gap-2 px-4 py-3 rounded-lg bg-terminal-green/10 border border-terminal-green/30"
                 {...fadeSlide}
               >
-                <CheckCircle2 size={14} className="text-terminal-green shrink-0" />
+                <CheckCircle2
+                  size={14}
+                  className="text-terminal-green shrink-0"
+                />
                 <p className="font-mono text-xs text-terminal-green">
                   Limit order placed — monitoring price every 30s.
                 </p>
@@ -262,8 +313,8 @@ export default function LimitOrderForm({ onAddOrder }) {
             disabled={!canSubmit}
             className={`w-full py-4 rounded-xl font-mono font-bold text-sm tracking-wider transition-colors duration-200 flex items-center justify-center gap-2.5 relative overflow-hidden ${
               canSubmit
-                ? 'bg-terminal-yellow text-black hover:bg-terminal-yellow/85'
-                : 'bg-terminal-surface border border-terminal-border text-terminal-dim cursor-not-allowed'
+                ? "bg-terminal-yellow text-black hover:bg-terminal-yellow/85"
+                : "bg-terminal-surface border border-terminal-border text-terminal-dim cursor-not-allowed"
             }`}
             whileHover={canSubmit ? { scale: 1.01 } : {}}
             whileTap={canSubmit ? { scale: 0.98 } : {}}
@@ -277,21 +328,31 @@ export default function LimitOrderForm({ onAddOrder }) {
             )}
           </motion.button>
 
-          <div className="flex items-center gap-1.5 justify-center pt-1">
-            <Info size={10} className="text-terminal-dim/60" />
-            <span className="text-terminal-dim/60 text-xs font-mono">
-              Order executes via DFlow when target price is hit
-            </span>
-          </div>
+          {!isDevnet && (
+            <div className="flex items-center gap-1.5 justify-center pt-1">
+              <Info size={10} className="text-terminal-dim/60" />
+              <span className="text-terminal-dim/60 text-xs font-mono">
+                Order executes via DFlow when target price is hit
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Stats strip */}
       <div className="mt-3 grid grid-cols-3 gap-2">
         {[
-          { label: 'MEV Protection', value: 'Active', color: 'text-terminal-green' },
-          { label: 'Monitoring', value: '30s', color: 'text-terminal-yellow' },
-          { label: 'Network', value: 'Mainnet', color: 'text-terminal-bright' },
+          {
+            label: "MEV Protection",
+            value: isDevnet ? "Disabled" : "Active",
+            color: isDevnet ? "text-terminal-dim" : "text-terminal-green",
+          },
+          { label: "Monitoring", value: "30s", color: "text-terminal-yellow" },
+          {
+            label: "Network",
+            value: isDevnet ? "Devnet" : "Mainnet",
+            color: isDevnet ? "text-terminal-yellow" : "text-terminal-bright",
+          },
         ].map((s, i) => (
           <motion.div
             key={s.label}
@@ -300,11 +361,15 @@ export default function LimitOrderForm({ onAddOrder }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 + i * 0.07 }}
           >
-            <div className={`font-mono text-xs font-semibold ${s.color}`}>{s.value}</div>
-            <div className="font-mono text-xs text-terminal-dim/60 mt-0.5">{s.label}</div>
+            <div className={`font-mono text-xs font-semibold ${s.color}`}>
+              {s.value}
+            </div>
+            <div className="font-mono text-xs text-terminal-dim/60 mt-0.5">
+              {s.label}
+            </div>
           </motion.div>
         ))}
       </div>
     </motion.div>
-  )
+  );
 }

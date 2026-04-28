@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useNetwork } from '../contexts/NetworkContext'
 import {
   TrendingUp,
   TrendingDown,
@@ -215,6 +216,7 @@ function DbDisabledState() {
 // ─── main component ──────────────────────────────────────────────────────────
 
 export default function TradeHistory({ walletAddress, trades, loading, error, onRefresh, dbEnabled = true }) {
+  const { isDevnet } = useNetwork()
   const [typeFilter, setTypeFilter] = useState('all')
 
   const filteredTrades = useMemo(() => {
@@ -241,16 +243,16 @@ export default function TradeHistory({ walletAddress, trades, loading, error, on
           icon={<LuCoins size={11} />}
           label="TOTAL TRADES"
           value={stats.count}
-          sub="protected swaps"
+          sub={isDevnet ? "devnet swaps" : "protected swaps"}
           valueClass="text-terminal-text"
           delay={0}
         />
         <StatCard
           icon={<IoShieldCheckmarkOutline size={11} />}
           label="MEV SAVED"
-          value={fmtUSD(stats.totalMev)}
-          sub="est. from routing"
-          valueClass="text-terminal-green"
+          value={isDevnet ? "N/A" : fmtUSD(stats.totalMev)}
+          sub={isDevnet ? "no MEV protection" : "est. from routing"}
+          valueClass={isDevnet ? "text-terminal-dim" : "text-terminal-green"}
           delay={0.05}
         />
         <StatCard
@@ -310,7 +312,7 @@ export default function TradeHistory({ walletAddress, trades, loading, error, on
         <motion.div className="space-y-2">
           <AnimatePresence initial={false}>
             {filteredTrades.map((t, i) => (
-              <TradeRow key={t.id} trade={t} index={i} />
+              <TradeRow key={t.id} trade={t} index={i} isDevnet={isDevnet} />
             ))}
           </AnimatePresence>
         </motion.div>
@@ -319,7 +321,7 @@ export default function TradeHistory({ walletAddress, trades, loading, error, on
   );
 }
 
-function TradeRow({ trade: t, index }) {
+function TradeRow({ trade: t, index, isDevnet }) {
   const inAmt = fmtAmount(t.input_amount_raw, t.input_decimals)
   const outAmt = fmtAmount(t.output_amount_raw, t.output_decimals)
   const slip = t.slippage_pct != null ? Number(t.slippage_pct) : null
@@ -367,6 +369,11 @@ function TradeRow({ trade: t, index }) {
               Prediction
             </span>
           )}
+          {isDevnet && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-terminal-yellow/10 border border-terminal-yellow/25 font-mono text-xs font-bold text-terminal-yellow leading-none">
+              DEVNET
+            </span>
+          )}
         </div>
         <div className="font-mono text-xs text-terminal-dim/60 mt-0.5 truncate">
           {inAmt} → {outAmt}
@@ -379,9 +386,11 @@ function TradeRow({ trade: t, index }) {
           <SlipIcon size={10} />
           {slip != null ? (slip >= 0 ? '+' : '') + slip.toFixed(3) + '%' : '—'}
         </div>
-        <div className="font-mono text-xs text-terminal-dim/40 mt-0.5">
-          {t.mev_saved_usd != null ? fmtUSD(Number(t.mev_saved_usd)) + ' saved' : '—'}
-        </div>
+        {!isDevnet && (
+          <div className="font-mono text-xs text-terminal-dim/40 mt-0.5">
+            {t.mev_saved_usd != null ? fmtUSD(Number(t.mev_saved_usd)) + ' saved' : '—'}
+          </div>
+        )}
       </div>
 
       {/* Time + link */}

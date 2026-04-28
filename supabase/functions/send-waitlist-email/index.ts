@@ -1,0 +1,279 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const FROM_EMAIL = "Mainstay <onboarding@resend.dev>";
+
+function buildEmailHtml(email: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>You're on the Mainstay waitlist</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0d0d0d;
+      font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
+      color: #e2e8f0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrapper {
+      max-width: 560px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    .card {
+      background: #111111;
+      border: 1px solid #1e2631;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #1e2631;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22d3ee;
+    }
+    .header-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: #22d3ee;
+      text-transform: uppercase;
+    }
+    .body {
+      padding: 28px;
+    }
+    .hero {
+      background: rgba(34,211,238,0.06);
+      border: 1px solid rgba(34,211,238,0.2);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+    .hero-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #22d3ee;
+      margin-bottom: 8px;
+      letter-spacing: 0.04em;
+    }
+    .hero-subtitle {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: #475569;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .feature-list {
+      list-style: none;
+      margin-bottom: 24px;
+    }
+    .feature-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.5;
+      border-bottom: 1px solid #1e2631;
+    }
+    .feature-list li:last-child { border-bottom: none; }
+    .bullet {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #475569;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    .divider {
+      height: 1px;
+      background: #1e2631;
+      margin: 24px 0;
+    }
+    .confirmed-block {
+      background: rgba(34,197,94,0.08);
+      border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .check-icon {
+      font-size: 16px;
+      color: #22c55e;
+      flex-shrink: 0;
+    }
+    .confirmed-text {
+      font-size: 12px;
+      color: #86efac;
+      line-height: 1.5;
+    }
+    .confirmed-email {
+      color: #22c55e;
+      font-weight: 700;
+    }
+    .cta-button {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #22d3ee;
+      color: #000;
+      font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border-radius: 8px;
+    }
+    .footer {
+      padding: 20px 28px;
+      border-top: 1px solid #1e2631;
+      text-align: center;
+    }
+    .footer-text {
+      font-size: 11px;
+      color: #334155;
+      line-height: 1.6;
+    }
+    .footer-text a {
+      color: #22d3ee;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <!-- Header -->
+      <div class="header">
+        <div class="dot"></div>
+        <span class="header-label">Mainstay &mdash; Prediction Markets</span>
+      </div>
+
+      <!-- Body -->
+      <div class="body">
+        <!-- Hero -->
+        <div class="hero">
+          <div class="hero-title">You're on the list.</div>
+          <div class="hero-subtitle">
+            We'll notify you the moment Mainstay Prediction Markets goes live.
+            Expect MEV-protected outcome token trades — same DFlow protection as spot swaps.
+          </div>
+        </div>
+
+        <!-- Confirmed block -->
+        <div class="confirmed-block">
+          <span class="check-icon">&#10003;</span>
+          <div class="confirmed-text">
+            Waitlist confirmed for <span class="confirmed-email">${email}</span>.<br />
+            You'll receive a single email when we launch — no spam, ever.
+          </div>
+        </div>
+
+        <!-- What's coming -->
+        <div class="section-label">What's coming</div>
+        <ul class="feature-list">
+          <li><span class="bullet"></span>JIT auction routing for outcome token trades</li>
+          <li><span class="bullet"></span>Front-running and sandwich attack prevention</li>
+          <li><span class="bullet"></span>Same DFlow MEV protection as spot swaps</li>
+          <li><span class="bullet"></span>Live market resolution feeds on-chain</li>
+        </ul>
+
+        <div class="divider"></div>
+
+        <!-- CTA -->
+        <p style="font-size:12px;color:#94a3b8;margin-bottom:16px;line-height:1.6;">
+          In the meantime, try MEV-protected spot swaps on Solana — already live today.
+        </p>
+        <a href="https://main-stay.vercel.app" class="cta-button">Try Spot Swaps</a>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p class="footer-text">
+          You're receiving this because you signed up at
+          <a href="https://main-stay.vercel.app">main-stay.vercel.app</a>.<br />
+          &copy; ${new Date().getFullYear()} Mainstay. All rights reserved.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+      },
+    });
+  }
+
+  try {
+    const { email } = await req.json();
+    if (!email) {
+      return new Response(JSON.stringify({ error: "Email is required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: [email],
+        subject: "You're on the Mainstay waitlist",
+        html: buildEmailHtml(email),
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error("Resend error:", err);
+      return new Response(JSON.stringify({ error: "Failed to send email" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response(JSON.stringify({ error: "Internal error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+});

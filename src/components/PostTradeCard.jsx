@@ -15,6 +15,7 @@ import {
 import { IoShieldCheckmarkOutline } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
 import { DIALECT_PROXY } from "../config";
+import { useNetwork } from "../contexts/NetworkContext";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -253,6 +254,7 @@ export default function PostTradeCard({
   onNewSwap,
   onSaveTrade,
 }) {
+  const { isDevnet } = useNetwork();
   const [inputUSD, setInputUSD] = useState(null);
   const [sharing, setSharing] = useState(false);
   const [shareImgUrl, setShareImgUrl] = useState(null);
@@ -527,34 +529,36 @@ export default function PostTradeCard({
             </div>
           </motion.div>
 
-          {/* MEV saved */}
-          <motion.div
-            className="flex items-center justify-between bg-terminal-surface border border-terminal-green/20 rounded-xl px-4 py-3"
-            {...staggerItem(3)}
-          >
-            <div className="flex items-center gap-2">
-              <IoShieldCheckmarkOutline
-                size={14}
-                className="text-terminal-green"
-              />
-              <div>
-                <div className="font-mono text-xs text-terminal-dim">
-                  Est. MEV Saved
+          {/* MEV saved — mainnet only */}
+          {!isDevnet && (
+            <motion.div
+              className="flex items-center justify-between bg-terminal-surface border border-terminal-green/20 rounded-xl px-4 py-3"
+              {...staggerItem(3)}
+            >
+              <div className="flex items-center gap-2">
+                <IoShieldCheckmarkOutline
+                  size={14}
+                  className="text-terminal-green"
+                />
+                <div>
+                  <div className="font-mono text-xs text-terminal-dim">
+                    Est. MEV Saved
+                  </div>
+                  <div className="font-mono text-xs text-terminal-dim/50">
+                    vs unprotected DEX route
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-mono text-sm font-bold text-terminal-green">
+                  {mevSaved != null ? fmtUSD(mevSaved) : "Calculating…"}
                 </div>
                 <div className="font-mono text-xs text-terminal-dim/50">
-                  vs unprotected DEX route
+                  ~0.5% MEV tax avoided
                 </div>
               </div>
-            </div>
-            <div className="text-right">
-              <div className="font-mono text-sm font-bold text-terminal-green">
-                {mevSaved != null ? fmtUSD(mevSaved) : "Calculating…"}
-              </div>
-              <div className="font-mono text-xs text-terminal-dim/50">
-                ~0.5% MEV tax avoided
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          )}
 
           {/* Tx link */}
           <motion.div
@@ -575,49 +579,53 @@ export default function PostTradeCard({
             </a>
           </motion.div>
 
-          {/* Share image preview */}
-          <AnimatePresence>
-            {shareImgUrl && (
-              <motion.div
-                className="relative rounded-xl overflow-hidden border border-terminal-border"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <img src={shareImgUrl} alt="Trade card" className="w-full" />
-                <button
-                  onClick={handleDownload}
-                  className="absolute bottom-2 right-2 flex items-center gap-1 px-3 py-1.5 bg-black/70 border border-terminal-border rounded-lg font-mono text-xs text-terminal-text hover:text-terminal-accent transition-colors"
+          {/* Share image preview — mainnet only */}
+          {!isDevnet && (
+            <AnimatePresence>
+              {shareImgUrl && (
+                <motion.div
+                  className="relative rounded-xl overflow-hidden border border-terminal-border"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  <Download size={11} />
-                  Save
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  <img src={shareImgUrl} alt="Trade card" className="w-full" />
+                  <button
+                    onClick={handleDownload}
+                    className="absolute bottom-2 right-2 flex items-center gap-1 px-3 py-1.5 bg-black/70 border border-terminal-border rounded-lg font-mono text-xs text-terminal-text hover:text-terminal-accent transition-colors"
+                  >
+                    <Download size={11} />
+                    Save
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
 
-          {/* Share button */}
-          <motion.button
-            onClick={handleShare}
-            disabled={sharing}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-mono font-bold text-sm border border-terminal-accent/40 text-terminal-accent bg-terminal-accent/5 hover:bg-terminal-accent/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            whileHover={!sharing ? { scale: 1.01 } : {}}
-            whileTap={!sharing ? { scale: 0.98 } : {}}
-            {...staggerItem(5)}
-          >
-            {sharing ? (
-              <span className="animate-pulse">Generating card…</span>
-            ) : (
-              <>
-                <Share2 size={14} />
-                Share your savings
-                <span className="text-xs font-normal text-terminal-dim">
-                  / 𝕏
-                </span>
-              </>
-            )}
-          </motion.button>
+          {/* Share button — mainnet only */}
+          {!isDevnet && (
+            <motion.button
+              onClick={handleShare}
+              disabled={sharing}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-mono font-bold text-sm border border-terminal-accent/40 text-terminal-accent bg-terminal-accent/5 hover:bg-terminal-accent/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={!sharing ? { scale: 1.01 } : {}}
+              whileTap={!sharing ? { scale: 0.98 } : {}}
+              {...staggerItem(5)}
+            >
+              {sharing ? (
+                <span className="animate-pulse">Generating card…</span>
+              ) : (
+                <>
+                  <Share2 size={14} />
+                  Share your savings
+                  <span className="text-xs font-normal text-terminal-dim">
+                    / 𝕏
+                  </span>
+                </>
+              )}
+            </motion.button>
+          )}
 
           {/* New swap */}
           <motion.button
@@ -633,9 +641,15 @@ export default function PostTradeCard({
 
         {/* ── Footer ── */}
         <div className="flex items-center justify-center gap-1.5 py-3 border-t border-terminal-border bg-terminal-surface/40">
-          <Shield size={11} className="text-terminal-accent" />
-          <span className="font-mono text-xs text-terminal-accent/70 tracking-wider">
-            Protected by DFlow
+          {isDevnet ? (
+            <Zap size={11} className="text-terminal-yellow" />
+          ) : (
+            <Shield size={11} className="text-terminal-accent" />
+          )}
+          <span
+            className={`font-mono text-xs tracking-wider ${isDevnet ? "text-terminal-yellow/70" : "text-terminal-accent/70"}`}
+          >
+            {isDevnet ? "Devnet — Routed via Jupiter" : "Protected by DFlow"}
           </span>
         </div>
       </motion.div>

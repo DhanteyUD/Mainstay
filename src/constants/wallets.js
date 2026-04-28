@@ -5,6 +5,19 @@ import solflareImage from "../assets/solflare-trnsprnt.png";
 
 export const WALLETS = [
   {
+    name: "Solflare",
+    logo: solflareLogo,
+    image: solflareImage,
+    href: (url) =>
+      `https://solflare.com/ul/v1/browse/${url}?ref=${url}`,
+    color: "#FFEF46",
+    glow: "rgba(255,239,70,0.35)",
+    bg: "rgba(255,239,70,0.08)",
+    border: "rgba(255,239,70,0.3)",
+    hoverBorder: "rgba(255,239,70,0.7)",
+    recommended: true,
+  },
+  {
     name: "Phantom",
     logo: phantomLogo,
     image: phantomImage,
@@ -15,17 +28,5 @@ export const WALLETS = [
     bg: "rgba(171,102,255,0.08)",
     border: "rgba(171,102,255,0.3)",
     hoverBorder: "rgba(171,102,255,0.7)",
-  },
-  {
-    name: "Solflare",
-    logo: solflareLogo,
-    image: solflareImage,
-    href: (url) =>
-      `https://solflare.com/ul/v1/browse/${url}?ref=${url}`,
-    color: "#FFEF46",
-    glow: "rgba(252,140,4,0.35)",
-    bg: "rgba(252,140,4,0.08)",
-    border: "rgba(252,140,4,0.3)",
-    hoverBorder: "rgba(252,140,4,0.7)",
   },
 ];

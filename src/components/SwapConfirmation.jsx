@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { CheckCircle2, ExternalLink, ArrowRight, X, Shield } from 'lucide-react'
 
 function formatAmount(raw, decimals) {
@@ -13,6 +13,12 @@ function formatAmount(raw, decimals) {
 
 export default function SwapConfirmation({ result, inputToken, outputToken, quotedOutput, onClose, onNewSwap }) {
   if (!result) return null
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
 
   const actualOutput = formatAmount(result.outputAmount, outputToken?.decimals || 6)
   const quotedOutputFmt = formatAmount(quotedOutput, outputToken?.decimals || 6)
@@ -34,10 +40,10 @@ export default function SwapConfirmation({ result, inputToken, outputToken, quot
     : '—'
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-terminal-card border border-terminal-border rounded-2xl w-full max-w-sm shadow-2xl glow-green animate-slide-up">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 animate-fade-in flex sm:items-center sm:justify-center sm:p-4">
+      <div className="bg-terminal-card border-t sm:border border-terminal-border sm:rounded-2xl w-full sm:max-w-sm shadow-2xl sm:glow-green animate-slide-up mt-14 sm:mt-0 flex flex-col h-[calc(100vh-56px)] sm:h-auto overflow-hidden border">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-terminal-border">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-terminal-border shrink-0">
           <div className="flex items-center gap-2">
             <CheckCircle2 size={18} className="text-terminal-green" />
             <span className="font-mono font-bold text-terminal-green text-sm tracking-wide">
@@ -53,7 +59,7 @@ export default function SwapConfirmation({ result, inputToken, outputToken, quot
         </div>
 
         {/* Body */}
-        <div className="p-5 space-y-4">
+        <div className="p-5 space-y-4 overflow-y-auto flex-1">
           {/* Trade summary */}
           <div className="flex items-center justify-center gap-3 py-4 bg-terminal-surface rounded-xl border border-terminal-border">
             <div className="text-center">
@@ -141,7 +147,7 @@ export default function SwapConfirmation({ result, inputToken, outputToken, quot
         </div>
 
         {/* Footer */}
-        <div className="px-5 pb-5">
+        <div className="px-5 pb-5 shrink-0">
           <button
             onClick={onNewSwap}
             className="w-full py-3 rounded-xl font-mono font-bold text-sm bg-terminal-surface border border-terminal-border text-terminal-text hover:border-terminal-accent/50 hover:text-terminal-accent transition-all duration-200"
