@@ -161,6 +161,10 @@ export function useSwap() {
                     mode: "cors",
                     credentials: "omit",
                     signal: controller.signal,
+                    headers: {
+                      "Cache-Control": "no-cache",
+                      Pragma: "no-cache",
+                    },
                   },
                 );
               } finally {

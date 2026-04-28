@@ -227,6 +227,11 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
   }, [fetchQuote]);
 
   const handleNewSwap = () => {
+    if (cooldownTimerRef.current) {
+      clearTimeout(cooldownTimerRef.current);
+      cooldownTimerRef.current = null;
+    }
+    setPostSwapCooldown(false);
     setShowConfirm(false);
     setInputAmount("");
     clearQuote();
@@ -641,7 +646,7 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
             inputToken={inputToken}
             outputToken={outputToken}
             quotedOutput={savedQuote?.outAmount || savedQuote?.outputAmount}
-            onClose={() => setShowConfirm(false)}
+            onClose={() => { setShowConfirm(false); resetSwap(); setSavedQuote(null); }}
             onNewSwap={handleNewSwap}
             onSaveTrade={onSaveTrade}
           />

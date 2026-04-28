@@ -309,13 +309,15 @@ export default function TradeHistory({ walletAddress, trades, loading, error, on
       ) : filteredTrades.length === 0 ? (
         <EmptyState walletAddress={walletAddress} filter={typeFilter} />
       ) : (
-        <motion.div className="space-y-2">
-          <AnimatePresence initial={false}>
-            {filteredTrades.map((t, i) => (
-              <TradeRow key={t.id} trade={t} index={i} isDevnet={isDevnet} />
-            ))}
-          </AnimatePresence>
-        </motion.div>
+        <div className="overflow-y-auto max-h-[360px] pr-1 scrollbar-thin scrollbar-thumb-terminal-border scrollbar-track-transparent">
+          <motion.div className="space-y-2">
+            <AnimatePresence initial={false}>
+              {filteredTrades.map((t, i) => (
+                <TradeRow key={t.id} trade={t} index={i} isDevnet={isDevnet} />
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        </div>
       )}
     </div>
   );
