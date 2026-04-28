@@ -3,18 +3,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const FROM_EMAIL = "Mainstay <onboarding@resend.dev>";
 
-async function getLogoDataUrl(): Promise<string> {
-  try {
-    const logoUrl = import.meta.resolve("../../../src/assets/mainstay-logo.png");
-    const res = await fetch(logoUrl);
-    const buf = await res.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-    return `data:image/png;base64,${base64}`;
-  } catch {
-    return "";
-  }
-}
-
 function buildEmailHtml(email: string, logoDataUrl: string): string {
   const logoTag = logoDataUrl
     ? `<img src="${logoDataUrl}" class="logo-img" alt="Mainstay" />`
@@ -27,7 +15,7 @@ function buildEmailHtml(email: string, logoDataUrl: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>You're on the Mainstay waitlist</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Poppins:wght@400;700;800&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background-color: #0d0d0d;
@@ -35,7 +23,7 @@ function buildEmailHtml(email: string, logoDataUrl: string): string {
         linear-gradient(rgba(0,229,255,0.015) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0,229,255,0.015) 1px, transparent 1px);
       background-size: 40px 40px;
-      font-family: 'Syne', 'JetBrains Mono', 'Courier New', Courier, monospace;
+      font-family: 'Syne', 'Poppins', sans-serif;
       color: #e2e8f0;
       -webkit-font-smoothing: antialiased;
     }
@@ -58,13 +46,15 @@ function buildEmailHtml(email: string, logoDataUrl: string): string {
       gap: 10px;
     }
     .logo-img {
-      width: 24px;
-      height: 24px;
+      width: 35px;
+      height: 35px;
       object-fit: contain;
+      margin-right: 5px
     }
     .logo-fallback {
       font-size: 18px;
       line-height: 1;
+      margin-right: 5px
     }
     .header-label {
       font-size: 11px;
@@ -125,6 +115,7 @@ function buildEmailHtml(email: string, logoDataUrl: string): string {
       background: #475569;
       margin-top: 5px;
       flex-shrink: 0;
+      margin-right: 5px
     }
     .divider {
       height: 1px;
@@ -145,6 +136,7 @@ function buildEmailHtml(email: string, logoDataUrl: string): string {
       font-size: 16px;
       color: #22c55e;
       flex-shrink: 0;
+      margin-right: 5px
     }
     .confirmed-text {
       font-size: 12px;
@@ -160,7 +152,7 @@ function buildEmailHtml(email: string, logoDataUrl: string): string {
       padding: 12px 24px;
       background: #22d3ee;
       color: #000;
-      font-family: 'Syne', 'JetBrains Mono', 'Courier New', Courier, monospace;
+      font-family: 'Syne', 'Poppins', sans-serif;
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.08em;
@@ -189,7 +181,9 @@ function buildEmailHtml(email: string, logoDataUrl: string): string {
     <div class="card">
       <!-- Header -->
       <div class="header">
-        ${logoTag}
+        <Span>
+          ${logoTag}
+        </Span>
         <span class="header-label">Mainstay &mdash; Prediction Markets</span>
       </div>
 
@@ -250,7 +244,8 @@ serve(async (req) => {
     return new Response(null, {
       headers: {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+        "Access-Control-Allow-Headers":
+          "authorization, x-client-info, apikey, content-type",
       },
     });
   }
@@ -264,8 +259,6 @@ serve(async (req) => {
       });
     }
 
-    const logoDataUrl = await getLogoDataUrl();
-
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -276,7 +269,10 @@ serve(async (req) => {
         from: FROM_EMAIL,
         to: [email],
         subject: "You're on the Mainstay waitlist",
-        html: buildEmailHtml(email, logoDataUrl),
+        html: buildEmailHtml(
+          email,
+          "https://res.cloudinary.com/dhantey/image/upload/v1777367316/Dante/mainstay-logo_vydcnr.png",
+        ),
       }),
     });
 
