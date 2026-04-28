@@ -3,7 +3,23 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const FROM_EMAIL = "Mainstay <onboarding@resend.dev>";
 
-function buildEmailHtml(email: string): string {
+async function getLogoDataUrl(): Promise<string> {
+  try {
+    const logoUrl = import.meta.resolve("../../../src/assets/mainstay-logo.png");
+    const res = await fetch(logoUrl);
+    const buf = await res.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+    return `data:image/png;base64,${base64}`;
+  } catch {
+    return "";
+  }
+}
+
+function buildEmailHtml(email: string, logoDataUrl: string): string {
+  const logoTag = logoDataUrl
+    ? `<img src="${logoDataUrl}" class="logo-img" alt="Mainstay" />`
+    : `<span class="logo-fallback">🛡️</span>`;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,10 +27,15 @@ function buildEmailHtml(email: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>You're on the Mainstay waitlist</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background-color: #0d0d0d;
-      font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.015) 1px, transparent 1px);
+      background-size: 40px 40px;
+      font-family: 'Syne', 'JetBrains Mono', 'Courier New', Courier, monospace;
       color: #e2e8f0;
       -webkit-font-smoothing: antialiased;
     }
@@ -36,11 +57,14 @@ function buildEmailHtml(email: string): string {
       align-items: center;
       gap: 10px;
     }
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #22d3ee;
+    .logo-img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+    .logo-fallback {
+      font-size: 18px;
+      line-height: 1;
     }
     .header-label {
       font-size: 11px;
@@ -136,7 +160,7 @@ function buildEmailHtml(email: string): string {
       padding: 12px 24px;
       background: #22d3ee;
       color: #000;
-      font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
+      font-family: 'Syne', 'JetBrains Mono', 'Courier New', Courier, monospace;
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.08em;
@@ -165,7 +189,7 @@ function buildEmailHtml(email: string): string {
     <div class="card">
       <!-- Header -->
       <div class="header">
-        <div class="dot"></div>
+        ${logoTag}
         <span class="header-label">Mainstay &mdash; Prediction Markets</span>
       </div>
 
@@ -210,7 +234,7 @@ function buildEmailHtml(email: string): string {
       <!-- Footer -->
       <div class="footer">
         <p class="footer-text">
-          You're receiving this because you signed up at
+          You're receiving this because you requested to be on the waitlist at
           <a href="https://main-stay.vercel.app">main-stay.vercel.app</a>.<br />
           &copy; ${new Date().getFullYear()} Mainstay. All rights reserved.
         </p>
@@ -240,6 +264,8 @@ serve(async (req) => {
       });
     }
 
+    const logoDataUrl = await getLogoDataUrl();
+
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -250,7 +276,7 @@ serve(async (req) => {
         from: FROM_EMAIL,
         to: [email],
         subject: "You're on the Mainstay waitlist",
-        html: buildEmailHtml(email),
+        html: buildEmailHtml(email, logoDataUrl),
       }),
     });
 
