@@ -9,6 +9,7 @@ import App from "./App";
 import "@solana/wallet-adapter-react-ui/styles.css";
 import "./index.css";
 import { NetworkContextProvider, useNetwork } from "./contexts/NetworkContext";
+import { AuthProvider } from "./lib/auth-context";
 
 const connectionConfig = {
   commitment: "confirmed",
@@ -135,9 +136,11 @@ const root =
 root.render(
   <React.StrictMode>
     <NetworkContextProvider>
-      <WalletContextProvider>
-        <App />
-      </WalletContextProvider>
+      <AuthProvider>
+        <WalletContextProvider>
+          <App />
+        </WalletContextProvider>
+      </AuthProvider>
     </NetworkContextProvider>
   </React.StrictMode>,
 );

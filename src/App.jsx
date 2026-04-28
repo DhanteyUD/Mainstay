@@ -4,7 +4,6 @@ import {
   Clock,
   Info,
   TrendingUp,
-  BarChart2,
   AlertTriangle,
   Server,
   Target,
@@ -13,6 +12,9 @@ import { TbCurrencySolana } from "react-icons/tb";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { useAuth } from "./lib/auth-context";
+
+import LoginScreen from "./components/LoginScreen";
 import AppHeader from "./components/AppHeader";
 import AppFooter from "./components/AppFooter";
 import PriceChart from "./components/PriceChart";
@@ -47,6 +49,27 @@ import {
 import { TOKENS } from "./config";
 
 export default function App() {
+  const { user, loading: authLoading } = useAuth();
+  const { dismissed, dismiss } = useOnboarding();
+
+  if (authLoading) {
+    return (
+      <div className="fixed inset-0 bg-terminal-bg flex items-center justify-center">
+        <span className="font-mono text-xs text-terminal-dim animate-pulse">
+          Authenticating…
+        </span>
+      </div>
+    );
+  }
+
+  if (!dismissed) return <OnboardingScreen onDismiss={dismiss} />;
+
+  if (!user) return <LoginScreen />;
+
+  return <MainApp />;
+}
+
+function MainApp() {
   const { isDevnet } = useNetwork();
   const { publicKey, connected } = useWallet();
   const walletAddress = publicKey?.toBase58() || null;
@@ -64,13 +87,10 @@ export default function App() {
     inputToken: TOKENS.SOL,
     outputToken: TOKENS.USDC,
   });
-  const { dismissed, dismiss } = useOnboarding();
 
   useEffect(() => {
     if (connected && walletAddress) fetchTrades();
   }, [connected, walletAddress, isDevnet]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (!dismissed) return <OnboardingScreen onDismiss={dismiss} />;
 
   const risk = RISK_STYLES[riskLevel] ?? RISK_STYLES.LOW;
   const uptime =
