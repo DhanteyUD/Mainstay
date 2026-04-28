@@ -9,7 +9,10 @@ export default function MobileWalletBanner() {
 
   const url = encodeURIComponent(window.location.href);
   const ua = navigator.userAgent;
-  const isTablet = /iPad/.test(ua) || (ua.includes("Android") && !/Mobile/.test(ua)) || ua.includes("x86_64");
+  const isTablet =
+    /iPad/.test(ua) ||
+    (ua.includes("Android") && !/Mobile/.test(ua)) ||
+    ua.includes("x86_64");
 
   function getDeviceLabel() {
     if (/iPad/.test(ua)) return "iPad";
@@ -45,98 +48,109 @@ export default function MobileWalletBanner() {
       />
 
       <div className="relative w-full mx-auto max-w-3xl px-10 md:px-32 py-5 flex flex-col flex-1 justify-center gap-5">
-          <div className="flex items-center gap-2 mb-4">
-            <span
-              className="flex items-center justify-center w-7 h-7 rounded-lg"
+        <div className="flex items-center gap-2 mb-4">
+          <span
+            className="flex items-center justify-center w-7 h-7 rounded-lg"
+            style={{
+              background: "rgba(255,255,255,0.15)",
+              border: "1px solid rgba(255,255,255,0.3)",
+            }}
+          >
+            {isTablet ? (
+              <Tablet size={14} style={{ color: "#ffffff" }} />
+            ) : (
+              <Smartphone size={14} style={{ color: "#ffffff" }} />
+            )}
+          </span>
+          <span className="font-mono text-xs font-bold tracking-widest uppercase">
+            {deviceLabel} detected
+          </span>
+          <span
+            className="ml-1 w-1.5 h-1.5 rounded-full animate-pulse"
+            style={{ background: "#00e5ff", boxShadow: "0 0 6px #00e5ff" }}
+          />
+        </div>
+
+        {/* Message */}
+        <p className="font-mono text-xs text-terminal-dim leading-relaxed mb-5 max-w-sm">
+          To connect your wallet, open this page inside your wallet's{" "}
+          <span className="text-terminal-text font-semibold">
+            built-in browser
+          </span>
+          .
+        </p>
+
+        {/* Wallet buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 h-40 sm:h-auto">
+          {WALLETS.map((w) => (
+            <motion.a
+              key={w.name}
+              href={w.href(url)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              className="relative flex items-center gap-3 p-0 sm:p-4 rounded-xl flex-none sm:flex-1 group no-underline"
               style={{
-                background: "rgba(255,255,255,0.15)",
-                border: "1px solid rgba(255,255,255,0.3)",
+                background: w.bg,
+                border: `1px solid ${w.border}`,
+                boxShadow: `0 0 20px ${w.glow}`,
               }}
             >
-              {isTablet ? (
-                <Tablet size={14} style={{ color: "#ffffff" }} />
-              ) : (
-                <Smartphone size={14} style={{ color: "#ffffff" }} />
-              )}
-            </span>
-            <span className="font-mono text-xs font-bold tracking-widest uppercase">
-              {deviceLabel} detected
-            </span>
-            <span
-              className="ml-1 w-1.5 h-1.5 rounded-full animate-pulse"
-              style={{ background: "#00e5ff", boxShadow: "0 0 6px #00e5ff" }}
-            />
-          </div>
-
-          {/* Message */}
-          <p className="font-mono text-xs text-terminal-dim leading-relaxed mb-5 max-w-sm">
-            To connect your wallet, open this page inside your wallet's{" "}
-            <span className="text-terminal-text font-semibold">
-              built-in browser
-            </span>
-            .
-          </p>
-
-          {/* Wallet buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 h-40 sm:h-auto">
-            {WALLETS.map((w) => (
-              <motion.a
-                key={w.name}
-                href={w.href(url)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                className="relative flex items-center gap-3 p-0 sm:p-4 rounded-xl flex-1 overflow-hidden group no-underline"
+              {/* glow sweep on hover */}
+              <div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
                 style={{
-                  background: w.bg,
-                  border: `1px solid ${w.border}`,
-                  boxShadow: `0 0 20px ${w.glow}`,
+                  background: `radial-gradient(ellipse 120% 80% at 50% 120%, ${w.glow} 0%, transparent 70%)`,
                 }}
-              >
-                {/* glow sweep on hover */}
-                <div
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                  style={{
-                    background: `radial-gradient(ellipse 120% 80% at 50% 120%, ${w.glow} 0%, transparent 70%)`,
-                  }}
-                />
+              />
 
-                {/* Logo */}
-                <img
-                  src={w.logo}
-                  alt={w.name}
-                  className="hidden sm:flex w-9 h-9 rounded-lg object-cover shrink-0 relative z-10"
-                  style={{ boxShadow: `0 0 12px ${w.glow}` }}
-                />
+              {/* Logo */}
+              <img
+                src={w.logo}
+                alt={w.name}
+                className="hidden sm:flex w-9 h-9 rounded-lg object-cover shrink-0 relative z-10"
+                style={{ boxShadow: `0 0 12px ${w.glow}` }}
+              />
 
-                {/* Image */}
+              {/* Image */}
+              <div className="flex sm:hidden w-full h-16 rounded-lg overflow-hidden flex-shrink-0 relative">
                 <img
                   src={w.image}
                   alt={w.name}
-                  className="flex sm:hidden w-full h-full rounded-lg object-contain shrink-0 relative z-10"
-                  style={{ backgroundColor: w.color, boxShadow: `0 0 12px ${w.glow}` }}
+                  className="flex sm:hidden w-full h-full rounded-lg object-contain shrink-0 z-10"
+                  style={{
+                    backgroundColor: w.color,
+                    boxShadow: `0 0 12px ${w.glow}`,
+                  }}
                 />
+              </div>
 
-                {/* Label */}
-                <div className="hidden sm:block relative z-10 flex-1 min-w-0">
-                  <div
-                    className="font-mono text-sm font-bold tracking-wide"
-                    style={{ color: w.color }}
-                  >
-                    {w.name}
-                  </div>
-                  <div className="font-mono text-xs text-terminal-dim">
-                    Open in browser
-                  </div>
-                </div>
-
-                <ExternalLink
-                  size={14}
-                  className="hidden sm:flex relative z-10 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity"
+              {/* Label */}
+              <div className="hidden sm:block relative z-10 flex-1 min-w-0">
+                <div
+                  className="font-mono text-sm font-bold tracking-wide"
                   style={{ color: w.color }}
-                />
-              </motion.a>
-            ))}
-          </div>
+                >
+                  {w.name}
+                </div>
+                <div className="font-mono text-xs text-terminal-dim">
+                  Open in browser
+                </div>
+              </div>
+
+              <ExternalLink
+                size={14}
+                className="hidden sm:flex relative z-10 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity"
+                style={{ color: w.color }}
+              />
+
+              {w.recommended && (
+                <span className="absolute right-4 -top-2 sm:-top-2.5 font-mono text-[9px] font-bold tracking-wider px-2 py-0.5 rounded uppercase bg-terminal-muted z-10 sm:bg-[rgba(255,239,70)] border-[rgba(255,239,70,0.4)] text-terminal-text sm:text-terminal-bg">
+                  Recommended
+                </span>
+              )}
+            </motion.a>
+          ))}
+        </div>
       </div>
     </motion.div>
   );
