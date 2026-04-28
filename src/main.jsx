@@ -15,9 +15,9 @@ const connectionConfig = {
   wsEndpoint: "",
 };
 
-function usePhantomRecommended() {
+function useSolflareRecommended() {
   useEffect(() => {
-    const STYLE_ID = "phantom-recommended-styles";
+    const STYLE_ID = "solflare-recommended-styles";
     if (!document.getElementById(STYLE_ID)) {
       const style = document.createElement("style");
       style.id = STYLE_ID;
@@ -32,16 +32,16 @@ function usePhantomRecommended() {
           margin-bottom: 0 !important;
         }
 
-        .wallet-adapter-modal-list li.phantom-recommended {
+        .wallet-adapter-modal-list li.solflare-recommended {
           order: -1;
-          border: 1px solid #AB9FF2 !important;
+          border: 1px solid rgba(255, 239, 70) !important;
           border-radius: 8px;
-          background: rgba(171, 102, 255, 0.06);
+          background: rgba(255, 239, 70,0.07);
           position: relative;
           margin-bottom: 10px !important;
         }
 
-        .phantom-recommended-badge {
+        .solflare-recommended-badge {
           position: absolute;
           right: 16px;
           top: 0;
@@ -49,8 +49,8 @@ function usePhantomRecommended() {
           z-index: 20;
           display: inline-flex;
           align-items: center;
-          background: linear-gradient(135deg, #ab66ff, #7c3aed);
-          color: #fff;
+          background: linear-gradient(135deg, #ffef46, #ffd700);
+          color: #000;
           font-size: 10px;
           font-weight: 700;
           padding: 3px 9px;
@@ -66,26 +66,26 @@ function usePhantomRecommended() {
       document.head.appendChild(style);
     }
 
-    function promotePhantom(modalList) {
+    function promoteSolflare(modalList) {
       const items = modalList.querySelectorAll("li");
-      let phantomItem = null;
+      let solflareItem = null;
       items.forEach((li) => {
         const btn = li.querySelector(".wallet-adapter-button");
-        if (btn && btn.textContent?.toLowerCase().includes("phantom")) {
-          phantomItem = li;
+        if (btn && btn.textContent?.toLowerCase().includes("solflare")) {
+          solflareItem = li;
         }
       });
       if (
-        phantomItem &&
-        !phantomItem.classList.contains("phantom-recommended")
+        solflareItem &&
+        !solflareItem.classList.contains("solflare-recommended")
       ) {
-        modalList.prepend(phantomItem);
-        phantomItem.classList.add("phantom-recommended");
-        if (!phantomItem.querySelector(".phantom-recommended-badge")) {
+        modalList.prepend(solflareItem);
+        solflareItem.classList.add("solflare-recommended");
+        if (!solflareItem.querySelector(".solflare-recommended-badge")) {
           const badge = document.createElement("span");
-          badge.className = "phantom-recommended-badge";
+          badge.className = "solflare-recommended-badge";
           badge.textContent = "Recommended";
-          phantomItem.appendChild(badge);
+          solflareItem.appendChild(badge);
         }
       }
     }
@@ -100,7 +100,7 @@ function usePhantomRecommended() {
             )
               ? el
               : el.querySelector?.(".wallet-adapter-modal-list");
-            if (modalList) promotePhantom(modalList);
+            if (modalList) promoteSolflare(modalList);
           }
         }
       }
@@ -111,7 +111,7 @@ function usePhantomRecommended() {
 }
 
 function WalletContextProvider({ children }) {
-  usePhantomRecommended();
+  useSolflareRecommended();
   const { rpcEndpoint } = useNetwork();
   const wallets = useMemo(() => [], []);
 
