@@ -454,9 +454,12 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
                           resetSwap();
                           handleRetryQuote();
                         }}
-                        className="mt-1.5 flex items-center gap-1 text-terminal-red/70 hover:text-terminal-red text-xs font-mono transition-colors"
+                        title="Refresh & retry"
+                        className="mt-2 flex items-center gap-2 text-terminal-red/70 hover:text-terminal-red text-xs font-mono transition-colors group"
                       >
-                        <RefreshCw size={10} />
+                        <span className="flex items-center justify-center w-6 h-6 rounded-full border border-terminal-red/40 group-hover:border-terminal-red group-hover:bg-terminal-red/10 transition-all">
+                          <RefreshCw size={12} />
+                        </span>
                         <span>Refresh & retry</span>
                       </button>
                     )}

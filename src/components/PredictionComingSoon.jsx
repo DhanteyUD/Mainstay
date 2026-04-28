@@ -1,12 +1,33 @@
-import React, { useState } from 'react'
-import { Target, CheckCircle2 } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { Target, CheckCircle2, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 
 export default function PredictionComingSoon() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [countdown, setCountdown] = useState(null)
   const [error, setError] = useState('')
+  const timerRef = useRef(null)
+
+  useEffect(() => {
+    if (!submitted) return
+    setCountdown(5)
+    const tick = setInterval(() => {
+      setCountdown((c) => (c > 1 ? c - 1 : null))
+    }, 1000)
+    const reset = setTimeout(() => {
+      clearInterval(tick)
+      setSubmitted(false)
+      setEmail('')
+      setCountdown(null)
+    }, 5000)
+    return () => {
+      clearInterval(tick)
+      clearTimeout(reset)
+    }
+  }, [submitted])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -16,14 +37,19 @@ export default function PredictionComingSoon() {
       return
     }
     setError('')
+    setLoading(true)
     if (supabase) {
       const { error: dbErr } = await supabase.from('waitingList').insert({ email: trimmed })
       // Ignore unique-violation — user already signed up, still show success
       if (dbErr && !dbErr.message?.includes('duplicate') && !dbErr.code?.includes('23505')) {
+        setLoading(false)
         setError('Something went wrong. Please try again.')
         return
       }
+      // Fire confirmation email — non-blocking, ignore failures
+      supabase.functions.invoke('send-waitlist-email', { body: { email: trimmed } }).catch(() => {})
     }
+    setLoading(false)
     setSubmitted(true)
   }
 
@@ -79,10 +105,13 @@ export default function PredictionComingSoon() {
               transition={{ duration: 0.2 }}
             >
               <CheckCircle2 size={15} className="text-terminal-green shrink-0" />
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="font-mono text-xs font-bold text-terminal-green">You're on the list.</p>
                 <p className="font-mono text-xs text-terminal-dim mt-0.5">We'll email you when prediction markets go live.</p>
               </div>
+              {countdown !== null && (
+                <span className="font-mono text-xs text-terminal-dim/50 shrink-0">{countdown}s</span>
+              )}
             </motion.div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-2.5">
@@ -97,11 +126,19 @@ export default function PredictionComingSoon() {
                 />
                 <motion.button
                   type="submit"
-                  className="px-4 py-2.5 rounded-lg bg-terminal-accent text-black font-mono text-xs font-bold tracking-wider hover:bg-terminal-accentDim transition-colors shrink-0"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
+                  disabled={loading}
+                  className="px-4 py-2.5 rounded-lg bg-terminal-accent text-black font-mono text-xs font-bold tracking-wider hover:bg-terminal-accentDim transition-colors shrink-0 disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  whileHover={loading ? {} : { scale: 1.02 }}
+                  whileTap={loading ? {} : { scale: 0.97 }}
                 >
-                  Notify me
+                  {loading ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin" />
+                      <span>Queuing...</span>
+                    </>
+                  ) : (
+                    'Notify me'
+                  )}
                 </motion.button>
               </div>
               {error && <p className="font-mono text-xs text-terminal-red">{error}</p>}

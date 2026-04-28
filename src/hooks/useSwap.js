@@ -450,5 +450,25 @@ function humanizeError(msg) {
   if (m.includes("quote unavailable") || m.includes("quote failed")) {
     return "Quote unavailable right now. Try again in a moment.";
   }
+  if (m.includes("transaction failed on-chain")) {
+    try {
+      const jsonStart = msg.indexOf("{");
+      if (jsonStart !== -1) {
+        const err = JSON.parse(msg.slice(jsonStart));
+        if (err.InstructionError) {
+          const [ixIdx, detail] = err.InstructionError;
+          if (detail?.Custom !== undefined) {
+            return `Transaction rejected by program (error ${detail.Custom}, instruction ${ixIdx}). The route may be stale or your balance is insufficient — refresh the quote and try again.`;
+          }
+          if (typeof detail === "string") {
+            return `Transaction rejected on-chain: ${detail}. Refresh the quote and try again.`;
+          }
+        }
+      }
+    } catch (_) {
+      // fall through
+    }
+    return "Transaction was rejected by the network. Check your balance and try again.";
+  }
   return msg.length > 120 ? msg.slice(0, 120) + "…" : msg;
 }
