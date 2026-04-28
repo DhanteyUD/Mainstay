@@ -400,7 +400,7 @@ export default function PostTradeCard({
       transition={{ duration: 0.2 }}
     >
       <motion.div
-        className="bg-terminal-card border border-terminal-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg shadow-2xl overflow-hidden"
+        className="bg-terminal-card border border-terminal-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
         initial={{ scale: 0.92, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.92, opacity: 0, y: 20 }}
@@ -425,7 +425,7 @@ export default function PostTradeCard({
         </div>
 
         {/* ── Body ── */}
-        <div className="p-4 sm:p-5 space-y-3 max-h-[85vh] sm:max-h-[80vh] overflow-y-auto">
+        <div className="p-4 sm:p-5 space-y-3 flex-1 min-h-0 overflow-y-auto">
           {/* Execution grade badge */}
           {grade && (
             <motion.div
