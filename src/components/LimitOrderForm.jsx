@@ -31,6 +31,7 @@ export default function LimitOrderForm({ onAddOrder }) {
   const [inputAmount, setInputAmount] = useState("");
   const [targetPrice, setTargetPrice] = useState("");
   const [currentPrice, setCurrentPrice] = useState(null);
+  const [outputPrice, setOutputPrice] = useState(null);
   const [priceLoading, setPriceLoading] = useState(false);
   const [priceError, setPriceError] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -59,12 +60,29 @@ export default function LimitOrderForm({ onAddOrder }) {
     };
   }, [inputToken]);
 
+  useEffect(() => {
+    if (!outputToken) return;
+    let cancelled = false;
+    fetchTokenPriceUsd(outputToken.mint)
+      .then((p) => { if (!cancelled) setOutputPrice(p); })
+      .catch(() => { if (!cancelled) setOutputPrice(null); });
+    return () => { cancelled = true; };
+  }, [outputToken]);
+
   const target = parseFloat(targetPrice);
   const direction =
     !isNaN(target) && target > 0 && currentPrice != null
       ? target >= currentPrice
         ? "above"
         : "below"
+      : null;
+
+  const estimatedReceive =
+    parseFloat(inputAmount) > 0 &&
+    target > 0 &&
+    outputPrice != null &&
+    outputPrice > 0
+      ? (parseFloat(inputAmount) * target) / outputPrice
       : null;
 
   const canSubmit =
@@ -183,9 +201,19 @@ export default function LimitOrderForm({ onAddOrder }) {
               </span>
             </div>
             <div className="flex items-center gap-3 px-4 pb-3">
-              <span className="flex-1 font-mono text-xs text-terminal-dim/50 italic">
-                estimated at execution time
-              </span>
+              {estimatedReceive != null ? (
+                <span className="flex-1 font-mono text-xl sm:text-2xl font-bold text-terminal-text">
+                  ≈{" "}
+                  {estimatedReceive.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: estimatedReceive < 1 ? 6 : 2,
+                  })}
+                </span>
+              ) : (
+                <span className="flex-1 font-mono text-xs text-terminal-dim/50 italic">
+                  estimated at execution time
+                </span>
+              )}
               <TokenSelector
                 selected={outputToken}
                 onChange={handleOutputTokenChange}

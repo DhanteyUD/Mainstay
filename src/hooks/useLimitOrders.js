@@ -10,12 +10,69 @@ import {
   JUPITER_SWAP_API,
 } from "../config";
 import { useNetwork } from "../contexts/NetworkContext";
+import { supabase } from "../lib/supabase";
+import { TOKEN_LIST } from "../config";
 
 const STORAGE_KEY = "mainstay_limit_orders_v1";
 const POLL_MS = 30_000;
+const DB_ENABLED = supabase !== null;
 
-function genId() {
-  return `lo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+function getTable(devnet) {
+  return devnet ? "devLimitOrders" : "limitOrders";
+}
+
+function buildRow(order) {
+  return {
+    id: order.id,
+    wallet_address: order.walletAddress,
+    status: order.status,
+    direction: order.direction,
+    input_token_mint: order.inputToken.mint,
+    input_token_symbol: order.inputToken.symbol,
+    input_token_decimals: order.inputToken.decimals,
+    output_token_mint: order.outputToken.mint,
+    output_token_symbol: order.outputToken.symbol,
+    output_token_decimals: order.outputToken.decimals,
+    input_amount: String(order.inputAmount),
+    target_price: order.targetPrice,
+    executed_at: order.executedAt ?? null,
+    signature: order.signature ?? null,
+    explorer_url: order.explorerUrl ?? null,
+    error: order.error ?? null,
+  };
+}
+
+function logoForMint(mint) {
+  return TOKEN_LIST.find((t) => t.mint === mint)?.logo ?? null;
+}
+
+function rowToOrder(row) {
+  return {
+    id: row.id,
+    walletAddress: row.wallet_address,
+    network: row.network ?? null,
+    status: row.status,
+    direction: row.direction,
+    inputToken: {
+      mint: row.input_token_mint,
+      symbol: row.input_token_symbol,
+      decimals: row.input_token_decimals,
+      logo: logoForMint(row.input_token_mint),
+    },
+    outputToken: {
+      mint: row.output_token_mint,
+      symbol: row.output_token_symbol,
+      decimals: row.output_token_decimals,
+      logo: logoForMint(row.output_token_mint),
+    },
+    inputAmount: row.input_amount,
+    targetPrice: Number(row.target_price),
+    createdAt: row.created_at,
+    executedAt: row.executed_at ?? null,
+    signature: row.signature ?? null,
+    explorerUrl: row.explorer_url ?? null,
+    error: row.error ?? null,
+  };
 }
 
 function loadStored(walletAddress) {
@@ -126,6 +183,31 @@ async function confirmTx(connection, sig) {
   throw new Error("confirmation timeout — check your wallet");
 }
 
+function dbInsert(table, row) {
+  if (!DB_ENABLED) return;
+  supabase
+    .from(table)
+    .insert(row)
+    .then(({ error: err }) => {
+      if (err) console.warn(`[useLimitOrders] insert to ${table} failed:`, err.message);
+    });
+}
+
+function dbUpdate(table, id, patch) {
+  if (!DB_ENABLED) return;
+  supabase
+    .from(table)
+    .update(patch)
+    .eq("id", id)
+    .then(({ error: err }) => {
+      if (err) console.warn(`[useLimitOrders] update on ${table} failed:`, err.message);
+    });
+}
+
+function genId() {
+  return `lo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export function useLimitOrders() {
   const wallet = useWallet();
   const { isDevnet } = useNetwork();
@@ -141,22 +223,49 @@ export function useLimitOrders() {
   const isDevnetRef = useRef(isDevnet);
   const executingSet = useRef(new Set());
 
-  useEffect(() => {
-    ordersRef.current = orders;
-  }, [orders]);
-  useEffect(() => {
-    walletRef.current = wallet;
-  }, [wallet]);
-  useEffect(() => {
-    addrRef.current = walletAddress;
-  }, [walletAddress]);
-  useEffect(() => {
-    isDevnetRef.current = isDevnet;
-  }, [isDevnet]);
+  useEffect(() => { ordersRef.current = orders; }, [orders]);
+  useEffect(() => { walletRef.current = wallet; }, [wallet]);
+  useEffect(() => { addrRef.current = walletAddress; }, [walletAddress]);
+  useEffect(() => { isDevnetRef.current = isDevnet; }, [isDevnet]);
 
   useEffect(() => {
-    setOrders(walletAddress ? loadStored(walletAddress) : []);
-  }, [walletAddress]);
+    if (!walletAddress) {
+      setOrders([]);
+      return;
+    }
+
+    if (!DB_ENABLED) {
+      setOrders(loadStored(walletAddress));
+      return;
+    }
+
+    const table = getTable(isDevnet);
+    console.log("[useLimitOrders] loading from", table, "wallet:", walletAddress);
+
+    supabase
+      .from(table)
+      .select("*")
+      .eq("wallet_address", walletAddress)
+      .order("created_at", { ascending: false })
+      .limit(200)
+      .then(({ data, error: err }) => {
+        if (err) {
+          console.warn("[useLimitOrders] fetch error:", err.message);
+          setOrders(loadStored(walletAddress));
+          return;
+        }
+        console.log("[useLimitOrders] rows from DB:", data?.length ?? 0, data);
+        if (data && data.length > 0) {
+          const mapped = data.map(rowToOrder);
+          setOrders(mapped);
+          storeOrders(walletAddress, mapped);
+        } else {
+          // DB returned nothing — try localStorage before giving up
+          const local = loadStored(walletAddress);
+          setOrders(local);
+        }
+      });
+  }, [walletAddress, isDevnet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const persist = useCallback((updater) => {
     setOrders((prev) => {
@@ -172,6 +281,7 @@ export function useLimitOrders() {
       const order = {
         id: genId(),
         walletAddress: addrRef.current,
+        network: isDevnetRef.current ? "devnet" : "mainnet",
         status: "pending",
         createdAt: new Date().toISOString(),
         executedAt: null,
@@ -181,6 +291,7 @@ export function useLimitOrders() {
         ...params,
       };
       persist((prev) => [order, ...prev]);
+      dbInsert(getTable(isDevnetRef.current), buildRow(order));
       return order.id;
     },
     [persist],
@@ -195,6 +306,7 @@ export function useLimitOrders() {
             : o,
         ),
       );
+      dbUpdate(getTable(isDevnetRef.current), id, { status: "cancelled" });
     },
     [persist],
   );
@@ -231,12 +343,13 @@ export function useLimitOrders() {
             o.id === order.id ? { ...o, status: "executing" } : o,
           ),
         );
+        dbUpdate(getTable(isDevnetRef.current), order.id, { status: "executing" });
+
         (async () => {
           try {
             const addr = addrRef.current;
             const wlt = walletRef.current;
             const devnet = isDevnetRef.current;
-
             let sig, explorerUrl;
 
             if (devnet) {
@@ -246,23 +359,12 @@ export function useLimitOrders() {
                 amount: order.inputAmount,
                 decimals: order.inputToken.decimals,
               });
-              const swapData = await fetchJupiterSwapTxForOrder(
-                jupiterQuote,
-                addr,
-              );
-              const conn = new Connection(SOLANA_DEVNET_RPC, {
-                commitment: "confirmed",
-                wsEndpoint: "",
-              });
-              const txBytes = Uint8Array.from(
-                atob(swapData.swapTransaction),
-                (c) => c.charCodeAt(0),
-              );
+              const swapData = await fetchJupiterSwapTxForOrder(jupiterQuote, addr);
+              const conn = new Connection(SOLANA_DEVNET_RPC, { commitment: "confirmed", wsEndpoint: "" });
+              const txBytes = Uint8Array.from(atob(swapData.swapTransaction), (c) => c.charCodeAt(0));
               const tx = VersionedTransaction.deserialize(txBytes);
               const signed = await wlt.signTransaction(tx);
-              sig = await conn.sendRawTransaction(signed.serialize(), {
-                skipPreflight: true,
-              });
+              sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: true });
               await confirmTx(conn, sig);
               explorerUrl = `https://solscan.io/tx/${sig}?cluster=devnet`;
             } else {
@@ -273,47 +375,40 @@ export function useLimitOrders() {
                 decimals: order.inputToken.decimals,
                 walletPublicKey: addr,
               });
-              const conn = new Connection(SOLANA_RPC_PROXY, {
-                commitment: "confirmed",
-                wsEndpoint: "",
-              });
-              const txBytes = Uint8Array.from(atob(quote.transaction), (c) =>
-                c.charCodeAt(0),
-              );
+              const conn = new Connection(SOLANA_RPC_PROXY, { commitment: "confirmed", wsEndpoint: "" });
+              const txBytes = Uint8Array.from(atob(quote.transaction), (c) => c.charCodeAt(0));
               const tx = VersionedTransaction.deserialize(txBytes);
               const signed = await wlt.signTransaction(tx);
-              const sig = await conn.sendRawTransaction(signed.serialize(), {
-                skipPreflight: true,
-              });
+              sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: true });
               await confirmTx(conn, sig);
               explorerUrl = `https://solscan.io/tx/${sig}`;
             }
 
+            const executedAt = new Date().toISOString();
             persist((prev) =>
               prev.map((o) =>
                 o.id === order.id
-                  ? {
-                      ...o,
-                      status: "executed",
-                      executedAt: new Date().toISOString(),
-                      signature: sig,
-                      explorerUrl,
-                    }
+                  ? { ...o, status: "executed", executedAt, signature: sig, explorerUrl }
                   : o,
               ),
             );
+            dbUpdate(getTable(devnet), order.id, {
+              status: "executed",
+              executed_at: executedAt,
+              signature: sig,
+              explorer_url: explorerUrl,
+            });
           } catch (err) {
+            const errorMsg = (err.message || "execution failed").slice(0, 120);
             persist((prev) =>
               prev.map((o) =>
-                o.id === order.id
-                  ? {
-                      ...o,
-                      status: "failed",
-                      error: (err.message || "execution failed").slice(0, 120),
-                    }
-                  : o,
+                o.id === order.id ? { ...o, status: "failed", error: errorMsg } : o,
               ),
             );
+            dbUpdate(getTable(isDevnetRef.current), order.id, {
+              status: "failed",
+              error: errorMsg,
+            });
           } finally {
             executingSet.current.delete(order.id);
           }
@@ -326,11 +421,16 @@ export function useLimitOrders() {
     return () => clearInterval(id);
   }, [connected, walletAddress, persist]);
 
+  const currentNetwork = isDevnet ? "devnet" : "mainnet";
+  const filteredOrders = orders.filter(
+    (o) => !o.network || o.network === currentNetwork,
+  );
+
   return {
-    orders,
+    orders: filteredOrders,
     currentPrices,
     addOrder,
     cancelOrder,
-    pendingCount: orders.filter((o) => o.status === "pending").length,
+    pendingCount: filteredOrders.filter((o) => o.status === "pending").length,
   };
 }
