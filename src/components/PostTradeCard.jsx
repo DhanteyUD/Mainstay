@@ -139,18 +139,34 @@ async function generateShareImage({
   ctx.lineWidth = 1.5;
   ctx.strokeRect(1, 1, W - 2, H - 2);
 
-  ctx.fillStyle = "#00ff88";
-  ctx.font = "bold 28px monospace";
-  ctx.fillText(
-    "https://res.cloudinary.com/dhantey/image/upload/v1777367316/Dante/mainstay-logo_vydcnr.png",
-    48,
-    68,
-  );
+  await (async () => {
+    try {
+      const res = await fetch(
+        "https://res.cloudinary.com/dhantey/image/upload/v1777367316/Dante/mainstay-logo_vydcnr.png",
+      );
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      await new Promise((resolve) => {
+        const logo = new Image();
+        logo.onload = () => {
+          ctx.drawImage(logo, 40, 36, 38, 38);
+          URL.revokeObjectURL(blobUrl);
+          resolve();
+        };
+        logo.onerror = () => { URL.revokeObjectURL(blobUrl); resolve(); };
+        logo.src = blobUrl;
+      });
+    } catch { /* logo unavailable */ }
+  })();
 
-  ctx.fillStyle = "#00ff88";
   ctx.font = "bold 18px monospace";
-  ctx.fillText("Mainstay", 84, 58);
-  ctx.fillStyle = "rgba(0,255,136,0.5)";
+  ctx.fillStyle = "#e2e8f0";
+  ctx.fillText("Main", 84, 58);
+  const mainWidth = ctx.measureText("Main").width;
+  ctx.fillStyle = "#00e5ff";
+  ctx.fillText("stay", 84 + mainWidth, 58);
+  ctx.fillStyle = "#8892a4";
   ctx.font = "11px monospace";
   ctx.fillText("PROTECTED BY DFLOW", 84, 74);
 
@@ -168,7 +184,7 @@ async function generateShareImage({
     desc: "",
   };
   const cx = W - 100,
-    cy = 180;
+    cy = 140;
   ctx.beginPath();
   ctx.arc(cx, cy, 52, 0, Math.PI * 2);
   ctx.fillStyle = grade_.bg;
@@ -370,7 +386,7 @@ export default function PostTradeCard({
     if (!shareImgUrl) return;
     const a = document.createElement("a");
     a.href = shareImgUrl;
-    a.download = "mev-shield-trade.png";
+    a.download = "mainstay-trade.png";
     a.click();
   };
 
@@ -459,7 +475,7 @@ export default function PostTradeCard({
                 </div>
               </div>
               <motion.div
-                className="w-12 h-12 rounded-full flex items-center justify-center border-2 font-mono font-black text-xl -mt-3"
+                className="w-12 h-12 rounded-full flex items-center justify-center border-2 font-mono font-black text-xl"
                 style={{
                   borderColor: grade.color,
                   color: grade.color,
