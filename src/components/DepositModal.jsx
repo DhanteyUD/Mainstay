@@ -33,7 +33,9 @@ export default function DepositModal({ walletAddress, onClose }) {
   return (
     <div
       className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center sm:p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <motion.div
         className="bg-terminal-card border-t sm:border border-terminal-border sm:rounded-2xl w-full sm:max-w-md shadow-2xl flex flex-col overflow-hidden"
@@ -49,10 +51,10 @@ export default function DepositModal({ walletAddress, onClose }) {
               DEPOSIT
             </span>
             <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-mono text-xs font-semibold ${
+              className={`inline-flex items-center gap-2 px-2 py-0.5 rounded-full font-mono text-xs font-semibold ${
                 isDevnet
                   ? "bg-terminal-yellow/10 text-terminal-yellow border border-terminal-yellow/20"
-                  : "bg-terminal-green/10 text-terminal-green border border-terminal-green/20"
+                  : "bg-terminal-border/10 text-terminal-dim border border-terminal-dim/20"
               }`}
             >
               <span

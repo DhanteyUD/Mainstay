@@ -1,6 +1,7 @@
 import React from 'react'
 import { Shield } from 'lucide-react'
 import { useNetwork } from '../contexts/NetworkContext'
+import logo from "../assets/mainstay-logo.png"
 
 export default function AppFooter() {
   const { isDevnet } = useNetwork()
@@ -9,8 +10,8 @@ export default function AppFooter() {
     <footer className="border-t border-terminal-border mt-8 py-4">
       <div className="max-w-5xl mx-auto px-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Shield size={12} className="text-terminal-accent" />
+          <div className="flex items-center gap-1">
+            <img src={logo} alt="Mainstay Logo" className="w-6 h-6" />
             <span className="font-mono text-xs text-terminal-dim">Mainstay — Powered by DFlow Protocol</span>
           </div>
           <div className="flex items-center gap-4">
