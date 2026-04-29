@@ -1,3 +1,6 @@
+import "@solana/wallet-adapter-react-ui/styles.css";
+import "./index.css";
+import "./sentry";
 import React, { useMemo, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import {
@@ -6,15 +9,27 @@ import {
 } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import App from "./App";
-import "@solana/wallet-adapter-react-ui/styles.css";
-import "./index.css";
 import { NetworkContextProvider, useNetwork } from "./contexts/NetworkContext";
 import { AuthProvider } from "./lib/auth-context";
+import { registerSW } from "virtual:pwa-register";
+import * as Sentry from "@sentry/react";
 
 const connectionConfig = {
   commitment: "confirmed",
   wsEndpoint: "",
 };
+
+const updateSW = registerSW({
+  onNeedRefresh() {
+    if (
+      confirm(
+        "A new version of Mainstay is available. Would you like to update now?",
+      )
+    ) {
+      updateSW();
+    }
+  },
+});
 
 function useSolflareRecommended() {
   useEffect(() => {
@@ -135,6 +150,16 @@ const root =
 
 root.render(
   <React.StrictMode>
+    <Sentry.ErrorBoundary
+      fallback={
+        <div className="flex flex-col items-center justify-center h-screen">
+          <h1 className="text-2xl font-bold mb-4">Something went wrong.</h1>
+          <p className="text-gray-600 mb-6">
+            We're sorry, but something went wrong. Please try again later.
+          </p>
+        </div>
+      }
+    > 
     <NetworkContextProvider>
       <AuthProvider>
         <WalletContextProvider>
@@ -142,5 +167,6 @@ root.render(
         </WalletContextProvider>
       </AuthProvider>
     </NetworkContextProvider>
+    </Sentry.ErrorBoundary>
   </React.StrictMode>,
 );

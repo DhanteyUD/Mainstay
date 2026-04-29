@@ -240,7 +240,6 @@ export function useLimitOrders() {
     }
 
     const table = getTable(isDevnet);
-    console.log("[useLimitOrders] loading from", table, "wallet:", walletAddress);
 
     supabase
       .from(table)
@@ -254,7 +253,6 @@ export function useLimitOrders() {
           setOrders(loadStored(walletAddress));
           return;
         }
-        console.log("[useLimitOrders] rows from DB:", data?.length ?? 0, data);
         if (data && data.length > 0) {
           const mapped = data.map(rowToOrder);
           setOrders(mapped);
