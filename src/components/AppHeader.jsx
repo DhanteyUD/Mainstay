@@ -6,7 +6,7 @@ import { useWalletBalance } from "../hooks/useWalletBalance";
 import { useAuth } from "../lib/auth-context";
 import logo from "../assets/mainstay-logo.png";
 
-export default function AppHeader() {
+export default function AppHeader({ balanceHidden = false }) {
   const { connected } = useWallet();
   const { signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
@@ -29,23 +29,19 @@ export default function AppHeader() {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
     >
-      <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1 shrink-0">
-          <div className="relative">
-            <img src={logo} alt="Mainstay Logo" className="w-8 h-8" />
-          </div>
+      <div className="w-full px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 shrink-0">
+          <img src={logo} alt="Mainstay Logo" className="w-8 h-8" />
           <span className="font-mono font-bold text-sm text-terminal-text tracking-wider">
             Main<span className="text-terminal-accent">stay</span>
           </span>
         </div>
 
-        {/* Tagline */}
         <div className="hidden md:flex items-center gap-2 text-terminal-dim text-xs font-mono">
           <Lock size={11} className="text-terminal-accent" />
           <span>Protected DEX swaps on Solana</span>
         </div>
 
-        {/* Balance chip + ONLINE badge */}
         <div className="flex items-center gap-2">
           <AnimatePresence>
             {connected && (
@@ -63,11 +59,13 @@ export default function AppHeader() {
                   </span>
                 ) : balance != null ? (
                   <span className="font-mono text-xs text-terminal-green tracking-wider">
-                    {balance < 0.001
-                      ? balance.toFixed(6)
-                      : balance < 100
-                        ? balance.toFixed(4)
-                        : balance.toFixed(2)}{" "}
+                    {balanceHidden ? "••••" : (
+                      balance < 0.001
+                        ? balance.toFixed(6)
+                        : balance < 100
+                          ? balance.toFixed(4)
+                          : balance.toFixed(2)
+                    )}{" "}
                     <span className="text-terminal-bright font-semibold">SOL</span>
                   </span>
                 ) : (
@@ -89,7 +87,7 @@ export default function AppHeader() {
             )}
           </AnimatePresence>
 
-          <div className="flex items-center gap-2 bg-terminal-card border border-terminal-border rounded-lg px-2.5 py-1.5">
+          <div className="flex items-center gap-1.5 bg-terminal-card border border-terminal-border rounded-lg px-2.5 py-1.5">
             <ShieldCheck size={11} className="text-terminal-green animate-pulse" />
             <span className="hidden sm:inline font-mono text-xs text-terminal-green tracking-wider">
               ACTIVE

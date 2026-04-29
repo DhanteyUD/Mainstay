@@ -6,9 +6,9 @@ import { useNetwork } from "../contexts/NetworkContext";
 export default function ProtectionPanel({ showPredictionInfo }) {
   const { isDevnet } = useNetwork();
 
-  return (
-    <div className="space-y-4">
-      {showPredictionInfo && (
+  if (showPredictionInfo && !isDevnet) {
+    return (
+      <div className="space-y-4">
         <InfoCard
           title="Prediction Markets"
           accentColor="text-terminal-yellow"
@@ -29,8 +29,12 @@ export default function ProtectionPanel({ showPredictionInfo }) {
             <Feature label="feeBps: 8 with dynamic priority fee" />
           </div>
         </InfoCard>
-      )}
+      </div>
+    );
+  }
 
+  return (
+    <div className="space-y-4">
       {!isDevnet && (
         <>
           <InfoCard

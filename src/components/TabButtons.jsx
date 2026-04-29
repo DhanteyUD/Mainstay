@@ -15,11 +15,17 @@ export function MainTabBtn({ active, onClick, icon, label, badge, soon }) {
       }`}
     >
       {icon}
-      <span className="hidden sm:inline">{label}</span>
+      <span className="hidden lg:inline">{label}</span>
+      <span className="hidden sm:inline lg:hidden">{label.split(" ")[0]}</span>
       {soon && (
-        <span className="hidden sm:inline font-mono text-[9px] font-bold tracking-widest text-terminal-dim/40 border border-terminal-border rounded px-1 py-0.5 leading-none">
-          COMING SOON
-        </span>
+        <>
+          <span className="hidden lg:inline font-mono text-[9px] font-bold tracking-widest text-terminal-dim/40 border border-terminal-border rounded px-1 py-0.5 leading-none">
+            COMING SOON
+          </span>
+          <span className="hidden sm:inline lg:hidden font-mono text-[9px] font-bold tracking-widest text-terminal-dim/40 border border-terminal-border rounded px-1 py-0.5 leading-none">
+            SOON
+          </span>
+        </>
       )}
 
       <AnimatePresence>

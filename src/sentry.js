@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/react";
 
 Sentry.init({
+    enabled: import.meta.env.PROD,
     dsn: import.meta.env.VITE_SENTRY_DSN,
     tunnel: '/api/sentry-tunnel',
     sendDefaultPii: true,

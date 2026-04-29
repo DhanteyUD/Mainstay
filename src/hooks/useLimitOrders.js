@@ -208,6 +208,27 @@ function genId() {
   return `lo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function humanizeError(err) {
+  const raw = typeof err === "string" ? err : (err?.message ?? "");
+  if (!raw) return "Order execution failed";
+
+  if (/user rejected/i.test(raw)) return "Transaction rejected in wallet";
+  if (/confirmation timeout/i.test(raw)) return "Transaction timed out — check your wallet";
+  if (/on-chain error/i.test(raw)) return "Transaction failed on-chain";
+  if (/no route found/i.test(raw)) return "No swap route available for this pair";
+  if (/quote failed/i.test(raw)) return "Could not get a quote — try again";
+  if (/price fetch failed/i.test(raw)) return "Could not fetch current price";
+  if (/swap tx failed/i.test(raw)) return "Swap transaction could not be built";
+  if (/insufficient.*balance/i.test(raw)) return "Insufficient balance";
+  if (/blockhash/i.test(raw)) return "Transaction expired — try again";
+
+  if (/^\s*(import|export|const|let|var|function)\s/.test(raw)) {
+    return "Order execution failed";
+  }
+
+  return raw.slice(0, 120);
+}
+
 export function useLimitOrders() {
   const wallet = useWallet();
   const { isDevnet } = useNetwork();
@@ -397,7 +418,7 @@ export function useLimitOrders() {
               explorer_url: explorerUrl,
             });
           } catch (err) {
-            const errorMsg = (err.message || "execution failed").slice(0, 120);
+            const errorMsg = humanizeError(err);
             persist((prev) =>
               prev.map((o) =>
                 o.id === order.id ? { ...o, status: "failed", error: errorMsg } : o,

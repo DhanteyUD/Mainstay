@@ -290,7 +290,7 @@ function OrderRow({ order, currentPrice, onCancel }) {
         {order.error && (
           <div className="col-span-2">
             <div className="text-terminal-dim mb-0.5">Error</div>
-            <div className="text-terminal-red">{order.error}</div>
+            <div className="text-terminal-red break-words">{order.error}</div>
           </div>
         )}
       </div>
