@@ -147,25 +147,27 @@ export default function LimitOrderList({ orders, currentPrices, onCancel }) {
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          <AnimatePresence initial={false}>
-            {filtered.map((order) => (
-              <motion.div
-                key={order.id}
-                layout
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <OrderRow
-                  order={order}
-                  currentPrice={currentPrices[order.inputToken.mint]?.usdPrice}
-                  onCancel={onCancel}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+        <div className="overflow-y-auto max-h-[700px] pr-1 scrollbar-thin scrollbar-thumb-terminal-border scrollbar-track-transparent">
+          <div className="space-y-2">
+            <AnimatePresence initial={false}>
+              {filtered.map((order) => (
+                <motion.div
+                  key={order.id}
+                  layout
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <OrderRow
+                    order={order}
+                    currentPrice={currentPrices[order.inputToken.mint]?.usdPrice}
+                    onCancel={onCancel}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
         </div>
       )}
     </div>
