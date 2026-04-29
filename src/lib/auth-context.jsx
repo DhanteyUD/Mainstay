@@ -1,12 +1,16 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from './supabase';
 
 const AuthContext = createContext(null);
+
+const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const IDLE_EVENTS = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const idleTimer = useRef(null);
 
   useEffect(() => {
     if (!supabase) {
@@ -27,6 +31,25 @@ export function AuthProvider({ children }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user || !supabase) return;
+
+    const resetTimer = () => {
+      clearTimeout(idleTimer.current);
+      idleTimer.current = setTimeout(() => {
+        supabase.auth.signOut();
+      }, IDLE_TIMEOUT_MS);
+    };
+
+    resetTimer();
+    IDLE_EVENTS.forEach(e => window.addEventListener(e, resetTimer, { passive: true }));
+
+    return () => {
+      clearTimeout(idleTimer.current);
+      IDLE_EVENTS.forEach(e => window.removeEventListener(e, resetTimer));
+    };
+  }, [user]);
 
   const redirectTo = () =>
     import.meta.env.VITE_AUTH_REDIRECT_URL || window.location.origin;
