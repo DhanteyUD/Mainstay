@@ -32,11 +32,11 @@ export default function DepositModal({ walletAddress, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center sm:p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div
-        className="bg-terminal-card border-t sm:border border-terminal-border sm:rounded-2xl w-full sm:max-w-sm shadow-2xl flex flex-col overflow-hidden"
+        className="bg-terminal-card border-t sm:border border-terminal-border sm:rounded-2xl w-full sm:max-w-md shadow-2xl flex flex-col overflow-hidden"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 40 }}
@@ -137,9 +137,8 @@ export default function DepositModal({ walletAddress, onClose }) {
 
         {/* Footer */}
         <div className="px-5 pb-5 shrink-0 flex items-center justify-center gap-1.5 pt-1">
-          <Shield size={11} className="text-terminal-accent" />
-          <span className="font-mono text-xs text-terminal-accent/70 tracking-wider">
-            Solana • Only send SOL or SPL tokens to this address
+          <span className="font-mono text-[10px] text-terminal-accent/70 tracking-wider">
+            Use to receive token on the Solana network only.
           </span>
         </div>
       </motion.div>

@@ -28,7 +28,7 @@ export default function EdgeStatusCard({
       onHoverEnd={() => setExpanded(false)}
       onTap={() => setExpanded((prev) => !prev)}
     >
-      <div className="flex rounded-l-2xl overflow-hidden shadow-2xl" style={{ width: 196 }}>
+      <div className="flex rounded-l-2xl overflow-hidden shadow-2xl cursor-pointer" style={{ width: 196 }}>
         <div
           className={`w-3 shrink-0 ${stripBg} flex flex-col items-center justify-center gap-1.5`}
         >

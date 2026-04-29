@@ -89,7 +89,7 @@ function MainApp() {
   });
 
   const [balanceHidden, setBalanceHidden] = useState(
-    () => localStorage.getItem("mainstay_balance_hidden") === "true"
+    () => localStorage.getItem("mainstay_balance_hidden") === "true",
   );
 
   function toggleBalanceHidden() {
@@ -113,6 +113,8 @@ function MainApp() {
     <div className="min-h-screen bg-terminal-bg relative">
       {/* Scan-line + grid overlays */}
       <div className="scan-line" />
+
+      {/* grid */}
       <div
         className="fixed inset-0 pointer-events-none opacity-[0.015]"
         style={{
@@ -121,6 +123,17 @@ function MainApp() {
           backgroundSize: "40px 40px",
         }}
       />
+
+      {/* radial grid */}
+      {/* <div
+        className="fixed inset-0 pointer-events-none opacity-[0.25]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, rgba(0,229,255,0.35) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      /> */}
+
       <AppHeader balanceHidden={balanceHidden} />
       <AnimatePresence>
         {isMobile && !isWalletBrowser && !connected && <MobileWalletBanner />}
@@ -137,7 +150,9 @@ function MainApp() {
           />
         }
         accentClass={isDevnet ? "text-terminal-dim/30" : risk.accent}
-        stripBg={isDevnet ? "bg-terminal-dim/20" : (risk.pulse ?? "bg-terminal-green")}
+        stripBg={
+          isDevnet ? "bg-terminal-dim/20" : (risk.pulse ?? "bg-terminal-green")
+        }
         pulse={riskLevel !== null && !isDevnet}
         pulseColor={risk.pulse}
         topOffset="35%"

@@ -37,10 +37,10 @@ export default function AppHeader({ balanceHidden = false }) {
           </span>
         </div>
 
-        <div className="hidden md:flex items-center gap-2 text-terminal-dim text-xs font-mono">
+        {/* <div className="hidden md:flex items-center gap-2 text-terminal-dim text-xs font-mono">
           <Lock size={11} className="text-terminal-accent" />
           <span>Protected DEX swaps on Solana</span>
-        </div>
+        </div> */}
 
         <div className="flex items-center gap-2">
           <AnimatePresence>
@@ -59,14 +59,16 @@ export default function AppHeader({ balanceHidden = false }) {
                   </span>
                 ) : balance != null ? (
                   <span className="font-mono text-xs text-terminal-green tracking-wider">
-                    {balanceHidden ? "••••" : (
-                      balance < 0.001
+                    {balanceHidden
+                      ? "••••"
+                      : balance < 0.001
                         ? balance.toFixed(6)
                         : balance < 100
                           ? balance.toFixed(4)
-                          : balance.toFixed(2)
-                    )}{" "}
-                    <span className="text-terminal-bright font-semibold">SOL</span>
+                          : balance.toFixed(2)}{" "}
+                    <span className="text-terminal-bright font-semibold">
+                      SOL
+                    </span>
                   </span>
                 ) : (
                   <span className="font-mono text-xs text-terminal-dim tracking-wider">
@@ -88,7 +90,10 @@ export default function AppHeader({ balanceHidden = false }) {
           </AnimatePresence>
 
           <div className="flex items-center gap-1.5 bg-terminal-card border border-terminal-border rounded-lg px-2.5 py-1.5">
-            <ShieldCheck size={11} className="text-terminal-green animate-pulse" />
+            <ShieldCheck
+              size={11}
+              className="text-terminal-green animate-pulse"
+            />
             <span className="hidden sm:inline font-mono text-xs text-terminal-green tracking-wider">
               ACTIVE
             </span>

@@ -208,7 +208,7 @@ export default function PriceChart({ solPrice, inputToken, outputToken }) {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-0.5 bg-terminal-border/30 rounded-md p-0.5">
             <button
               onClick={prevStyle}
@@ -232,13 +232,14 @@ export default function PriceChart({ solPrice, inputToken, outputToken }) {
               <ChevronRight size={12} />
             </button>
           </div>
+
+          <span className="text-[9px] uppercase tracking-wider text-terminal-dim font-mono">
+            15m
+          </span>
         </div>
       </div>
 
       <div className="relative h-64" style={{ background: "#0d1117" }}>
-        <span className="absolute left-2 top-2 text-[9px] uppercase tracking-wider text-terminal-dim font-mono z-50">
-          15m
-        </span>
         <div id={CONTAINER_ID} ref={containerRef} className="w-full h-full" />
       </div>
 
