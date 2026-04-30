@@ -65,6 +65,62 @@ export const TOKENS = {
     decimals: 6,
     logo: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png',
   },
+  MSOL: {
+    symbol: 'mSOL',
+    name: 'Marinade Staked SOL',
+    mint: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So',
+    decimals: 9,
+    logo: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png',
+  },
+  JITOSOL: {
+    symbol: 'jitoSOL',
+    name: 'Jito Staked SOL',
+    mint: 'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn',
+    decimals: 9,
+    logo: 'https://storage.googleapis.com/token-metadata/JitoSOL-256.png',
+  },
+  BSOL: {
+    symbol: 'bSOL',
+    name: 'BlazeStake Staked SOL',
+    mint: 'bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1',
+    decimals: 9,
+    logo: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1/logo.png',
+  },
+  ORCA: {
+    symbol: 'ORCA',
+    name: 'Orca',
+    mint: 'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE',
+    decimals: 6,
+    logo: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png',
+  },
+  RENDER: {
+    symbol: 'RENDER',
+    name: 'Render Token',
+    mint: 'rndrizKT3MK1iimdxRdWabcF7Zg7AR5T4nud4EkHBof',
+    decimals: 8,
+    logo: 'https://coin-images.coingecko.com/coins/images/11636/small/rndr.png',
+  },
+  MNDE: {
+    symbol: 'MNDE',
+    name: 'Marinade',
+    mint: 'MNDEFzGvMt87ueuHvVU9VcTqsAP5b3fTGPsHuuPA5ey',
+    decimals: 9,
+    logo: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MNDEFzGvMt87ueuHvVU9VcTqsAP5b3fTGPsHuuPA5ey/logo.png',
+  },
+  WEN: {
+    symbol: 'WEN',
+    name: 'Wen',
+    mint: 'WENWENvqqNya429ubCdR81ZmD69brwQaaBYY6p3LCpk',
+    decimals: 5,
+    logo: 'https://coin-images.coingecko.com/coins/images/34856/small/wen.jpeg',
+  },
+  SAMO: {
+    symbol: 'SAMO',
+    name: 'Samoyed Coin',
+    mint: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
+    decimals: 9,
+    logo: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU/logo.png',
+  },
 };
 
 export const TOKEN_LIST = Object.values(TOKENS);

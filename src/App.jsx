@@ -8,7 +8,6 @@ import {
   Server,
   Target,
 } from "lucide-react";
-import { TbCurrencySolana } from "react-icons/tb";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -24,7 +23,8 @@ import LimitOrderList from "./components/LimitOrderList";
 import TradeHistory from "./components/TradeHistory";
 import OnboardingScreen, { useOnboarding } from "./components/OnboardingScreen";
 import MobileWalletBanner from "./components/MobileWalletBanner";
-import StatCard from "./components/StatCard";
+import WalletCard from "./components/WalletCard";
+import EdgeStatusCard from "./components/EdgeStatusCard";
 import ProtectionPanel from "./components/ProtectionPanel";
 import PredictionComingSoon from "./components/PredictionComingSoon";
 import PredictionMarketsInterface from "./components/PredictionMarketsInterface";
@@ -33,6 +33,7 @@ import { useNetwork } from "./contexts/NetworkContext";
 
 import { isMobile, isWalletBrowser } from "./lib/device";
 import { useTrades } from "./hooks/useTrades";
+import { useReceivedTransfers } from "./hooks/useReceivedTransfers";
 import { useLimitOrders } from "./hooks/useLimitOrders";
 import { useNetworkStats } from "./hooks/useNetworkStats";
 import { useWalletBalance } from "./hooks/useWalletBalance";
@@ -74,8 +75,9 @@ function MainApp() {
   const { publicKey, connected } = useWallet();
   const walletAddress = publicKey?.toBase58() || null;
 
-  const { trades, loading, error, saveTrade, fetchTrades, dbEnabled } =
+  const { trades, loading, error, saveTrade, saveTransfer, fetchTrades, dbEnabled } =
     useTrades(walletAddress);
+  const { received, fetchReceived } = useReceivedTransfers(walletAddress);
   const { orders, currentPrices, addOrder, cancelOrder, pendingCount } =
     useLimitOrders();
   const { solPrice, priceLoading, uptimePct, riskLevel } = useNetworkStats();
@@ -88,8 +90,19 @@ function MainApp() {
     outputToken: TOKENS.USDC,
   });
 
+  const [balanceHidden, setBalanceHidden] = useState(
+    () => localStorage.getItem("mainstay_balance_hidden") === "true",
+  );
+
+  function toggleBalanceHidden() {
+    setBalanceHidden((v) => {
+      localStorage.setItem("mainstay_balance_hidden", String(!v));
+      return !v;
+    });
+  }
+
   useEffect(() => {
-    if (connected && walletAddress) fetchTrades();
+    if (connected && walletAddress) { fetchTrades(); fetchReceived(); }
   }, [connected, walletAddress, isDevnet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const risk = RISK_STYLES[riskLevel] ?? RISK_STYLES.LOW;
@@ -102,6 +115,8 @@ function MainApp() {
     <div className="min-h-screen bg-terminal-bg relative">
       {/* Scan-line + grid overlays */}
       <div className="scan-line" />
+
+      {/* grid */}
       <div
         className="fixed inset-0 pointer-events-none opacity-[0.015]"
         style={{
@@ -110,10 +125,66 @@ function MainApp() {
           backgroundSize: "40px 40px",
         }}
       />
-      <AppHeader />
+
+      {/* radial grid */}
+      {/* <div
+        className="fixed inset-0 pointer-events-none opacity-[0.25]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, rgba(0,229,255,0.35) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      /> */}
+
+      <AppHeader balanceHidden={balanceHidden} />
       <AnimatePresence>
         {isMobile && !isWalletBrowser && !connected && <MobileWalletBanner />}
       </AnimatePresence>
+
+      <EdgeStatusCard
+        label="Risk Level"
+        value={riskLevel ?? "···"}
+        sublabel={isDevnet ? "mainnet MEV + TPS" : "MEV protection + TPS"}
+        icon={
+          <AlertTriangle
+            size={12}
+            className={isDevnet ? "text-terminal-dim/30" : risk.accent}
+          />
+        }
+        accentClass={isDevnet ? "text-terminal-dim/30" : risk.accent}
+        stripBg={
+          isDevnet ? "bg-terminal-dim/20" : (risk.pulse ?? "bg-terminal-green")
+        }
+        pulse={riskLevel !== null && !isDevnet}
+        pulseColor={risk.pulse}
+        topOffset="35%"
+      />
+      <EdgeStatusCard
+        label="Network Uptime"
+        value={uptimePct !== null ? `${uptimePct}%` : "···"}
+        sublabel={isDevnet ? "mainnet DFlow + Helius" : "DFlow + Helius"}
+        icon={
+          <Server
+            size={12}
+            className={isDevnet ? "text-terminal-dim/30" : uptime.accent}
+          />
+        }
+        accentClass={isDevnet ? "text-terminal-dim/30" : uptime.accent}
+        stripBg={
+          isDevnet
+            ? "bg-terminal-dim/20"
+            : uptimePct !== null && Number(uptimePct) < 90
+              ? "bg-terminal-yellow"
+              : "bg-terminal-green"
+        }
+        pulse={uptimePct !== null && !isDevnet}
+        pulseColor={
+          uptimePct !== null && Number(uptimePct) < 90
+            ? "bg-terminal-yellow"
+            : "bg-terminal-green"
+        }
+        topOffset="52%"
+      />
 
       <motion.main
         className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8"
@@ -126,94 +197,17 @@ function MainApp() {
             : undefined
         }
       >
-        {/* Stats Cards */}
-        <AnimatePresence>
-          <motion.div
-            className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.4, delay: 0.25 }}
-          >
-            <StatCard
-              icon={
-                <TbCurrencySolana size={14} className="text-terminal-accent" />
-              }
-              label={
-                connected && solBalance != null ? "SOL Balance" : "SOL Price"
-              }
-              value={
-                priceLoading && solPrice === null
-                  ? "···"
-                  : connected && solBalance != null && solPrice != null
-                    ? `$${(solBalance * solPrice).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                    : solPrice != null
-                      ? `$${solPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                      : "—"
-              }
-              accent="text-terminal-accent"
-              border="border-terminal-accent/20"
-              bg="bg-terminal-accent/5"
-              sublabel={
-                connected && solBalance != null
-                  ? `${solBalance < 0.001 ? solBalance.toFixed(6) : solBalance < 100 ? solBalance.toFixed(4) : solBalance.toFixed(2)} SOL`
-                  : "auto-updates"
-              }
-              pulse={!priceLoading}
-            />
-            <StatCard
-              icon={
-                <ArrowRightLeft size={14} className="text-terminal-green" />
-              }
-              label="Transactions"
-              value={
-                trades.length > 0
-                  ? trades.length.toLocaleString()
-                  : connected
-                    ? "0"
-                    : "—"
-              }
-              accent="text-terminal-green"
-              border="border-terminal-green/20"
-              bg="bg-terminal-green/5"
-              sublabel={connected ? "this wallet" : "connect wallet"}
-            />
-            <StatCard
-              icon={
-                <AlertTriangle
-                  size={14}
-                  className={isDevnet ? "text-terminal-dim/30" : risk.accent}
-                />
-              }
-              label="Risk Level"
-              value={riskLevel ?? "···"}
-              accent={isDevnet ? "text-terminal-dim/30" : risk.accent}
-              border={isDevnet ? "border-terminal-dim/20" : risk.border}
-              bg={isDevnet ? "bg-terminal-dim/5" : risk.bg}
-              sublabel={isDevnet ? "mainnet MEV + TPS" : "MEV protection + TPS"}
-              pulse={riskLevel !== null}
-              pulseColor={isDevnet ? "bg-terminal-dim/30" : risk.pulse}
-              network={isDevnet}
-            />
-            <StatCard
-              icon={
-                <Server
-                  size={14}
-                  className={isDevnet ? "text-terminal-dim/30" : uptime.accent}
-                />
-              }
-              label="Network Uptime"
-              value={uptimePct !== null ? `${uptimePct}%` : "···"}
-              accent={isDevnet ? "text-terminal-dim/30" : uptime.accent}
-              border={isDevnet ? "border-terminal-dim/20" : uptime.border}
-              bg={isDevnet ? "bg-terminal-dim/5" : uptime.bg}
-              sublabel={isDevnet ? "mainnet DFlow + Helius" : "DFlow + Helius"}
-              pulse={uptimePct !== null}
-              pulseColor={isDevnet ? "bg-terminal-dim/30" : uptime.pulse}
-              network={isDevnet}
-            />
-          </motion.div>
-        </AnimatePresence>
+        <WalletCard
+          solBalance={solBalance}
+          solPrice={solPrice}
+          priceLoading={priceLoading}
+          tradesCount={trades.length}
+          walletAddress={walletAddress}
+          connected={connected}
+          balanceHidden={balanceHidden}
+          onToggleHide={toggleBalanceHidden}
+          onSendSuccess={saveTransfer}
+        />
 
         {/* Price chart */}
         <motion.div
@@ -388,9 +382,10 @@ function MainApp() {
                         <TradeHistory
                           walletAddress={walletAddress}
                           trades={trades}
+                          transfers={received}
                           loading={loading}
                           error={error}
-                          onRefresh={fetchTrades}
+                          onRefresh={() => { fetchTrades(); fetchReceived(); }}
                           dbEnabled={dbEnabled}
                         />
                       </motion.div>

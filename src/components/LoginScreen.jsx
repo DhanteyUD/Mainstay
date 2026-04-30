@@ -71,7 +71,7 @@ export default function LoginScreen() {
 
       {/* Top glow */}
       <div
-        className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] pointer-events-none"
+        className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] pointer-events-none animate-pulse-glow"
         style={{
           background:
             "radial-gradient(ellipse at center top, rgba(0,229,255,0.07) 0%, transparent 70%)",

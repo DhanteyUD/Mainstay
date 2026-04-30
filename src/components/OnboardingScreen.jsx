@@ -88,7 +88,7 @@ export default function OnboardingScreen({ onDismiss }) {
         }}
       />
 
-      <div className="relative w-full max-w-lg px-4 md:px-6">
+      <div className="relative w-full max-w-lg px-1">
         {/* Logo */}
         <motion.div
           className="flex items-center justify-center mb-4 md:mb-6 lg:mb-8"
@@ -210,7 +210,7 @@ export default function OnboardingScreen({ onDismiss }) {
                 <div className="bg-terminal-card border border-terminal-border rounded-2xl py-6 pl-6 pr-3">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-6 md:w-8 h-6 md:h-8 rounded-full bg-terminal-red/10 border border-terminal-red/30 flex items-center justify-center">
-                      <span className="text-base">🥪</span>
+                      <div className="text-[10px] md:text-sm h-4">🥪</div>
                     </div>
                     <h2 className="font-mono font-bold text-terminal-text text-sm md:text-lg tracking-wide">
                       How a Sandwich Attack Works
@@ -304,7 +304,8 @@ export default function OnboardingScreen({ onDismiss }) {
                 <div className="bg-terminal-card border border-terminal-border rounded-2xl py-6 pl-6 pr-3">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-6 md:w-8 h-6 md:h-8 rounded-full bg-terminal-green/10 border border-terminal-green/30 flex items-center justify-center">
-                      <Shield size={15} className="text-terminal-green" />
+                      <Shield size={15} className="hidden sm:flex text-terminal-green" />
+                      <Shield size={11} className="flex sm:hidden text-terminal-green" />
                     </div>
                     <h2 className="font-mono font-bold text-terminal-text text-sm md:text-lg tracking-wide">
                       How DFlow Protects You
@@ -546,7 +547,7 @@ function ScrollableContent({ children }) {
         onClick={handleTrackClick}
       >
         <motion.div
-          className="w-full bg-terminal-accent/50 hover:bg-terminal-accent/80 rounded-full absolute left-0 cursor-grab active:cursor-grabbing"
+          className="w-full bg-terminal-muted/20 hover:bg-terminal-muted/80 rounded-full absolute left-0 cursor-grab active:cursor-grabbing"
           style={{ height: `${thumb.height}%`, top: `${thumb.top}%` }}
           onMouseDown={handleThumbMouseDown}
           onTouchStart={handleThumbTouchStart}

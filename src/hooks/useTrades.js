@@ -73,5 +73,33 @@ export function useTrades(walletAddress) {
     }
   }, [walletAddress, isDevnet])
 
-  return { trades, loading, error, saveTrade, fetchTrades, dbEnabled: DB_ENABLED }
+  const saveTransfer = useCallback(async (payload) => {
+    if (!walletAddress || !DB_ENABLED) return
+    const table = isDevnet ? 'devTrades' : 'trades'
+    const decimals = payload.token?.decimals ?? 9
+    const raw = String(Math.round(Number(payload.amount) * Math.pow(10, decimals)))
+    const row = {
+      wallet_address: walletAddress,
+      trade_type: 'sent',
+      input_token_symbol: payload.token?.symbol || 'SOL',
+      output_token_symbol: payload.recipient || null,
+      input_amount_raw: raw,
+      output_amount_raw: '0',
+      input_decimals: decimals,
+      output_decimals: 9,
+      execution_grade: null,
+      slippage_pct: null,
+      mev_saved_usd: null,
+      signature: payload.signature || null,
+      explorer_url: payload.explorerUrl || null,
+    }
+    const { data, error: err } = await supabase.from(table).insert(row).select().single()
+    if (err) {
+      console.warn(`[useTrades] saveTransfer failed:`, err.message)
+      return
+    }
+    if (data) setTrades(prev => [data, ...prev])
+  }, [walletAddress, isDevnet])
+
+  return { trades, loading, error, saveTrade, saveTransfer, fetchTrades, dbEnabled: DB_ENABLED }
 }
