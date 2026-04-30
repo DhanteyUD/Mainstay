@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import ReactDOM from "react-dom";
-import { ChevronDown, Search, X, ClipboardPaste } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
@@ -131,9 +131,7 @@ export default function TokenSelector({ selected, onChange, exclude }) {
       try {
         const accounts = await connection.getParsedTokenAccountsByOwner(
           publicKey,
-          {
-            programId: TOKEN_PROGRAM_ID,
-          },
+          { programId: TOKEN_PROGRAM_ID },
         );
         const mintSet = new Set(TOKEN_LIST.map((t) => t.mint));
         for (const { account } of accounts.value) {
@@ -162,7 +160,7 @@ export default function TokenSelector({ selected, onChange, exclude }) {
     const rect = buttonRef.current.getBoundingClientRect();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const PANEL_W = Math.min(320, vw - 16);
+    const PANEL_W = Math.min(360, vw - 16);
     const PANEL_H_APPROX = 380;
 
     let top = rect.bottom + 8;
@@ -313,7 +311,6 @@ export default function TokenSelector({ selected, onChange, exclude }) {
     );
   }
 
-  // Two-row layout for mobile: name|USD on top, symbol|balance below
   function renderMobileTokenInfo(token) {
     const hasWallet = connected && publicKey;
     const bal = hasWallet ? balances[token.mint] : null;
@@ -348,7 +345,6 @@ export default function TokenSelector({ selected, onChange, exclude }) {
     );
   }
 
-  // Compact two-row layout for desktop: name|USD on top, symbol|balance below
   function renderDesktopTokenInfo(token) {
     const hasWallet = connected && publicKey;
     const bal = hasWallet ? balances[token.mint] : null;
@@ -444,14 +440,8 @@ export default function TokenSelector({ selected, onChange, exclude }) {
                 {search ? (
                   <motion.button
                     key="clear"
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      setSearch("");
-                    }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setSearch("");
-                    }}
+                    onTouchEnd={(e) => { e.preventDefault(); setSearch(""); }}
+                    onMouseDown={(e) => { e.preventDefault(); setSearch(""); }}
                     initial={{ opacity: 0, scale: 0.7 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.7 }}
@@ -462,14 +452,8 @@ export default function TokenSelector({ selected, onChange, exclude }) {
                 ) : (
                   <motion.button
                     key="paste"
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      handlePaste();
-                    }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      handlePaste();
-                    }}
+                    onTouchEnd={(e) => { e.preventDefault(); handlePaste(); }}
+                    onMouseDown={(e) => { e.preventDefault(); handlePaste(); }}
                     initial={{ opacity: 0, scale: 0.7 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.7 }}
@@ -498,14 +482,8 @@ export default function TokenSelector({ selected, onChange, exclude }) {
               filtered.map((token, i) => (
                 <motion.button
                   key={token.mint}
-                  onTouchEnd={(e) => {
-                    e.preventDefault();
-                    handleSelect(token);
-                  }}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    handleSelect(token);
-                  }}
+                  onTouchEnd={(e) => { e.preventDefault(); handleSelect(token); }}
+                  onMouseDown={(e) => { e.preventDefault(); handleSelect(token); }}
                   className={`w-full flex items-center gap-3 px-4 py-3.5 transition-colors active:bg-terminal-surface/70 ${
                     selected?.mint === token.mint ? "bg-terminal-accent/10" : ""
                   }`}
@@ -517,12 +495,9 @@ export default function TokenSelector({ selected, onChange, exclude }) {
                     src={token.logo}
                     alt={token.symbol}
                     className="w-10 h-10 rounded-full shrink-0"
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
+                    onError={(e) => { e.target.style.display = "none"; }}
                   />
                   {renderMobileTokenInfo(token)}
-
                   {selected?.mint === token.mint && (
                     <motion.div
                       className="w-2 h-2 rounded-full bg-terminal-accent shrink-0 ml-1"
@@ -550,14 +525,8 @@ export default function TokenSelector({ selected, onChange, exclude }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            close();
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            close();
-          }}
+          onMouseDown={(e) => { e.preventDefault(); close(); }}
+          onTouchEnd={(e) => { e.preventDefault(); close(); }}
         />
 
         <motion.div
@@ -591,27 +560,18 @@ export default function TokenSelector({ selected, onChange, exclude }) {
                 {search ? (
                   <motion.button
                     key="clear"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setSearch("");
-                    }}
+                    onMouseDown={(e) => { e.preventDefault(); setSearch(""); }}
                     initial={{ opacity: 0, scale: 0.7 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.7 }}
                     transition={{ duration: 0.1 }}
                   >
-                    <X
-                      size={12}
-                      className="text-terminal-dim hover:text-terminal-text"
-                    />
+                    <X size={12} className="text-terminal-dim hover:text-terminal-text" />
                   </motion.button>
                 ) : (
                   <motion.button
                     key="paste"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      handlePaste();
-                    }}
+                    onMouseDown={(e) => { e.preventDefault(); handlePaste(); }}
                     initial={{ opacity: 0, scale: 0.7 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.7 }}
@@ -634,10 +594,7 @@ export default function TokenSelector({ selected, onChange, exclude }) {
               filtered.map((token, i) => (
                 <motion.button
                   key={token.mint}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    handleSelect(token);
-                  }}
+                  onMouseDown={(e) => { e.preventDefault(); handleSelect(token); }}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-terminal-surface transition-colors ${
                     selected?.mint === token.mint
                       ? "bg-terminal-accent/10 text-terminal-accent"
@@ -651,9 +608,7 @@ export default function TokenSelector({ selected, onChange, exclude }) {
                     src={token.logo}
                     alt={token.symbol}
                     className="w-7 h-7 rounded-full shrink-0"
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
+                    onError={(e) => { e.target.style.display = "none"; }}
                   />
                   {renderDesktopTokenInfo(token)}
                   {selected?.mint === token.mint && (
@@ -692,9 +647,7 @@ export default function TokenSelector({ selected, onChange, exclude }) {
               src={selected.logo}
               alt={selected.symbol}
               className="w-6 h-6 rounded-full"
-              onError={(e) => {
-                e.target.style.display = "none";
-              }}
+              onError={(e) => { e.target.style.display = "none"; }}
             />
             <span className="font-mono font-semibold text-terminal-text text-sm">
               {selected.symbol}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   X,
   Send,
@@ -17,7 +17,6 @@ import { useNetwork } from "../contexts/NetworkContext";
 import { TOKEN_LIST } from "../config";
 
 const SOL_MINT = "So11111111111111111111111111111111111111112";
-const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 
 function fmtBal(v) {
   if (v == null || v === 0) return "0";
@@ -37,14 +36,13 @@ function isValidSolanaAddress(addr) {
   }
 }
 
-export default function SendModal({ onClose }) {
-  const { publicKey, connected } = useWallet();
+export default function SendModal({ onClose, onSendSuccess }) {
   const wallet = useWallet();
   const { connection } = useConnection();
   const { isDevnet } = useNetwork();
   const { sendStatus, sendError, sendResult, executeSend, resetSend } = useSend();
 
-  const [selectedToken, setSelectedToken] = useState(TOKEN_LIST[0]); // SOL
+  const [selectedToken, setSelectedToken] = useState(TOKEN_LIST[0]);
   const [tokenPickerOpen, setTokenPickerOpen] = useState(false);
   const [tokenSearch, setTokenSearch] = useState("");
   const [amount, setAmount] = useState("");
@@ -52,10 +50,39 @@ export default function SendModal({ onClose }) {
   const [balance, setBalance] = useState(null);
   const [balLoading, setBalLoading] = useState(false);
 
+  const fetchBalance = useCallback(async (token) => {
+    if (!wallet.publicKey || !token) return;
+    setBalLoading(true);
+    try {
+      if (token.mint === SOL_MINT) {
+        const lamports = await connection.getBalance(wallet.publicKey);
+        setBalance(lamports / 1e9);
+      } else {
+        const accounts = await connection.getParsedTokenAccountsByOwner(
+          wallet.publicKey,
+          { mint: new PublicKey(token.mint) },
+        );
+        const bal =
+          accounts.value[0]?.account.data.parsed.info.tokenAmount.uiAmount ?? 0;
+        setBalance(bal);
+      }
+    } catch {
+      setBalance(null);
+    } finally {
+      setBalLoading(false);
+    }
+  }, [wallet.publicKey, connection]);
+
+  useEffect(() => {
+    if (wallet.connected) fetchBalance(selectedToken);
+    else setBalance(null);
+  }, [selectedToken, wallet.connected, fetchBalance]);
+
   const recipientValid = recipient.length > 0 && isValidSolanaAddress(recipient);
   const amountNum = parseFloat(amount);
-  const amountValid = !isNaN(amountNum) && amountNum > 0 && (balance == null || amountNum <= balance);
-  const canSend = recipientValid && amountValid && sendStatus === "idle";
+  const amountValid =
+    !isNaN(amountNum) && amountNum > 0 && (balance == null || amountNum <= balance);
+  const canSend = recipientValid && amountValid && sendStatus === "idle" && !!selectedToken;
 
   // Lock body scroll
   useEffect(() => {
@@ -70,37 +97,17 @@ export default function SendModal({ onClose }) {
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  // Fetch balance for selected token
-  const fetchBalance = useCallback(async () => {
-    if (!publicKey || !connected) { setBalance(null); return; }
-    setBalLoading(true);
-    try {
-      if (selectedToken.mint === SOL_MINT) {
-        const lamports = await connection.getBalance(publicKey);
-        setBalance(lamports / 1e9);
-      } else {
-        const mint = new PublicKey(selectedToken.mint);
-        const accounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
-          programId: TOKEN_PROGRAM_ID,
-        });
-        const match = accounts.value.find(
-          (a) => a.account.data.parsed.info.mint === selectedToken.mint
-        );
-        setBalance(match ? match.account.data.parsed.info.tokenAmount.uiAmount : 0);
-      }
-    } catch {
-      setBalance(null);
-    } finally {
-      setBalLoading(false);
-    }
-  }, [publicKey, connected, connection, selectedToken]);
-
-  useEffect(() => { fetchBalance(); }, [fetchBalance]);
+  const filteredTokens = useMemo(() => {
+    const q = tokenSearch.toLowerCase();
+    if (!q) return TOKEN_LIST;
+    return TOKEN_LIST.filter(
+      (t) => t.symbol.toLowerCase().includes(q) || t.name.toLowerCase().includes(q),
+    );
+  }, [tokenSearch]);
 
   function handleMax() {
-    if (balance == null) return;
+    if (balance == null || !selectedToken) return;
     if (selectedToken.mint === SOL_MINT) {
-      // Leave ~0.005 SOL for fees
       const maxSol = Math.max(0, balance - 0.005);
       setAmount(maxSol > 0 ? fmtBal(maxSol) : "0");
     } else {
@@ -110,7 +117,17 @@ export default function SendModal({ onClose }) {
 
   async function handleSend() {
     if (!canSend) return;
-    await executeSend({ wallet, token: selectedToken, amount: amountNum, recipient });
+    const result = await executeSend({
+      wallet,
+      connection,
+      token: selectedToken,
+      amount: amountNum,
+      recipient,
+    });
+    if (result) {
+      fetchBalance(selectedToken);
+      onSendSuccess?.({ token: selectedToken, amount: amountNum, recipient, ...result });
+    }
   }
 
   function handleReset() {
@@ -119,21 +136,15 @@ export default function SendModal({ onClose }) {
     setRecipient("");
   }
 
-  const filteredTokens = TOKEN_LIST.filter(
-    (t) =>
-      t.symbol.toLowerCase().includes(tokenSearch.toLowerCase()) ||
-      t.name.toLowerCase().includes(tokenSearch.toLowerCase())
-  );
-
   const isBusy = sendStatus === "signing" || sendStatus === "confirming";
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center sm:p-4"
       onClick={(e) => { if (e.target === e.currentTarget && !isBusy) onClose(); }}
     >
       <motion.div
-        className="bg-terminal-card border-t sm:border border-terminal-border sm:rounded-2xl w-full sm:max-w-sm shadow-2xl flex flex-col overflow-hidden"
+        className="bg-terminal-card border-t sm:border border-terminal-border rounded-tl-2xl rounded-tr-2xl sm:rounded-2xl w-full sm:max-w-md shadow-2xl flex flex-col overflow-hidden"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 40 }}
@@ -147,10 +158,10 @@ export default function SendModal({ onClose }) {
               SEND
             </span>
             <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-mono text-xs font-semibold ${
+              className={`inline-flex items-center gap-2 px-2 py-0.5 rounded-full font-mono text-xs font-semibold ${
                 isDevnet
                   ? "bg-terminal-yellow/10 text-terminal-yellow border border-terminal-yellow/20"
-                  : "bg-terminal-green/10 text-terminal-green border border-terminal-green/20"
+                  : "bg-terminal-border/10 text-terminal-dim border border-terminal-dim/20"
               }`}
             >
               <span
@@ -187,7 +198,7 @@ export default function SendModal({ onClose }) {
                   SENT SUCCESSFULLY
                 </p>
                 <p className="font-mono text-xs text-terminal-dim">
-                  {fmtBal(sendResult?.amount)} {selectedToken.symbol} sent
+                  {fmtBal(sendResult?.amount)} {selectedToken?.symbol} sent
                 </p>
               </div>
               <div className="w-full bg-terminal-surface border border-terminal-border rounded-xl px-4 py-3 space-y-2">
@@ -244,20 +255,20 @@ export default function SendModal({ onClose }) {
                     disabled={isBusy}
                     className="w-full flex items-center gap-3 bg-terminal-surface border border-terminal-border rounded-xl px-4 py-3 hover:border-terminal-accent/40 transition-colors disabled:opacity-50"
                   >
-                    {selectedToken.logo && (
+                    {selectedToken?.logo ? (
                       <img
                         src={selectedToken.logo}
                         alt={selectedToken.symbol}
                         className="w-6 h-6 rounded-full shrink-0"
                         onError={(e) => { e.target.style.display = "none"; }}
                       />
-                    )}
+                    ) : null}
                     <div className="flex-1 text-left">
                       <div className="font-mono font-bold text-sm text-terminal-text">
-                        {selectedToken.symbol}
+                        {selectedToken?.symbol ?? "—"}
                       </div>
                       <div className="font-mono text-xs text-terminal-dim">
-                        {selectedToken.name}
+                        {selectedToken?.name ?? "Select token"}
                       </div>
                     </div>
                     <div className="text-right mr-1">
@@ -290,45 +301,58 @@ export default function SendModal({ onClose }) {
                             autoFocus
                             value={tokenSearch}
                             onChange={(e) => setTokenSearch(e.target.value)}
-                            placeholder="Search token..."
+                            placeholder="Search any token…"
                             className="w-full bg-terminal-surface border border-terminal-border rounded-lg px-3 py-2 font-mono text-xs text-terminal-text placeholder:text-terminal-dim/50 outline-none focus:border-terminal-accent/40"
                           />
                         </div>
-                        <div className="max-h-48 overflow-y-auto">
-                          {filteredTokens.map((token) => (
-                            <button
-                              key={token.mint}
-                              onClick={() => {
-                                setSelectedToken(token);
-                                setTokenPickerOpen(false);
-                                setTokenSearch("");
-                                setAmount("");
-                              }}
-                              className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-terminal-surface transition-colors ${
-                                token.mint === selectedToken.mint ? "bg-terminal-accent/5" : ""
-                              }`}
-                            >
-                              {token.logo && (
-                                <img
-                                  src={token.logo}
-                                  alt={token.symbol}
-                                  className="w-5 h-5 rounded-full shrink-0"
-                                  onError={(e) => { e.target.style.display = "none"; }}
-                                />
-                              )}
-                              <div className="text-left flex-1">
-                                <div className="font-mono text-xs font-bold text-terminal-text">
-                                  {token.symbol}
+                        <div className="max-h-52 overflow-y-auto">
+                          {filteredTokens.length === 0 ? (
+                            <p className="font-mono text-xs text-terminal-dim px-4 py-3">
+                              No tokens found
+                            </p>
+                          ) : (
+                            filteredTokens.map((token) => (
+                              <button
+                                key={token.mint}
+                                onClick={() => {
+                                  setSelectedToken(token);
+                                  setTokenPickerOpen(false);
+                                  setTokenSearch("");
+                                  setAmount("");
+                                }}
+                                className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-terminal-surface transition-colors ${
+                                  token.mint === selectedToken?.mint ? "bg-terminal-accent/5" : ""
+                                }`}
+                              >
+                                {token.logo ? (
+                                  <img
+                                    src={token.logo}
+                                    alt={token.symbol}
+                                    className="w-5 h-5 rounded-full shrink-0"
+                                    onError={(e) => { e.target.style.display = "none"; }}
+                                  />
+                                ) : (
+                                  <div className="w-5 h-5 rounded-full bg-terminal-border shrink-0" />
+                                )}
+                                <div className="text-left flex-1 min-w-0">
+                                  <div className="font-mono text-xs font-bold text-terminal-text">
+                                    {token.symbol}
+                                  </div>
+                                  <div className="font-mono text-xs text-terminal-dim/70 truncate">
+                                    {token.name}
+                                  </div>
                                 </div>
-                                <div className="font-mono text-xs text-terminal-dim/70">
-                                  {token.name}
-                                </div>
-                              </div>
-                              {token.mint === selectedToken.mint && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-terminal-accent" />
-                              )}
-                            </button>
-                          ))}
+                                {token.balance > 0 && (
+                                  <span className="font-mono text-xs text-terminal-dim shrink-0">
+                                    {fmtBal(token.balance)}
+                                  </span>
+                                )}
+                                {token.mint === selectedToken?.mint && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-terminal-accent shrink-0" />
+                                )}
+                              </button>
+                            ))
+                          )}
                         </div>
                       </motion.div>
                     )}
@@ -342,7 +366,7 @@ export default function SendModal({ onClose }) {
                   <label className="font-mono text-xs text-terminal-dim tracking-wider">
                     AMOUNT
                   </label>
-                  {balance != null && !balLoading && (
+                  {balance != null && balance > 0 && (
                     <button
                       onClick={handleMax}
                       disabled={isBusy}
@@ -359,10 +383,10 @@ export default function SendModal({ onClose }) {
                     onChange={(e) => setAmount(e.target.value)}
                     disabled={isBusy}
                     placeholder="0.00"
-                    className="w-full bg-terminal-surface border border-terminal-border rounded-xl px-4 py-3 pr-16 font-mono text-sm text-terminal-text placeholder:text-terminal-dim/40 outline-none focus:border-terminal-accent/40 transition-colors disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="w-full h-12 bg-terminal-surface border border-terminal-border rounded-xl px-4 py-3 pr-16 font-mono text-sm text-terminal-text placeholder:text-terminal-dim/40 outline-none focus:border-terminal-accent/40 transition-colors disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 font-mono text-xs text-terminal-dim font-semibold">
-                    {selectedToken.symbol}
+                    {selectedToken?.symbol ?? ""}
                   </span>
                 </div>
                 {amount && balance != null && amountNum > balance && (
@@ -383,7 +407,7 @@ export default function SendModal({ onClose }) {
                   onChange={(e) => setRecipient(e.target.value.trim())}
                   disabled={isBusy}
                   placeholder="Solana wallet address"
-                  className={`w-full bg-terminal-surface border rounded-xl px-4 py-3 font-mono text-xs text-terminal-text placeholder:text-terminal-dim/40 outline-none transition-colors disabled:opacity-50 ${
+                  className={`w-full h-12 bg-terminal-surface border rounded-xl px-4 py-3 font-mono text-xs text-terminal-text placeholder:text-terminal-dim/40 outline-none transition-colors disabled:opacity-50 ${
                     recipient.length > 0
                       ? recipientValid
                         ? "border-terminal-green/40 focus:border-terminal-green/60"

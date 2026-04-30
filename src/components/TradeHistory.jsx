@@ -12,6 +12,8 @@ import {
   Clock,
   Inbox,
   Target,
+  ArrowDownLeft,
+  ArrowUpRight,
 } from 'lucide-react'
 import { RiTokenSwapLine } from "react-icons/ri";
 import { LuCoins } from "react-icons/lu";
@@ -73,6 +75,15 @@ function gradeScore(label) {
 
 function isSpot(t) { return !t.trade_type || t.trade_type === 'spot' }
 function isPredict(t) { return t.trade_type === 'prediction' }
+function isTransfer(t) { return t.trade_type === 'sent' || t.trade_type === 'received' }
+
+function sortByDate(items) {
+  return [...items].sort((a, b) => {
+    const da = a.created_at ? new Date(a.created_at) : new Date(0)
+    const db = b.created_at ? new Date(b.created_at) : new Date(0)
+    return db - da
+  })
+}
 
 // ─── summary stats ─────────────────────────────────────────────────────────
 
@@ -91,6 +102,7 @@ function computeStats(trades) {
 
   const pairCounts = {}
   trades.forEach((t) => {
+    if (isTransfer(t)) return
     const key = `${t.input_token_symbol}/${t.output_token_symbol}`
     pairCounts[key] = (pairCounts[key] || 0) + 1
   })
@@ -136,6 +148,7 @@ function FilterToggle({ value, onChange }) {
     { key: 'all', label: 'All' },
     { key: 'spot', label: 'Spot' },
     { key: 'prediction', label: 'Prediction' },
+    { key: 'transfers', label: 'Transfers' },
   ]
   return (
     <div className="flex gap-1 bg-terminal-surface border border-terminal-border rounded-lg p-0.5">
@@ -162,11 +175,15 @@ function EmptyState({ walletAddress, filter }) {
       ? 'No prediction trades yet'
       : filter === 'spot'
       ? 'No spot trades yet'
+      : filter === 'transfers'
+      ? 'No transfers yet'
       : walletAddress
-      ? 'No swaps recorded yet'
+      ? 'No history yet'
       : 'Connect your wallet'
   const sub =
-    filter !== 'all'
+    filter === 'transfers'
+      ? 'Send or receive tokens to see your transfer history here.'
+      : filter !== 'all'
       ? 'Try switching to "All" or complete a trade.'
       : walletAddress
       ? 'Complete a swap to see your trade history here.'
@@ -215,15 +232,19 @@ function DbDisabledState() {
 
 // ─── main component ──────────────────────────────────────────────────────────
 
-export default function TradeHistory({ walletAddress, trades, loading, error, onRefresh, dbEnabled = true }) {
+export default function TradeHistory({ walletAddress, trades, transfers = [], loading, error, onRefresh, dbEnabled = true }) {
   const { isDevnet } = useNetwork()
   const [typeFilter, setTypeFilter] = useState('all')
 
   const filteredTrades = useMemo(() => {
+    const tradeSigSet = new Set(trades.map(t => t.signature).filter(Boolean))
+    const uniqueTransfers = transfers.filter(t => !t.signature || !tradeSigSet.has(t.signature))
+
     if (typeFilter === 'spot') return trades.filter(isSpot)
     if (typeFilter === 'prediction') return trades.filter(isPredict)
-    return trades
-  }, [trades, typeFilter])
+    if (typeFilter === 'transfers') return sortByDate([...trades.filter(isTransfer), ...uniqueTransfers])
+    return sortByDate([...trades, ...uniqueTransfers])
+  }, [trades, transfers, typeFilter])
 
   const stats = useMemo(() => computeStats(filteredTrades), [filteredTrades])
 
@@ -312,15 +333,99 @@ export default function TradeHistory({ walletAddress, trades, loading, error, on
         <div className="overflow-y-auto max-h-[360px] pr-1 scrollbar-thin scrollbar-thumb-terminal-border scrollbar-track-transparent">
           <motion.div className="space-y-2">
             <AnimatePresence initial={false}>
-              {filteredTrades.map((t, i) => (
-                <TradeRow key={t.id} trade={t} index={i} isDevnet={isDevnet} />
-              ))}
+              {filteredTrades.map((t, i) =>
+                isTransfer(t) ? (
+                  <TransferRow key={t.id} item={t} index={i} isDevnet={isDevnet} />
+                ) : (
+                  <TradeRow key={t.id} trade={t} index={i} isDevnet={isDevnet} />
+                )
+              )}
             </AnimatePresence>
           </motion.div>
         </div>
       )}
     </div>
   );
+}
+
+function TransferRow({ item: t, index, isDevnet }) {
+  const isSent = t.trade_type === 'sent'
+  const amount = fmtAmount(t.input_amount_raw, t.input_decimals)
+  const token = t.input_token_symbol
+
+  const counterparty = isSent
+    ? t.output_token_symbol
+      ? `${t.output_token_symbol.slice(0, 4)}…${t.output_token_symbol.slice(-4)}`
+      : '—'
+    : t.sender
+      ? `${t.sender.slice(0, 4)}…${t.sender.slice(-4)}`
+      : '—'
+
+  return (
+    <motion.div
+      className={`bg-terminal-surface border rounded-xl px-4 py-3 flex items-center gap-3 hover:border-terminal-accent/30 transition-colors ${
+        isSent ? 'border-terminal-accent/20' : 'border-terminal-green/20'
+      }`}
+      initial={{ opacity: 0, x: -12 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 12, transition: { duration: 0.15 } }}
+      transition={{ delay: index * 0.05 }}
+      layout
+    >
+      {/* Icon */}
+      <div className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center border ${
+        isSent
+          ? 'bg-terminal-accent/10 border-terminal-accent/30 text-terminal-accent'
+          : 'bg-terminal-green/10 border-terminal-green/30 text-terminal-green'
+      }`}>
+        {isSent ? <ArrowUpRight size={13} /> : <ArrowDownLeft size={13} />}
+      </div>
+
+      {/* Details */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className={`font-mono text-xs font-bold px-1.5 py-0.5 rounded ${
+            isSent
+              ? 'bg-terminal-accent/10 text-terminal-accent'
+              : 'bg-terminal-green/10 text-terminal-green'
+          }`}>
+            {isSent ? 'SENT' : 'RECEIVED'}
+          </span>
+          <span className="font-mono text-sm font-bold text-terminal-text">{token}</span>
+          {isDevnet && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-terminal-yellow/10 border border-terminal-yellow/25 font-mono text-xs font-bold text-terminal-yellow leading-none">
+              DEVNET
+            </span>
+          )}
+        </div>
+        <div className="font-mono text-xs text-terminal-dim/60 mt-0.5">
+          {isSent ? 'to' : 'from'} {counterparty}
+        </div>
+      </div>
+
+      {/* Amount + time + link */}
+      <div className="shrink-0 text-right">
+        <div className={`font-mono text-sm font-bold ${isSent ? 'text-terminal-accent' : 'text-terminal-green'}`}>
+          {isSent ? '-' : '+'}{amount} {token}
+        </div>
+        <div className="flex items-center gap-1 justify-end text-terminal-dim/50 mt-0.5">
+          <Clock size={9} />
+          <span className="font-mono text-xs">{fmtTime(t.created_at)}</span>
+        </div>
+        {t.explorer_url && (
+          <a
+            href={t.explorer_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-0.5 font-mono text-xs text-terminal-accent/60 hover:text-terminal-accent transition-colors mt-0.5"
+          >
+            <ExternalLink size={9} />
+            <span>tx</span>
+          </a>
+        )}
+      </div>
+    </motion.div>
+  )
 }
 
 function TradeRow({ trade: t, index, isDevnet }) {

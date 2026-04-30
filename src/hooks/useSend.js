@@ -57,7 +57,7 @@ export function useSend() {
   const [sendError, setSendError] = useState(null);
   const [sendResult, setSendResult] = useState(null);
 
-  const executeSend = useCallback(async ({ wallet, token, amount, recipient }) => {
+  const executeSend = useCallback(async ({ wallet, connection, token, amount, recipient }) => {
     if (!wallet?.publicKey) {
       setSendError("Wallet not connected.");
       return null;
@@ -76,20 +76,11 @@ export function useSend() {
     setSendResult(null);
 
     try {
-      const rpcUrl = isDevnetRef.current ? SOLANA_DEVNET_RPC : SOLANA_RPC_PROXY;
-      const connection = new Connection(rpcUrl, { commitment: "confirmed", wsEndpoint: "" });
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-
-      let tx;
+      let tx = new Transaction({ feePayer: wallet.publicKey });
 
       if (!token || token.mint === SOL_MINT) {
-        // Native SOL transfer
         const lamports = Math.floor(Number(amount) * LAMPORTS_PER_SOL);
-        tx = new Transaction({
-          recentBlockhash: blockhash,
-          feePayer: wallet.publicKey,
-          lastValidBlockHeight,
-        }).add(
+        tx.add(
           SystemProgram.transfer({
             fromPubkey: wallet.publicKey,
             toPubkey: recipientKey,
@@ -97,17 +88,13 @@ export function useSend() {
           })
         );
       } else {
-        // SPL token transfer
         const mint = new PublicKey(token.mint);
         const fromATA = await getAssociatedTokenAddress(mint, wallet.publicKey);
         const toATA = await getAssociatedTokenAddress(mint, recipientKey);
 
-        const instructions = [];
-
-        // Create recipient ATA if it doesn't exist
         const toATAInfo = await connection.getAccountInfo(toATA);
         if (!toATAInfo) {
-          instructions.push(
+          tx.add(
             createAssociatedTokenAccountInstruction(
               wallet.publicKey,
               toATA,
@@ -119,31 +106,23 @@ export function useSend() {
         }
 
         const rawAmount = BigInt(Math.floor(Number(amount) * Math.pow(10, token.decimals)));
-        instructions.push(
-          createTransferInstruction(fromATA, toATA, wallet.publicKey, rawAmount)
-        );
-
-        tx = new Transaction({
-          recentBlockhash: blockhash,
-          feePayer: wallet.publicKey,
-          lastValidBlockHeight,
-        }).add(...instructions);
+        tx.add(createTransferInstruction(fromATA, toATA, wallet.publicKey, rawAmount));
       }
 
-      let signedTx;
+      const rpcUrl = isDevnetRef.current ? SOLANA_DEVNET_RPC : SOLANA_RPC_PROXY;
+      const sendConn = new Connection(rpcUrl, "confirmed");
+
+      let signature;
       try {
-        signedTx = await wallet.signTransaction(tx);
-      } catch (sigErr) {
-        throw new Error(sigErr?.message || "Wallet rejected the transaction.");
+        signature = await wallet.sendTransaction(tx, sendConn, {
+          skipPreflight: false,
+          preflightCommitment: "confirmed",
+        });
+      } catch (sendErr) {
+        throw new Error(sendErr?.message || "Wallet rejected the transaction.");
       }
 
       setSendStatus("confirming");
-
-      const signature = await connection.sendRawTransaction(signedTx.serialize(), {
-        skipPreflight: false,
-        preflightCommitment: "confirmed",
-      });
-
       await confirmPolling(connection, signature);
 
       const explorerUrl = isDevnetRef.current
