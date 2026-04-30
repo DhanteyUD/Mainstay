@@ -33,6 +33,7 @@ import { useNetwork } from "./contexts/NetworkContext";
 
 import { isMobile, isWalletBrowser } from "./lib/device";
 import { useTrades } from "./hooks/useTrades";
+import { useReceivedTransfers } from "./hooks/useReceivedTransfers";
 import { useLimitOrders } from "./hooks/useLimitOrders";
 import { useNetworkStats } from "./hooks/useNetworkStats";
 import { useWalletBalance } from "./hooks/useWalletBalance";
@@ -74,8 +75,9 @@ function MainApp() {
   const { publicKey, connected } = useWallet();
   const walletAddress = publicKey?.toBase58() || null;
 
-  const { trades, loading, error, saveTrade, fetchTrades, dbEnabled } =
+  const { trades, loading, error, saveTrade, saveTransfer, fetchTrades, dbEnabled } =
     useTrades(walletAddress);
+  const { received, fetchReceived } = useReceivedTransfers(walletAddress);
   const { orders, currentPrices, addOrder, cancelOrder, pendingCount } =
     useLimitOrders();
   const { solPrice, priceLoading, uptimePct, riskLevel } = useNetworkStats();
@@ -100,7 +102,7 @@ function MainApp() {
   }
 
   useEffect(() => {
-    if (connected && walletAddress) fetchTrades();
+    if (connected && walletAddress) { fetchTrades(); fetchReceived(); }
   }, [connected, walletAddress, isDevnet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const risk = RISK_STYLES[riskLevel] ?? RISK_STYLES.LOW;
@@ -204,6 +206,7 @@ function MainApp() {
           connected={connected}
           balanceHidden={balanceHidden}
           onToggleHide={toggleBalanceHidden}
+          onSendSuccess={saveTransfer}
         />
 
         {/* Price chart */}
@@ -379,9 +382,10 @@ function MainApp() {
                         <TradeHistory
                           walletAddress={walletAddress}
                           trades={trades}
+                          transfers={received}
                           loading={loading}
                           error={error}
-                          onRefresh={fetchTrades}
+                          onRefresh={() => { fetchTrades(); fetchReceived(); }}
                           dbEnabled={dbEnabled}
                         />
                       </motion.div>
