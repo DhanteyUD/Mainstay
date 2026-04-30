@@ -142,7 +142,7 @@ async function generateShareImage({
   await (async () => {
     try {
       const res = await fetch(
-        "https://res.cloudinary.com/dhantey/image/upload/v1777367316/Dante/mainstay-logo_vydcnr.png",
+        "https://res.cloudinary.com/dhantey/image/upload/v1777367316/Mainstay/mainstay-logo_vydcnr.png",
       );
       if (!res.ok) return;
       const blob = await res.blob();
