@@ -38,7 +38,7 @@ export default function DepositModal({ walletAddress, onClose }) {
       }}
     >
       <motion.div
-        className="bg-terminal-card border-t sm:border border-terminal-border sm:rounded-2xl w-full sm:max-w-md shadow-2xl flex flex-col overflow-hidden"
+        className="bg-terminal-card border-t sm:border border-terminal-border rounded-tl-2xl rounded-tr-2xl sm:rounded-2xl w-full sm:max-w-md shadow-2xl flex flex-col overflow-hidden"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 40 }}

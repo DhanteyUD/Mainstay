@@ -47,6 +47,7 @@ export default function WalletCard({
   connected,
   balanceHidden = false,
   onToggleHide,
+  onSendSuccess,
 }) {
   const { wallet } = useWallet();
   const walletName = wallet?.adapter?.name ?? null;
@@ -181,7 +182,7 @@ export default function WalletCard({
         )}
       </AnimatePresence>
       <AnimatePresence>
-        {sendOpen && <SendModal onClose={() => setSendOpen(false)} />}
+        {sendOpen && <SendModal onClose={() => setSendOpen(false)} onSendSuccess={onSendSuccess} />}
       </AnimatePresence>
     </>
   );
