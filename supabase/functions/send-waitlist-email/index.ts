@@ -271,7 +271,7 @@ serve(async (req) => {
         subject: "You're on the Mainstay waitlist",
         html: buildEmailHtml(
           email,
-          "https://res.cloudinary.com/dhantey/image/upload/v1777367316/Dante/mainstay-logo_vydcnr.png",
+          "https://res.cloudinary.com/dhantey/image/upload/v1777367316/Mainstay/mainstay-logo_vydcnr.png",
         ),
       }),
     });
