@@ -1,1 +1,20 @@
-{}
+{
+  "rewrites": [
+    {
+      "source": "/api/solana/rpc",
+      "destination": "https://api.eitherway.ai/api/solana/rpc"
+    },
+    {
+      "source": "/api/dialect/:path*",
+      "destination": "https://api.eitherway.ai/api/dialect/:path*"
+    },
+    {
+      "source": "/api/dflow/:path*",
+      "destination": "https://api.eitherway.ai/api/dflow/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
