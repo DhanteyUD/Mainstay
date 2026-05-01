@@ -43,12 +43,22 @@ export function AuthProvider({ children }) {
       }, IDLE_TIMEOUT_MS);
     };
 
+    const handleVisibility = () => {
+      if (document.hidden) {
+        clearTimeout(idleTimer.current);
+      } else {
+        resetTimer();
+      }
+    };
+
     resetTimer();
     IDLE_EVENTS.forEach(e => window.addEventListener(e, resetTimer, { passive: true }));
+    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       clearTimeout(idleTimer.current);
       IDLE_EVENTS.forEach(e => window.removeEventListener(e, resetTimer));
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [user]);
 

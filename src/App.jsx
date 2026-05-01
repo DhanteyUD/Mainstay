@@ -33,7 +33,7 @@ import { MainTabBtn, TabBtn } from "./components/TabButtons";
 import { useNetwork } from "./contexts/NetworkContext";
 import DashboardCustomizer, { useDashboardLayout } from "./components/DashboardCustomizer";
 
-import { isMobile, isWalletBrowser } from "./lib/device";
+import { isMobile } from "./lib/device";
 import { useTrades } from "./hooks/useTrades";
 import { useReceivedTransfers } from "./hooks/useReceivedTransfers";
 import { useLimitOrders } from "./hooks/useLimitOrders";
@@ -51,9 +51,32 @@ import {
 } from "./constants";
 import { TOKENS } from "./config";
 
+function useIsWalletBrowser() {
+  const detect = () =>
+    Boolean(window.phantom?.solana) ||
+    Boolean(window.solana?.isPhantom) ||
+    Boolean(window.solflare?.isSolflare) ||
+    Boolean(window.solana?.isSolflare);
+
+  const [isWalletBrowser, setIsWalletBrowser] = useState(detect);
+
+  useEffect(() => {
+    if (isWalletBrowser) return;
+    let attempts = 0;
+    const id = setInterval(() => {
+      if (detect()) { setIsWalletBrowser(true); clearInterval(id); }
+      if (++attempts >= 10) clearInterval(id);
+    }, 200);
+    return () => clearInterval(id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return isWalletBrowser;
+}
+
 export default function App() {
   const { user, loading: authLoading } = useAuth();
   const { dismissed, dismiss } = useOnboarding();
+  const isWalletBrowser = useIsWalletBrowser();
 
   if (authLoading) {
     return (
@@ -83,6 +106,7 @@ export default function App() {
 }
 
 function MainApp() {
+  const isWalletBrowser = useIsWalletBrowser();
   const { isDevnet } = useNetwork();
   const { publicKey, connected } = useWallet();
   const walletAddress = publicKey?.toBase58() || null;

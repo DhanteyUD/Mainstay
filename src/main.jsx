@@ -155,7 +155,7 @@ root.render(
   <React.StrictMode>
     <Sentry.ErrorBoundary
       fallback={
-        <div className="flex flex-col items-center justify-center h-screen">
+        <div className="flex flex-col items-center justify-center h-screen p-4">
           <h1 className="text-2xl font-bold mb-4">Something went wrong.</h1>
           <p className="text-gray-600 mb-6">
             We're sorry, but something went wrong. Please try again later.
