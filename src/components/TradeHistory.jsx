@@ -249,12 +249,10 @@ export default function TradeHistory({ walletAddress, trades, transfers = [], lo
   const stats = useMemo(() => computeStats(filteredTrades), [filteredTrades])
 
   useEffect(() => {
-    if (walletAddress && dbEnabled) onRefresh?.()
+    if (walletAddress) onRefresh?.()
   }, [walletAddress]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const gradeC = stats.avgGrade ? (GRADE_COLORS[stats.avgGrade] || GRADE_COLORS['C']) : null
-
-  if (!dbEnabled) return <DbDisabledState />
 
   return (
     <div className="space-y-4">
@@ -327,6 +325,8 @@ export default function TradeHistory({ walletAddress, trades, transfers = [], lo
           <RefreshCw size={14} className="animate-spin" />
           <span className="font-mono text-xs">Loading trades…</span>
         </div>
+      ) : !dbEnabled && filteredTrades.length === 0 ? (
+        <DbDisabledState />
       ) : filteredTrades.length === 0 ? (
         <EmptyState walletAddress={walletAddress} filter={typeFilter} />
       ) : (
