@@ -13,6 +13,7 @@ Sentry.init({
         Sentry.replayIntegration(),
         Sentry.feedbackIntegration({
             colorScheme: "system",
+            autoInject: false,
         }),
     ],
     enableLogs: true,
