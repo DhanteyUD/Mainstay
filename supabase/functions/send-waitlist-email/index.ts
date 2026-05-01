@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const APP_URL = Deno.env.get("APP_URL") ?? "https://main-stay.vercel.app";
-const FROM_EMAIL = "Mainstay <onboarding@resend.dev>";
+const FROM_EMAIL = "Mainstay <noreply@mainstay.pro>";
 
 function buildEmailHtml(email: string, logoDataUrl: string, appUrl: string): string {
   const logoTag = logoDataUrl
