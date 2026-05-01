@@ -244,6 +244,8 @@ export function useLimitOrders() {
   const isDevnetRef = useRef(isDevnet);
   const executingSet = useRef(new Set());
 
+  const BASE = typeof window !== "undefined" ? window.location.origin : "";
+
   useEffect(() => { ordersRef.current = orders; }, [orders]);
   useEffect(() => { walletRef.current = wallet; }, [wallet]);
   useEffect(() => { addrRef.current = walletAddress; }, [walletAddress]);
@@ -394,7 +396,7 @@ export function useLimitOrders() {
                 decimals: order.inputToken.decimals,
                 walletPublicKey: addr,
               });
-              const conn = new Connection(SOLANA_RPC_PROXY, { commitment: "confirmed", wsEndpoint: "" });
+              const conn = new Connection(`${BASE}${SOLANA_RPC_PROXY}`, { commitment: "confirmed", wsEndpoint: "" });
               const txBytes = Uint8Array.from(atob(quote.transaction), (c) => c.charCodeAt(0));
               const tx = VersionedTransaction.deserialize(txBytes);
               const signed = await wlt.signTransaction(tx);

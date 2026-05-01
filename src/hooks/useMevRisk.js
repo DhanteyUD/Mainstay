@@ -14,6 +14,8 @@ export function useMevRisk({ quote, inputToken, outputToken }) {
   const [risk, setRisk] = useState(null)
   const [loading, setLoading] = useState(false)
 
+  const BASE = typeof window !== "undefined" ? window.location.origin : "";
+
   useEffect(() => {
     if (!quote || !inputToken || !outputToken) {
       setRisk(null)
@@ -76,7 +78,7 @@ export function useMevRisk({ quote, inputToken, outputToken }) {
         // ── 4. Network congestion score (0–20) ─────────────────────────
         let congestionScore = 10 // sensible default if RPC call fails
         try {
-          const connection = new Connection(SOLANA_RPC_PROXY, {
+          const connection = new Connection(`${BASE}${SOLANA_RPC_PROXY}`, {
             commitment: 'confirmed',
             wsEndpoint: '',
           })
