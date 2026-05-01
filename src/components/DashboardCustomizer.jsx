@@ -85,14 +85,14 @@ export default function DashboardCustomizer({ order, visibility, onSave }) {
 
   return (
     <>
-      {/* Floating button — desktop only */}
-      <div className="hidden sm:block fixed bottom-6 left-6 z-[1500]">
+      {/* Floating button */}
+      <div className="fixed bottom-6 left-6 z-[1500]">
         <AnimatePresence>
           {!open && (
             <motion.button
               key="customize-btn"
               onClick={openPanel}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-terminal-border shadow-lg backdrop-blur-sm bg-terminal-surface/90 font-mono text-xs text-terminal-dim hover:text-terminal-green hover:border-terminal-green/40 transition-colors"
+              className="flex items-center gap-2 px-2.5 sm:px-4 py-2.5 rounded-full border border-terminal-border shadow-lg backdrop-blur-sm bg-terminal-surface/90 font-mono text-xs text-terminal-dim hover:text-terminal-green hover:border-terminal-green/40 transition-colors"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
@@ -101,7 +101,7 @@ export default function DashboardCustomizer({ order, visibility, onSave }) {
               transition={{ type: "spring", stiffness: 400, damping: 20 }}
             >
               <LayoutGrid size={13} />
-              <span className="tracking-wide whitespace-nowrap">Customize</span>
+              <span className="hidden sm:flex tracking-wide whitespace-nowrap">Customize</span>
             </motion.button>
           )}
         </AnimatePresence>
@@ -127,7 +127,7 @@ export default function DashboardCustomizer({ order, visibility, onSave }) {
         {open && (
           <motion.div
             key="panel"
-            className="fixed right-0 top-0 h-full z-[1500] w-72 bg-terminal-bg border-l border-terminal-border flex flex-col shadow-2xl"
+            className="fixed right-0 top-0 h-full z-[1500] w-full sm:w-72 bg-terminal-bg border-l border-terminal-border flex flex-col shadow-2xl"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
