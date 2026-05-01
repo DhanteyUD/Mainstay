@@ -12,6 +12,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useAuth } from "./lib/auth-context";
+import FeedbackButton from "./components/FeedbackButton";
 
 import LoginScreen from "./components/LoginScreen";
 import AppHeader from "./components/AppHeader";
@@ -63,9 +64,19 @@ export default function App() {
     );
   }
 
-  if (!dismissed) return <OnboardingScreen onDismiss={dismiss} />;
+  if (!dismissed) return (
+    <>
+      <OnboardingScreen onDismiss={dismiss} />
+      <FeedbackButton />
+    </>
+  );
 
-  if (!user) return <LoginScreen />;
+  if (!user) return (
+    <>
+      <LoginScreen />
+      <FeedbackButton />
+    </>
+  );
 
   return <MainApp />;
 }
@@ -407,6 +418,7 @@ function MainApp() {
         </div>
       </motion.main>
       {(!isMobile || isWalletBrowser || connected) && <AppFooter />}
+      <FeedbackButton />
     </div>
   );
 }
