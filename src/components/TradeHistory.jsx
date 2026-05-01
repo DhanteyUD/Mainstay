@@ -301,7 +301,7 @@ export default function TradeHistory({ walletAddress, trades, transfers = [], lo
           className="flex items-center gap-1.5 font-mono text-xs text-terminal-dim hover:text-terminal-accent transition-colors disabled:opacity-40"
         >
           <RefreshCw size={11} className={loading ? "animate-spin" : ""} />
-          Refresh
+          <span className='hidden sm:flex'>Refresh</span>
         </button>
       </div>
 
@@ -353,13 +353,8 @@ function TransferRow({ item: t, index, isDevnet }) {
   const amount = fmtAmount(t.input_amount_raw, t.input_decimals)
   const token = t.input_token_symbol
 
-  const counterparty = isSent
-    ? t.output_token_symbol
-      ? `${t.output_token_symbol.slice(0, 4)}…${t.output_token_symbol.slice(-4)}`
-      : '—'
-    : t.sender
-      ? `${t.sender.slice(0, 4)}…${t.sender.slice(-4)}`
-      : '—'
+  const truncate = (addr) => addr ? `${addr.slice(0, 4)}…${addr.slice(-4)}` : "—"
+  const counterparty = isSent ? truncate(t.output_token_symbol) : truncate(t.wallet_address)
 
   return (
     <motion.div
@@ -398,17 +393,21 @@ function TransferRow({ item: t, index, isDevnet }) {
             </span>
           )}
         </div>
-        <div className="font-mono text-xs text-terminal-dim/60 mt-0.5">
+        <div className="font-mono text-xs text-terminal-dim/60 mt-0.5 truncate">
           {isSent ? 'to' : 'from'} {counterparty}
         </div>
       </div>
 
-      {/* Amount + time + link */}
-      <div className="shrink-0 text-right">
-        <div className={`font-mono text-sm font-bold ${isSent ? 'text-terminal-accent' : 'text-terminal-green'}`}>
+      {/* Amount */}
+      <div className="shrink-0 text-right hidden sm:block mr-2">
+        <div className={`font-mono text-xs font-semibold ${isSent ? 'text-terminal-accent' : 'text-terminal-green'}`}>
           {isSent ? '-' : '+'}{amount} {token}
         </div>
-        <div className="flex items-center gap-1 justify-end text-terminal-dim/50 mt-0.5">
+      </div>
+
+      {/* Time + link */}
+      <div className="shrink-0 text-right">
+        <div className="flex items-center gap-1 justify-end text-terminal-dim/50">
           <Clock size={9} />
           <span className="font-mono text-xs">{fmtTime(t.created_at)}</span>
         </div>
