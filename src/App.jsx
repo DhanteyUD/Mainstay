@@ -352,7 +352,7 @@ function MainApp() {
   }
 
   return (
-    <div className="min-h-screen bg-terminal-bg relative">
+    <div className="min-h-screen bg-terminal-bg relative flex flex-col">
       {/* Scan-line + grid overlays */}
       <div className="scan-line" />
 
@@ -427,7 +427,7 @@ function MainApp() {
       />
 
       <motion.main
-        className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8"
+        className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8 flex-1 w-full"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.15 }}
