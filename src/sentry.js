@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/react";
 import config from './config/index';
 
-const { sentryDsn, environment } = config().secrets;
+const { sentryDsn, environment, appUrl } = config().secrets;
 
 Sentry.init({
     enabled: environment !== "development",
@@ -19,7 +19,7 @@ Sentry.init({
     tracesSampleRate: 1.0,
     tracePropagationTargets: [
         "localhost",
-        /^https:\/\/main-stay\.vercel\.app/,
+        ...(appUrl ? [appUrl] : []),
     ],
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
