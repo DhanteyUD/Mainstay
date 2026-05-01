@@ -407,7 +407,10 @@ function TransferRow({ item: t, index, isDevnet }) {
 
       {/* Time + link */}
       <div className="shrink-0 text-right">
-        <div className="flex items-center gap-1 justify-end text-terminal-dim/50">
+        <div className={`font-mono text-xs font-semibold sm:hidden ${isSent ? 'text-terminal-accent' : 'text-terminal-green'}`}>
+          {isSent ? '-' : '+'}{amount} {token}
+        </div>
+        <div className="flex items-center gap-1 justify-end text-terminal-dim/50 mt-0.5">
           <Clock size={9} />
           <span className="font-mono text-xs">{fmtTime(t.created_at)}</span>
         </div>
