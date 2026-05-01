@@ -6,8 +6,7 @@ import { sentryVitePlugin } from '@sentry/vite-plugin'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const appEnv = env.VITE_APP_ENVIRONMENT || 'development'
-  const sentryDsn = appEnv === 'development' ? env.VITE_SENTRY_DSN_DEV : env.VITE_SENTRY_DSN_PROD
+  const sentryDsn = env.VITE_SENTRY_DSN
 
   let sentryTunnelProxy = {}
   if (sentryDsn) {
@@ -86,7 +85,7 @@ export default defineConfig(({ mode }) => {
       }),
       sentryVitePlugin({
         org: env.SENTRY_ORG,
-        project: appEnv === 'development' ? env.SENTRY_PROJECT_DEV : env.SENTRY_PROJECT_PROD,
+        project: env.SENTRY_PROJECT,
         authToken: env.SENTRY_AUTH_TOKEN,
         silent: true,
       }),
