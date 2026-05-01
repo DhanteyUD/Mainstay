@@ -71,7 +71,7 @@ export default function App() {
     </>
   );
 
-  if (!user) return (
+  if (!user && !isWalletBrowser) return (
     <>
       <LoginScreen />
       <FeedbackButton />
