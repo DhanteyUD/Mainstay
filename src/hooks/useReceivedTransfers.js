@@ -7,6 +7,17 @@ import { useNetwork } from '../contexts/NetworkContext'
 const MINT_TO_SYMBOL = Object.fromEntries(TOKEN_LIST.map(t => [t.mint, t.symbol]))
 const MINT_TO_DECIMALS = Object.fromEntries(TOKEN_LIST.map(t => [t.mint, t.decimals]))
 
+async function fetchConcurrent(fns, concurrency = 3) {
+  const results = []
+  for (let i = 0; i < fns.length; i += concurrency) {
+    const settled = await Promise.allSettled(
+      fns.slice(i, i + concurrency).map(fn => fn())
+    )
+    results.push(...settled)
+  }
+  return results
+}
+
 export function useReceivedTransfers(walletAddress) {
   const { isDevnet } = useNetwork()
   const [received, setReceived] = useState([])
@@ -20,25 +31,23 @@ export function useReceivedTransfers(walletAddress) {
       const connection = new Connection(rpcUrl, { commitment: 'confirmed', wsEndpoint: '' })
       const pubkey = new PublicKey(walletAddress)
 
-      const sigs = await connection.getSignaturesForAddress(pubkey, { limit: 30 })
+      const sigs = await connection.getSignaturesForAddress(pubkey, { limit: 20 })
       if (!sigs.length) { setReceived([]); return }
 
-      let txns
-      try {
-        txns = await connection.getParsedTransactions(
-          sigs.map(s => s.signature),
-          { maxSupportedTransactionVersion: 0 }
-        )
-      } catch {
-        txns = await connection.getParsedTransactions(sigs.map(s => s.signature))
-      }
+      const txResults = await fetchConcurrent(
+        sigs.map(s => () =>
+          connection.getParsedTransaction(s.signature, { maxSupportedTransactionVersion: 0 })
+        ),
+        3
+      )
 
       const items = []
       for (let i = 0; i < sigs.length; i++) {
         const sigInfo = sigs[i]
-        const tx = txns?.[i]
-        if (!tx || tx.meta?.err) continue
+        const result = txResults[i]
+        if (result.status !== 'fulfilled' || !result.value || result.value.meta?.err) continue
 
+        const tx = result.value
         const accounts = tx.transaction.message.accountKeys ?? []
         const explorerUrl = isDevnet
           ? `https://solscan.io/tx/${sigInfo.signature}?cluster=devnet`

@@ -73,6 +73,38 @@ export function useTrades(walletAddress) {
     }
   }, [walletAddress, isDevnet])
 
+  const saveReceived = useCallback(async (item) => {
+    if (!walletAddress || !DB_ENABLED || !item.signature) return
+    const table = isDevnet ? 'devTrades' : 'trades'
+    const { data: existing } = await supabase
+      .from(table)
+      .select('id')
+      .eq('wallet_address', walletAddress)
+      .eq('signature', item.signature)
+      .maybeSingle()
+    if (existing) return
+    const row = {
+      wallet_address: walletAddress,
+      trade_type: 'received',
+      input_token_symbol: item.input_token_symbol,
+      output_token_symbol: item.sender || null,
+      input_amount_raw: item.input_amount_raw,
+      output_amount_raw: '0',
+      input_decimals: item.input_decimals ?? 9,
+      output_decimals: 9,
+      execution_grade: null,
+      slippage_pct: null,
+      mev_saved_usd: null,
+      signature: item.signature,
+      explorer_url: item.explorer_url || null,
+    }
+    const { data, error: err } = await supabase.from(table).insert(row).select().single()
+    if (err) { console.warn('[useTrades] saveReceived failed:', err.message); return }
+    if (data) setTrades(prev =>
+      prev.some(t => t.signature === data.signature) ? prev : [data, ...prev]
+    )
+  }, [walletAddress, isDevnet])
+
   const saveTransfer = useCallback(async (payload) => {
     if (!walletAddress || !DB_ENABLED) return
     const table = isDevnet ? 'devTrades' : 'trades'
@@ -101,5 +133,5 @@ export function useTrades(walletAddress) {
     if (data) setTrades(prev => [data, ...prev])
   }, [walletAddress, isDevnet])
 
-  return { trades, loading, error, saveTrade, saveTransfer, fetchTrades, dbEnabled: DB_ENABLED }
+  return { trades, loading, error, saveTrade, saveTransfer, saveReceived, fetchTrades, dbEnabled: DB_ENABLED }
 }
