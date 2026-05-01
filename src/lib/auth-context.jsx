@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from './supabase';
+import config from '../config/index';
 
 const AuthContext = createContext(null);
 
@@ -52,7 +53,7 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   const redirectTo = () =>
-    import.meta.env.VITE_AUTH_REDIRECT_URL || window.location.origin;
+    config().secrets.authRedirectUrl || window.location.origin;
 
   const signInWithGoogle = async () => {
     if (!supabase) throw new Error('Supabase not configured');
