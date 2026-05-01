@@ -8,6 +8,7 @@ const config = () => {
       secrets: {
         environment: env,
         solanaNetwork: env === "development" ? "devnet" : "mainnet",
+        client: env === "development" ? "main-stay.vercel.app" : "mainstay.pro",
         appUrl:
           env === "development"
             ? import.meta.env.VITE_APP_URL_DEV
