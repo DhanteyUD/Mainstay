@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   ArrowRightLeft,
   Clock,
@@ -75,9 +75,10 @@ function MainApp() {
   const { publicKey, connected } = useWallet();
   const walletAddress = publicKey?.toBase58() || null;
 
-  const { trades, loading, error, saveTrade, saveTransfer, fetchTrades, dbEnabled } =
+  const { trades, loading, error, saveTrade, saveTransfer, saveReceived, fetchTrades, dbEnabled } =
     useTrades(walletAddress);
   const { received, fetchReceived } = useReceivedTransfers(walletAddress);
+  const savedReceivedSigs = useRef(new Set());
   const { orders, currentPrices, addOrder, cancelOrder, pendingCount } =
     useLimitOrders();
   const { solPrice, priceLoading, uptimePct, riskLevel } = useNetworkStats();
@@ -104,6 +105,14 @@ function MainApp() {
   useEffect(() => {
     if (connected && walletAddress) { fetchTrades(); fetchReceived(); }
   }, [connected, walletAddress, isDevnet]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    received.forEach(item => {
+      if (!item.signature || savedReceivedSigs.current.has(item.signature)) return
+      savedReceivedSigs.current.add(item.signature)
+      saveReceived(item)
+    })
+  }, [received]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const risk = RISK_STYLES[riskLevel] ?? RISK_STYLES.LOW;
   const uptime =
