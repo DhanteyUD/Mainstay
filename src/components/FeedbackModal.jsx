@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { X, Bug, MessageSquare, Lightbulb, Send, CheckCircle } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { X, Bug, MessageSquare, Lightbulb, Send, CheckCircle, ImagePlus, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as Sentry from "@sentry/react";
 
@@ -16,6 +16,23 @@ export default function FeedbackModal({ onClose }) {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [screenshot, setScreenshot] = useState(null);
+  const [screenshotPreview, setScreenshotPreview] = useState(null);
+  const fileInputRef = useRef(null);
+
+  function handleScreenshotChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setScreenshot(file);
+    setScreenshotPreview(URL.createObjectURL(file));
+  }
+
+  function removeScreenshot() {
+    setScreenshot(null);
+    if (screenshotPreview) URL.revokeObjectURL(screenshotPreview);
+    setScreenshotPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -23,9 +40,15 @@ export default function FeedbackModal({ onClose }) {
 
     setSubmitting(true);
     try {
+      const attachments = [];
+      if (screenshot) {
+        const buffer = await screenshot.arrayBuffer();
+        attachments.push({ data: new Uint8Array(buffer), filename: screenshot.name, contentType: screenshot.type });
+      }
+
       await Sentry.captureFeedback(
         { name: name.trim() || undefined, email: email.trim() || undefined, message: message.trim() },
-        { captureContext: { tags: { feedbackType: category } } },
+        { captureContext: { tags: { feedbackType: category } }, attachments },
       );
       setSubmitted(true);
       setTimeout(onClose, 2000);
@@ -80,7 +103,7 @@ export default function FeedbackModal({ onClose }) {
                     <button
                       key={cat.id}
                       type="button"
-                      onClick={() => setCategory(cat.id)}
+                      onClick={() => { setCategory(cat.id); if (cat.id !== "bug") removeScreenshot(); }}
                       className={`flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border transition-all duration-150 ${
                         isActive ? `${cat.border} ${cat.bg}` : "border-terminal-border hover:border-terminal-muted"
                       }`}
@@ -125,6 +148,48 @@ export default function FeedbackModal({ onClose }) {
                 onChange={(e) => setMessage(e.target.value)}
                 className="bg-terminal-card border border-terminal-border rounded-lg px-3 py-2 font-mono text-xs text-terminal-text placeholder:text-terminal-dim/50 focus:outline-none focus:border-terminal-accent/50 resize-none"
               />
+
+              <AnimatePresence>
+                {category === "bug" && (
+                  <motion.div
+                    key="screenshot"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleScreenshotChange}
+                    />
+                    {screenshotPreview ? (
+                      <div className="relative rounded-lg overflow-hidden border border-terminal-red/30 bg-terminal-card">
+                        <img src={screenshotPreview} alt="Screenshot preview" className="w-full max-h-36 object-cover" />
+                        <button
+                          type="button"
+                          onClick={removeScreenshot}
+                          className="absolute top-1.5 right-1.5 bg-terminal-bg/80 rounded-full text-terminal-dim hover:text-terminal-red transition-colors"
+                        >
+                          <XCircle size={18} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center gap-2 w-full py-2.5 px-3 rounded-lg border border-dashed border-terminal-border hover:border-terminal-red/40 bg-terminal-card text-terminal-dim hover:text-terminal-red/80 transition-all duration-150"
+                      >
+                        <ImagePlus size={13} />
+                        <span className="font-mono text-xs">Add a screenshot</span>
+                      </button>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <button
                 type="submit"
