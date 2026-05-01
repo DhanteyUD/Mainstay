@@ -109,7 +109,9 @@ export function useSend() {
         tx.add(createTransferInstruction(fromATA, toATA, wallet.publicKey, rawAmount));
       }
 
-      const rpcUrl = isDevnetRef.current ? SOLANA_DEVNET_RPC : SOLANA_RPC_PROXY;
+      const BASE = typeof window !== "undefined" ? window.location.origin : "";
+
+      const rpcUrl = isDevnetRef.current ? SOLANA_DEVNET_RPC : `${BASE}${SOLANA_RPC_PROXY}`;
       const sendConn = new Connection(rpcUrl, "confirmed");
 
       let signature;

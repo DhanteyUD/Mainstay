@@ -9,6 +9,8 @@ export function useNetworkStats() {
   const [networkRisk, setNetworkRisk] = useState(null)
   const [heliusPings, setHeliusPings] = useState([])
 
+  const BASE = typeof window !== "undefined" ? window.location.origin : "";
+
   useEffect(() => {
     const SOL_MINT = TOKENS.SOL.mint
     async function fetchPrice() {
@@ -59,7 +61,7 @@ export function useNetworkStats() {
     async function fetchRisk() {
       let ok = false
       try {
-        const connection = new Connection(SOLANA_RPC_PROXY, { commitment: 'confirmed', wsEndpoint: '' })
+        const connection = new Connection(`${BASE}${SOLANA_RPC_PROXY}`, { commitment: 'confirmed', wsEndpoint: '' })
         const samples = await connection.getRecentPerformanceSamples(1)
         if (samples?.length > 0) {
           const tps = samples[0].numTransactions / samples[0].samplePeriodSecs

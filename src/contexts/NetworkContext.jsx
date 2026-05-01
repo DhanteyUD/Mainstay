@@ -4,10 +4,11 @@ import config from '../config/index';
 
 const { solanaNetwork, heliusRpcUrl } = config().secrets;
 
+const BASE = typeof window !== "undefined" ? window.location.origin : "";
 const IS_DEVNET = solanaNetwork === 'devnet';
 const RPC_ENDPOINT = IS_DEVNET
   ? SOLANA_DEVNET_RPC
-  : (heliusRpcUrl || SOLANA_RPC_PROXY);
+  : heliusRpcUrl || `${BASE}${SOLANA_RPC_PROXY}`;
 
 const NetworkContext = createContext(null);
 

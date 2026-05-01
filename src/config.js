@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.PROD ? '' : 'https://api.eitherway.ai');
+const API_BASE_URL = import.meta.env.PROD ? '' : 'https://api.eitherway.ai';
 
 export const DIALECT_PROXY = `${API_BASE_URL}/api/dialect`;
 export const DFLOW_PROXY = `${API_BASE_URL}/api/dflow`;
