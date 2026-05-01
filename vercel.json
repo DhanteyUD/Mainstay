@@ -1,10 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/api/solana/rpc",
-      "destination": "https://api.eitherway.ai/api/solana/rpc"
-    },
-    {
       "source": "/api/dialect/:path*",
       "destination": "https://api.eitherway.ai/api/dialect/:path*"
     },
