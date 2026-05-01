@@ -1,8 +1,11 @@
 import * as Sentry from "@sentry/react";
+import config from './config/index';
+
+const { sentryDsn, environment } = config().secrets;
 
 Sentry.init({
-    enabled: import.meta.env.PROD,
-    dsn: import.meta.env.VITE_SENTRY_DSN,
+    enabled: environment !== "development",
+    dsn: sentryDsn,
     tunnel: '/api/sentry-tunnel',
     sendDefaultPii: true,
     integrations: [
