@@ -6,10 +6,12 @@ import { sentryVitePlugin } from '@sentry/vite-plugin'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
+  const appEnv = env.VITE_APP_ENVIRONMENT || 'development'
+  const sentryDsn = appEnv === 'development' ? env.VITE_SENTRY_DSN_DEV : env.VITE_SENTRY_DSN_PROD
 
   let sentryTunnelProxy = {}
-  if (env.VITE_SENTRY_DSN) {
-    const dsn = new URL(env.VITE_SENTRY_DSN)
+  if (sentryDsn) {
+    const dsn = new URL(sentryDsn)
     const projectId = dsn.pathname.slice(1)
     sentryTunnelProxy = {
       '/api/sentry-tunnel': {
@@ -83,9 +85,9 @@ export default defineConfig(({ mode }) => {
         },
       }),
       sentryVitePlugin({
-        org: process.env.SENTRY_ORG,
-        project: process.env.SENTRY_PROJECT,
-        authToken: process.env.SENTRY_AUTH_TOKEN,
+        org: env.SENTRY_ORG,
+        project: appEnv === 'development' ? env.SENTRY_PROJECT_DEV : env.SENTRY_PROJECT_PROD,
+        authToken: env.SENTRY_AUTH_TOKEN,
         silent: true,
       }),
       nodePolyfills({

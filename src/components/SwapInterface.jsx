@@ -42,7 +42,7 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
   const wallet = useWallet();
   const { publicKey, connected } = wallet;
   const { connection } = useConnection();
-  const { isDevnet, networkLabel, toggleNetwork } = useNetwork();
+  const { isDevnet, networkLabel } = useNetwork();
 
   const isSolflare = wallet.wallet?.adapter?.name === "Solflare";
 
@@ -301,19 +301,17 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
                   className={`w-2 h-2 rounded-full animate-pulse ${isDevnet ? "bg-terminal-yellow" : "bg-terminal-green"}`}
                 />
                 <span className="font-mono font-bold text-terminal-text text-sm tracking-wider">
-                  SWAP
+                  SWAP /
                 </span>
-                <button
-                  onClick={toggleNetwork}
-                  title={`Switch to ${isDevnet ? "mainnet" : "devnet"}`}
-                  className={`font-mono text-xs tracking-widest px-2 py-0.5 rounded border transition-colors ${
+                <span
+                  className={`font-mono text-xs tracking-widest px-2 py-0.5 rounded border ${
                     isDevnet
-                      ? "text-terminal-yellow border-terminal-yellow/40 bg-terminal-yellow/10 hover:bg-terminal-yellow/20"
-                      : "text-terminal-dim border-terminal-border bg-transparent hover:border-terminal-accent/40 hover:text-terminal-accent"
+                      ? "text-terminal-yellow border-terminal-yellow/40 bg-terminal-yellow/10"
+                      : "text-terminal-dim border-terminal-border bg-transparent"
                   }`}
                 >
                   {networkLabel}
-                </button>
+                </span>
               </div>
               <div className="shrink-0 max-w-[180px] sm:max-w-none">
                 <WalletMultiButton />
