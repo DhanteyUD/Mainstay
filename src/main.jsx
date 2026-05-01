@@ -144,9 +144,12 @@ const rootElement = document.getElementById("root");
 if (!rootElement) {
   throw new Error("Root element not found");
 }
-const root =
-  window.__MEV_SHIELD_REACT_ROOT__ ||
-  (window.__MEV_SHIELD_REACT_ROOT__ = ReactDOM.createRoot(rootElement));
+
+if (window.__MAINSTAY_REACT_ROOT__) {
+  window.__MAINSTAY_REACT_ROOT__.unmount();
+}
+const root = ReactDOM.createRoot(rootElement);
+window.__MAINSTAY_REACT_ROOT__ = root;
 
 root.render(
   <React.StrictMode>

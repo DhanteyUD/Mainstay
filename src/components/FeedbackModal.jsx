@@ -16,6 +16,7 @@ export default function FeedbackModal({ onClose }) {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
   const [screenshot, setScreenshot] = useState(null);
   const [screenshotPreview, setScreenshotPreview] = useState(null);
   const fileInputRef = useRef(null);
@@ -39,6 +40,7 @@ export default function FeedbackModal({ onClose }) {
     if (!message.trim()) return;
 
     setSubmitting(true);
+    setSubmitError(false);
     try {
       const attachments = [];
       if (screenshot) {
@@ -54,6 +56,7 @@ export default function FeedbackModal({ onClose }) {
       setTimeout(onClose, 2000);
     } catch {
       setSubmitting(false);
+      setSubmitError(true);
     }
   }
 
@@ -191,6 +194,11 @@ export default function FeedbackModal({ onClose }) {
                 )}
               </AnimatePresence>
 
+              {submitError && (
+                <p className="font-mono text-[10px] text-terminal-red text-center">
+                  Failed to send — please try again.
+                </p>
+              )}
               <button
                 type="submit"
                 disabled={submitting || !message.trim()}
