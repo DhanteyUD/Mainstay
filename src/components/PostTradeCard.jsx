@@ -16,6 +16,9 @@ import { IoShieldCheckmarkOutline } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
 import { DIALECT_PROXY } from "../config";
 import { useNetwork } from "../contexts/NetworkContext";
+import config from "../config/index";
+
+const { client } = config().secrets;
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -257,7 +260,7 @@ async function generateShareImage({
   ctx.fillStyle = "rgba(0,255,136,0.3)";
   ctx.font = "11px monospace";
   ctx.textAlign = "right";
-  ctx.fillText("main-stay.vercel.app • @DFlowProtocol", W - 40, H - 22);
+  ctx.fillText(`${client} • @DFlowProtocol`, W - 40, H - 22);
   ctx.textAlign = "left";
 
   return canvas.toDataURL("image/png");
