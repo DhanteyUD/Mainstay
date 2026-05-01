@@ -301,7 +301,7 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
                   className={`w-2 h-2 rounded-full animate-pulse ${isDevnet ? "bg-terminal-yellow" : "bg-terminal-green"}`}
                 />
                 <span className="font-mono font-bold text-terminal-text text-sm tracking-wider">
-                  SWAP /
+                  SWAP
                 </span>
                 <span
                   className={`font-mono text-xs tracking-widest px-2 py-0.5 rounded border ${
@@ -644,7 +644,11 @@ export default function SwapInterface({ onSaveTrade, onTokensChange }) {
             inputToken={inputToken}
             outputToken={outputToken}
             quotedOutput={savedQuote?.outAmount || savedQuote?.outputAmount}
-            onClose={() => { setShowConfirm(false); resetSwap(); setSavedQuote(null); }}
+            onClose={() => {
+              setShowConfirm(false);
+              resetSwap();
+              setSavedQuote(null);
+            }}
             onNewSwap={handleNewSwap}
             onSaveTrade={onSaveTrade}
           />
