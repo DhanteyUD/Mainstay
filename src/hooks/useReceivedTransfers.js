@@ -23,11 +23,13 @@ export function useReceivedTransfers(walletAddress) {
   const [received, setReceived] = useState([])
   const [loading, setLoading] = useState(false)
 
+  const BASE = typeof window !== "undefined" ? window.location.origin : "";
+
   const fetchReceived = useCallback(async () => {
     if (!walletAddress) { setReceived([]); return }
     setLoading(true)
     try {
-      const rpcUrl = isDevnet ? SOLANA_DEVNET_RPC : SOLANA_RPC_PROXY
+      const rpcUrl = isDevnet ? SOLANA_DEVNET_RPC : `${BASE}${SOLANA_RPC_PROXY}`
       const connection = new Connection(rpcUrl, { commitment: 'confirmed', wsEndpoint: '' })
       const pubkey = new PublicKey(walletAddress)
 

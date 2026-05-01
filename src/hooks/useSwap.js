@@ -276,7 +276,9 @@ export function useSwap() {
             return null;
           }
 
-          const connection = new Connection(SOLANA_RPC_PROXY, {
+          const BASE = typeof window !== "undefined" ? window.location.origin : "";
+
+          const connection = new Connection(`${BASE}${SOLANA_RPC_PROXY}`, {
             commitment: "confirmed",
             wsEndpoint: "",
           });
