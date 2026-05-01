@@ -182,7 +182,7 @@ export default function WalletCard({
         )}
       </AnimatePresence>
       <AnimatePresence>
-        {sendOpen && <SendModal onClose={() => setSendOpen(false)} onSendSuccess={onSendSuccess} />}
+        {sendOpen && <SendModal walletAddress={walletAddress} onClose={() => setSendOpen(false)} onSendSuccess={onSendSuccess} />}
       </AnimatePresence>
     </>
   );

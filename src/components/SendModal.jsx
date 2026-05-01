@@ -8,11 +8,13 @@ import {
   ExternalLink,
   AlertCircle,
   Loader2,
+  Clock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { useSend } from "../hooks/useSend";
+import { useSavedAddresses } from "../hooks/useSavedAddresses";
 import { useNetwork } from "../contexts/NetworkContext";
 import { TOKEN_LIST } from "../config";
 
@@ -36,7 +38,7 @@ function isValidSolanaAddress(addr) {
   }
 }
 
-export default function SendModal({ onClose, onSendSuccess }) {
+export default function SendModal({ walletAddress, onClose, onSendSuccess }) {
   const wallet = useWallet();
   const { connection } = useConnection();
   const { isDevnet } = useNetwork();
@@ -47,7 +49,10 @@ export default function SendModal({ onClose, onSendSuccess }) {
   const [tokenSearch, setTokenSearch] = useState("");
   const [amount, setAmount] = useState("");
   const [recipient, setRecipient] = useState("");
+  const [recipientLabel, setRecipientLabel] = useState("");
+  const [recipientFocused, setRecipientFocused] = useState(false);
   const [balance, setBalance] = useState(null);
+  const { addresses: savedAddresses, save: saveAddress, remove: removeAddress } = useSavedAddresses(walletAddress);
   const [balLoading, setBalLoading] = useState(false);
 
   const fetchBalance = useCallback(async (token) => {
@@ -105,6 +110,17 @@ export default function SendModal({ onClose, onSendSuccess }) {
     );
   }, [tokenSearch]);
 
+  const filteredSavedAddresses = useMemo(() => {
+    if (!recipient) return savedAddresses;
+    const q = recipient.toLowerCase();
+    return savedAddresses.filter(a =>
+      a.address.toLowerCase().includes(q) ||
+      (a.label && a.label.toLowerCase().includes(q))
+    );
+  }, [savedAddresses, recipient]);
+
+  const showAddressDropdown = recipientFocused && filteredSavedAddresses.length > 0;
+
   function handleMax() {
     if (balance == null || !selectedToken) return;
     if (selectedToken.mint === SOL_MINT) {
@@ -125,6 +141,7 @@ export default function SendModal({ onClose, onSendSuccess }) {
       recipient,
     });
     if (result) {
+      saveAddress(recipient, recipientLabel.trim() || null);
       fetchBalance(selectedToken);
       onSendSuccess?.({ token: selectedToken, amount: amountNum, recipient, ...result });
     }
@@ -134,6 +151,7 @@ export default function SendModal({ onClose, onSendSuccess }) {
     resetSend();
     setAmount("");
     setRecipient("");
+    setRecipientLabel("");
   }
 
   const isBusy = sendStatus === "signing" || sendStatus === "confirming";
@@ -401,25 +419,93 @@ export default function SendModal({ onClose, onSendSuccess }) {
                 <label className="font-mono text-xs text-terminal-dim mb-1.5 block tracking-wider">
                   RECIPIENT ADDRESS
                 </label>
-                <input
-                  type="text"
-                  value={recipient}
-                  onChange={(e) => setRecipient(e.target.value.trim())}
-                  disabled={isBusy}
-                  placeholder="Solana wallet address"
-                  className={`w-full h-12 bg-terminal-surface border rounded-xl px-4 py-3 font-mono text-xs text-terminal-text placeholder:text-terminal-dim/40 outline-none transition-colors disabled:opacity-50 ${
-                    recipient.length > 0
-                      ? recipientValid
-                        ? "border-terminal-green/40 focus:border-terminal-green/60"
-                        : "border-terminal-red/40 focus:border-terminal-red/60"
-                      : "border-terminal-border focus:border-terminal-accent/40"
-                  }`}
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={recipient}
+                    onChange={(e) => { setRecipient(e.target.value.trim()); setRecipientLabel(""); }}
+                    onFocus={() => setRecipientFocused(true)}
+                    onBlur={() => setTimeout(() => setRecipientFocused(false), 150)}
+                    disabled={isBusy}
+                    placeholder="Solana wallet address"
+                    className={`w-full h-12 bg-terminal-surface border rounded-xl px-4 py-3 font-mono text-xs text-terminal-text placeholder:text-terminal-dim/40 outline-none transition-colors disabled:opacity-50 ${
+                      recipient.length > 0
+                        ? recipientValid
+                          ? "border-terminal-green/40 focus:border-terminal-green/60"
+                          : "border-terminal-red/40 focus:border-terminal-red/60"
+                        : "border-terminal-border focus:border-terminal-accent/40"
+                    }`}
+                  />
+
+                  <AnimatePresence>
+                    {showAddressDropdown && (
+                      <motion.div
+                        className="absolute z-10 top-full left-0 right-0 mt-1 bg-terminal-card border border-terminal-border rounded-xl shadow-2xl overflow-hidden"
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.13 }}
+                      >
+                        <div className="px-3 py-1.5 border-b border-terminal-border/50">
+                          <span className="font-mono text-xs text-terminal-dim/50 tracking-wider">SAVED</span>
+                        </div>
+                        {filteredSavedAddresses.map(({ address, label }) => (
+                          <div
+                            key={address}
+                            className="flex items-center gap-2 px-3 py-2.5 hover:bg-terminal-surface cursor-pointer group"
+                            onMouseDown={() => { setRecipient(address); setRecipientLabel(label || ""); }}
+                          >
+                            <Clock size={10} className="text-terminal-dim/40 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              {label ? (
+                                <>
+                                  <div className="font-mono text-xs font-bold text-terminal-text truncate">{label}</div>
+                                  <div className="font-mono text-xs text-terminal-dim/50">{address.slice(0, 6)}…{address.slice(-6)}</div>
+                                </>
+                              ) : (
+                                <div className="font-mono text-xs text-terminal-text truncate">{address.slice(0, 6)}…{address.slice(-6)}</div>
+                              )}
+                            </div>
+                            <button
+                              onMouseDown={(e) => { e.stopPropagation(); removeAddress(address); }}
+                              className="opacity-0 group-hover:opacity-100 text-terminal-dim/50 hover:text-terminal-red transition-all shrink-0"
+                            >
+                              <X size={10} />
+                            </button>
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
                 {recipient.length > 0 && !recipientValid && (
                   <p className="font-mono text-xs text-terminal-red mt-1">
                     Invalid Solana address
                   </p>
                 )}
+
+                {/* Label input — shown once address is valid */}
+                <AnimatePresence>
+                  {recipientValid && (
+                    <motion.div
+                      className="mt-2"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <input
+                        type="text"
+                        value={recipientLabel}
+                        onChange={(e) => setRecipientLabel(e.target.value)}
+                        disabled={isBusy}
+                        placeholder="Label (optional) — e.g. Alice, My Exchange"
+                        maxLength={40}
+                        className="w-full h-9 bg-terminal-surface border border-terminal-border rounded-lg px-3 font-mono text-xs text-terminal-text placeholder:text-terminal-dim/30 outline-none focus:border-terminal-accent/40 transition-colors disabled:opacity-50"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Error */}
