@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const APP_URL = Deno.env.get("APP_URL") ?? "https://main-stay.vercel.app";
 const FROM_EMAIL = "Mainstay <onboarding@resend.dev>";
 
-function buildEmailHtml(email: string, logoDataUrl: string): string {
+function buildEmailHtml(email: string, logoDataUrl: string, appUrl: string): string {
   const logoTag = logoDataUrl
     ? `<img src="${logoDataUrl}" class="logo-img" alt="Mainstay" />`
     : `<span class="logo-fallback">🛡️</span>`;
@@ -222,14 +223,14 @@ function buildEmailHtml(email: string, logoDataUrl: string): string {
         <p style="font-size:12px;color:#94a3b8;margin-bottom:16px;line-height:1.6;">
           In the meantime, try MEV-protected spot swaps on Solana — already live today.
         </p>
-        <a href="https://main-stay.vercel.app" class="cta-button">Try Spot Swaps</a>
+        <a href="${appUrl}" class="cta-button">Try Spot Swaps</a>
       </div>
 
       <!-- Footer -->
       <div class="footer">
         <p class="footer-text">
           You're receiving this because you requested to be on the waitlist at
-          <a href="https://main-stay.vercel.app">main-stay.vercel.app</a>.<br />
+          <a href="${appUrl}">${appUrl.replace(/^https?:\/\//, '')}</a>.<br />
           &copy; ${new Date().getFullYear()} Mainstay. All rights reserved.
         </p>
       </div>
@@ -272,6 +273,7 @@ serve(async (req) => {
         html: buildEmailHtml(
           email,
           "https://res.cloudinary.com/dhantey/image/upload/v1777367316/Mainstay/mainstay-logo_vydcnr.png",
+          APP_URL,
         ),
       }),
     });

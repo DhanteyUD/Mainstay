@@ -7,35 +7,15 @@ const config = () => {
     cache = Object.freeze({
       secrets: {
         environment: env,
-        solanaNetwork: env === "development" ? "devnet" : "mainnet",
-        appUrl:
-          env === "development"
-            ? import.meta.env.VITE_APP_URL_DEV
-            : import.meta.env.VITE_APP_URL_PROD,
-        sentryDsn:
-          env === "development"
-            ? import.meta.env.VITE_SENTRY_DSN_DEV
-            : import.meta.env.VITE_SENTRY_DSN_PROD,
-        sentryProject:
-          env === "development"
-            ? import.meta.env.SENTRY_PROJECT_DEV
-            : import.meta.env.SENTRY_PROJECT_PROD,
-        authRedirectUrl:
-          env === "development"
-            ? import.meta.env.VITE_AUTH_REDIRECT_URL_DEV
-            : import.meta.env.VITE_AUTH_REDIRECT_URL_PROD,
-        supabaseAnonKey:
-          env === "development"
-            ? import.meta.env.VITE_SUPABASE_ANON_KEY_DEV
-            : import.meta.env.VITE_SUPABASE_ANON_KEY_PROD,
-        supabaseUrl:
-          env === "development"
-            ? import.meta.env.VITE_SUPABASE_URL_DEV
-            : import.meta.env.VITE_SUPABASE_URL_PROD,
-        heliusRpcUrl:
-          env === "development"
-            ? import.meta.env.VITE_HELIUS_RPC_URL_DEV
-            : import.meta.env.VITE_HELIUS_RPC_URL_PROD,
+        solanaNetwork: env === "production" ? "mainnet" : "devnet",
+        client: env === "production" ? "mainstay.pro" : "main-stay.vercel.app",
+        appUrl: import.meta.env.VITE_APP_URL,
+        sentryDsn: import.meta.env.VITE_SENTRY_DSN,
+        sentryProject: import.meta.env.SENTRY_PROJECT,
+        authRedirectUrl: import.meta.env.VITE_AUTH_REDIRECT_URL,
+        supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+        supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+        heliusRpcUrl: import.meta.env.VITE_HELIUS_RPC_URL,
       },
     });
   }
