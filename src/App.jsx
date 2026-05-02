@@ -34,6 +34,7 @@ import { useNetwork } from "./contexts/NetworkContext";
 import DashboardCustomizer, { useDashboardLayout } from "./components/DashboardCustomizer";
 
 import { isMobile } from "./lib/device";
+import { WalletBrowserSignedOut } from "./components/MobileWalletGateway";
 import { useTrades } from "./hooks/useTrades";
 import { useReceivedTransfers } from "./hooks/useReceivedTransfers";
 import { useLimitOrders } from "./hooks/useLimitOrders";
@@ -103,7 +104,12 @@ export default function App() {
     </>
   );
 
-  if (!user && (!isWalletBrowser || signedOut)) return (
+  if (isMobile && isWalletBrowser) {
+    if (signedOut) return <WalletBrowserSignedOut />;
+    return <MainApp />;
+  }
+
+  if (!user) return (
     <>
       <LoginScreen />
       <FeedbackButton />
