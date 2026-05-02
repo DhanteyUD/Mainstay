@@ -74,15 +74,23 @@ function useIsWalletBrowser() {
 }
 
 export default function App() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signedOut } = useAuth();
   const { dismissed, dismiss } = useOnboarding();
   const isWalletBrowser = useIsWalletBrowser();
 
   if (authLoading) {
     return (
       <div className="fixed inset-0 bg-terminal-bg flex items-center justify-center">
-        <span className="font-mono text-xs text-terminal-dim animate-pulse">
-          Authenticating…
+        <div
+          className="fixed inset-0 pointer-events-none opacity-[0.015]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(0,229,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,1) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+        <span className="relative font-mono text-[11px] text-terminal-dim tracking-[0.2em] animate-pulse">
+          Authenticating
         </span>
       </div>
     );
@@ -95,7 +103,7 @@ export default function App() {
     </>
   );
 
-  if (!user && !isWalletBrowser) return (
+  if (!user && (!isWalletBrowser || signedOut)) return (
     <>
       <LoginScreen />
       <FeedbackButton />
