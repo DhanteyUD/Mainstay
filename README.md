@@ -632,6 +632,51 @@ The `vercel.json` rewrites proxy all API traffic so CORS never blocks your produ
   ]
 }
 ```
+For the Solana RPC endpoint specifically, use the `api/solana-rpc.js` serverless function (included in the `api/` directory) to proxy directly to `https://api.mainnet-beta.solana.com`, avoiding CORS restrictions from third-party proxies.
+
+---
+
+## 🔗 Integrations
+
+| Service | Purpose | Docs |
+|---|---|---|
+| **DFlow Protocol** | MEV-protected order routing | [dflow.net](https://dflow.net) |
+| **Jupiter Aggregator** | Devnet swap routing + price data | [jup.ag](https://jup.ag) |
+| **Helius** | High-reliability Solana RPC | [helius.dev](https://helius.dev) |
+| **Supabase** | Auth, trade history, limit orders, address book | [supabase.com](https://supabase.com) |
+| **Sentry** | Error tracking, user feedback | [sentry.io](https://sentry.io) |
+| **TradingView** | Price charts | [tradingview.com](https://tradingview.com) |
+| **Resend** | Waitlist confirmation emails | [resend.com](https://resend.com) |
+
+---
+
+## Supabase Schema
+
+The following tables are required for full functionality:
+
+```sql
+-- Mainnet trades
+trades (id, wallet_address, trade_type, input_token_symbol, output_token_symbol,
+        input_amount_raw, output_amount_raw, input_decimals, output_decimals,
+        execution_grade, slippage_pct, mev_saved_usd, signature, explorer_url, created_at)
+
+-- Devnet trades (same schema)
+devTrades (...)
+
+-- Limit orders
+limitOrders (id, wallet_address, network, status, direction, input_token_mint,
+             input_token_symbol, input_token_decimals, output_token_mint,
+             output_token_symbol, output_token_decimals, input_amount, target_price,
+             executed_at, signature, explorer_url, error, created_at)
+
+devLimitOrders (...)
+
+-- Saved recipient addresses
+recipients (id, wallet_address, address, label, last_used_at)
+
+-- Prediction market waitlist
+waitingList (id, email, created_at)
+```
 
 For the Solana RPC endpoint specifically, use the `api/solana-rpc.js` serverless function (included in the `api/` directory) to proxy directly to `https://api.mainnet-beta.solana.com`, avoiding CORS restrictions from third-party proxies.
 
