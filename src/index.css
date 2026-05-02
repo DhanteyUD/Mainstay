@@ -162,6 +162,11 @@ input[type="number"] {
   }
 }
 
+@keyframes ms-dot {
+  0%, 60%, 100% { opacity: 0.2; transform: scale(0.7); }
+  30%            { opacity: 1;   transform: scale(1.2); }
+}
+
 /* Scan line animation */
 @keyframes scanline {
   0% {

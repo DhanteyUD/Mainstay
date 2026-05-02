@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [signedOut, setSignedOut] = useState(false);
   const idleTimer = useRef(null);
 
   useEffect(() => {
@@ -28,6 +29,7 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session) setSignedOut(false);
     });
 
     return () => subscription.unsubscribe();
@@ -103,12 +105,13 @@ export function AuthProvider({ children }) {
 
   const signOut = async () => {
     if (!supabase) return;
+    setSignedOut(true);
     await supabase.auth.signOut();
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, session, loading, signUp, signIn, signInWithGoogle, signInWithGitHub, signOut }}
+      value={{ user, session, loading, signedOut, signUp, signIn, signInWithGoogle, signInWithGitHub, signOut }}
     >
       {children}
     </AuthContext.Provider>

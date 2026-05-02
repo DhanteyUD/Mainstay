@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { useAuth } from "./lib/auth-context";
 import FeedbackButton from "./components/FeedbackButton";
+import logo from "./assets/mainstay-logo.png";
 
 import LoginScreen from "./components/LoginScreen";
 import AppHeader from "./components/AppHeader";
@@ -74,16 +75,48 @@ function useIsWalletBrowser() {
 }
 
 export default function App() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signedOut } = useAuth();
   const { dismissed, dismiss } = useOnboarding();
   const isWalletBrowser = useIsWalletBrowser();
 
   if (authLoading) {
     return (
       <div className="fixed inset-0 bg-terminal-bg flex items-center justify-center">
-        <span className="font-mono text-xs text-terminal-dim animate-pulse">
-          Authenticating…
-        </span>
+        <div
+          className="fixed inset-0 pointer-events-none opacity-[0.015]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(0,229,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,1) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+        <div
+          className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] pointer-events-none animate-pulse"
+          style={{ background: "radial-gradient(ellipse at center top, rgba(0,229,255,0.07) 0%, transparent 70%)" }}
+        />
+        <div className="relative z-10 flex flex-col items-center gap-5">
+          <div className="flex items-center gap-2.5">
+            <img src={logo} alt="" className="w-9 h-9" />
+            <span className="font-mono font-bold text-[17px] text-terminal-text tracking-[0.12em]">
+              Main<span className="text-terminal-accent">stay</span>
+            </span>
+          </div>
+          <p className="font-mono text-[10px] text-terminal-dim tracking-[0.2em]">
+            MEV-protected trading on Solana
+          </p>
+          <div className="flex gap-1.5 items-center">
+            {[0, 200, 400].map((delay) => (
+              <span
+                key={delay}
+                className="w-[5px] h-[5px] rounded-full bg-terminal-accent"
+                style={{ animation: `ms-dot 1.4s ease-in-out ${delay}ms infinite` }}
+              />
+            ))}
+          </div>
+          <p className="font-mono text-[10px] text-terminal-dim tracking-[0.2em] animate-pulse">
+            Authenticating
+          </p>
+        </div>
       </div>
     );
   }
@@ -95,7 +128,7 @@ export default function App() {
     </>
   );
 
-  if (!user && !isWalletBrowser) return (
+  if (!user && (!isWalletBrowser || signedOut)) return (
     <>
       <LoginScreen />
       <FeedbackButton />

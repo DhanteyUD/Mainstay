@@ -18,8 +18,11 @@ export default function AppHeader({ balanceHidden = false }) {
 
   async function handleSignOut() {
     setSigningOut(true);
-    await signOut();
-    setSigningOut(false);
+    try {
+      await signOut();
+    } finally {
+      setSigningOut(false);
+    }
   }
 
   return (

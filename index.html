@@ -1,28 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
   <script src="/scripts/runtime-error-reporter.js"></script>
   <script src="/scripts/vite-error-monitor.js"></script>
   <script src="/scripts/component-inspector.js"></script>
-    <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0f0f1a" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Mainstay" />
-    <meta name="description" content="Protected swaps powered by Mainstay" />
-    <title>Mainstay — Stay Clean</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f0f1a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mainstay" />
+  <meta name="description" content="Protected swaps powered by Mainstay" />
+  <title>Mainstay — Stay Clean</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap"
+    rel="stylesheet" />
+  <style>
+    #ms-shell {
+      position: fixed;
+      inset: 0;
+      background: #0a0b0f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #ms-grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.015;
+      background-image:
+        linear-gradient(rgba(0, 229, 255, 1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 255, 1) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    #ms-glow {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 300px;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center top, rgba(0, 229, 255, 0.07) 0%, transparent 70%);
+      animation: ms-breathe 3s ease-in-out infinite;
+    }
+
+    #ms-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #ms-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #ms-logo img {
+      width: 38px;
+      height: 38px;
+    }
+
+    #ms-logo span {
+      font-family: 'Space Mono', 'Courier New', monospace;
+      font-weight: 700;
+      font-size: 17px;
+      color: #e2e8f0;
+      letter-spacing: 0.12em;
+    }
+
+    #ms-logo em {
+      font-style: normal;
+      color: #00e5ff;
+    }
+
+    #ms-tagline {
+      font-family: 'Space Mono', 'Courier New', monospace;
+      font-size: 10px;
+      color: #8892a4;
+      letter-spacing: 0.2em;
+    }
+
+    #ms-dots {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    #ms-dots span {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #00e5ff;
+      animation: ms-dot 1.4s ease-in-out infinite;
+    }
+
+    #ms-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    #ms-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    #ms-status {
+      font-family: 'Space Mono', 'Courier New', monospace;
+      font-size: 10px;
+      color: #8892a4;
+      letter-spacing: 0.2em;
+      animation: ms-breathe 1.8s ease-in-out infinite;
+    }
+
+    @keyframes ms-dot {
+
+      0%,
+      60%,
+      100% {
+        opacity: 0.2;
+        transform: scale(0.7);
+      }
+
+      30% {
+        opacity: 1;
+        transform: scale(1.2);
+      }
+    }
+
+    @keyframes ms-breathe {
+
+      0%,
+      100% {
+        opacity: 0.45;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body style="background:#0a0b0f;margin:0">
+  <div id="root">
+    <div id="ms-shell">
+      <div id="ms-grid"></div>
+      <div id="ms-glow"></div>
+      <div id="ms-content">
+        <div id="ms-logo">
+          <img src="https://res.cloudinary.com/dhantey/image/upload/v1777367316/Mainstay/mainstay-logo_vydcnr.png"
+            alt="" />
+          <span>Main<em>stay</em></span>
+        </div>
+        <p id="ms-tagline">MEV-protected trading on Solana</p>
+        <div id="ms-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <p id="ms-status">Authenticating</p>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>
