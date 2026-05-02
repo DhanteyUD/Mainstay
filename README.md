@@ -26,10 +26,14 @@
 - [The Problem](#-the-problem)
 - [Why Mainstay Beats the Alternatives](#-why-mainstay-beats-the-alternatives)
 - [Features](#-features)
+- [Architecture](#architecture)
 - [How It Works](#-how-it-works)
 - [Tech Stack](#-tech-stack)
-- [DFlow Integration](#-dflow-integration)
 - [Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Environment Variables](#environment-variables)
+  - [Running Locally](#running-locally)
 - [Environment Variables](#-environment-variables)
 - [Deployment](#-deployment)
 - [Roadmap](#-roadmap)
@@ -58,7 +62,7 @@ MEV (Maximal Extractable Value) bots extracted an estimated **$370M–$500M** fr
 1. You broadcast a swap → SOL to USDC
 2. MEV bot spots your transaction in the mempool
 3. Bot front-runs → buys SOL first, drives price up
-4. Your trade executes at the worse price
+4. Your trade executes at the worst price
 5. Bot sells immediately → pockets the difference
 6. You never see what happened
 ```
@@ -85,45 +89,49 @@ The cumulative savings dashboard turns individual receipts into a running total 
 
 ## ✨ Features
 
-### 🔴 MEV Risk Meter
-Real-time risk assessment before every trade. Three inputs, one badge.
+| Feature | Description |
+|---|---|
+| 🛡️ **MEV-Protected Swaps** | All mainnet swaps route through DFlow's JIT auction, bypassing the public mempool |
+| 📊 **MEV Risk Scoring** | Per-trade risk assessment based on order size, pool liquidity, and network TPS |
+| 🎯 **Limit Orders** | Price-triggered orders that monitor markets every 30 seconds and execute automatically |
+| 🔮 **Prediction Markets** `Coming soon` | Trade outcome tokens (YES/NO) with the same MEV protection as spot swaps |
+| 💼 **Portfolio Dashboard** | Real-time SOL balance, USD value, and trade count |
+| 📜 **Trade History** | Full record of swaps, limit executions, sends, and received transfers |
+| 📈 **Execution Grade** | Post-trade `A+` `–F` quality score based on slippage delta vs quoted price |
+| 📤 **Send Tokens** | Transfer SOL or any SPL token with saved address book |
+| 📥 **Deposit** | QR code and address copy for receiving tokens |
+| 📡 **Network Status** | Live DFlow + Helius uptime and Solana TPS risk level |
+| 🌐 **Devnet Mode** | Full feature parity on devnet via Jupiter routing (no real funds) |
+| 📱 **PWA + Mobile** | Installable as a Progressive Web App; mobile wallet deep links for `Phantom` and `Solflare` |
+| 🔐 **Auth** | Supabase-backed auth with Google, GitHub, and email/password |
+| 🐛 **Feedback System** | In-app bug reports, feedback, and feature requests via Sentry |
+| 🎨 **Customization** | Customize and re-arrange components how you like |
+
+---
+
+## 🏗️ Architecture
 
 ```
-Order size vs pool TVL    → 40% weight
-Pool liquidity depth      → 40% weight  
-Network congestion        → 20% weight
-─────────────────────────────────────
-Score 0–33   → 🟢 LOW     minimal exposure
-Score 34–66  → 🟡 MEDIUM  consider smaller size
-Score 67–100 → 🔴 HIGH    significant sandwich risk
+┌─────────────────────────────────────────────────────┐
+│                Browser (React App)                  │
+│                                                     │
+│  SwapInterface → useSwap → DFlow Proxy → DFlow API  │
+│  LimitOrders   → useLimitOrders → price polling     │
+│  WalletBalance → useWalletBalance → Helius RPC      │
+│  TradeHistory  → useTrades → Supabase               │
+└────────────────────┬────────────────────────────────┘
+                     │ relative /api/* requests
+         ┌───────────▼────────────┐
+         │  Vercel Edge (proxy)   │
+         │  /api/dialect/*        │──► api.eitherway.ai (Jupiter prices)
+         │  /api/dflow/*          │──► api.eitherway.ai (DFlow quotes/swaps)
+         │  /api/solana/rpc       │──► Solana mainnet RPC
+         └────────────────────────┘
 ```
 
-### ⚡ DFlow JIT Execution
-All swaps execute through DFlow's declarative trade API. Market makers compete in a sealed-bid auction — no public mempool entry, no front-running opportunity.
-
-- DFlow JIT Routing shown explicitly on every trade
-- Priority fees auto-escalated for HIGH risk trades
-- No route pre-commitment — optimised at execution time
-
-### 📊 Post-Trade Execution Card
-The receipt. The thing nobody else shows you.
-
-```
-Quoted price     →  $85.62 USDC / SOL
-Actual price     →  $85.61 USDC / SOL
-Slippage delta   →  0.006%
-MEV saved        →  $0.23
-Execution grade  →  A+
-```
-
-### 💎 Prediction Markets
-Extended MEV protection for Solana prediction market outcome tokens (YES/NO). Same 3-step DFlow routing. Same execution quality card. Same proof.
-
-### 📈 Savings Dashboard
-Cumulative protected volume, total MEV saved in USD, average execution grade, and a shareable savings card for Twitter/X.
-
-### 🎓 MEV Education Layer
-First-visit onboarding explaining sandwich attacks with a 3-step visual diagram. Converts newcomers into believers before their first trade.
+> On **devnet**, the app routes directly through Jupiter v6's public API.
+> 
+> On **mainnet**, all quote and swap transactions go through the DFlow proxy, which provides private order routing and MEV protection.
 
 ---
 
@@ -153,7 +161,7 @@ Every trade passes through exactly **3 steps** — and MEV is blocked at all 3.
 │  ────────────────                                           │
 │  DFlow JIT auction → market makers compete for your order   │
 │  → Transaction confirmed on Solana mainnet                  │
-│  → Helius RPC fetches actual execution price                │
+│  → Helius RPC fetches the actual execution price            │
 │  → Post-trade card generated (grade + savings)              │
 │  → Trade saved to Supabase                                  │
 │                                                             │
@@ -166,63 +174,24 @@ Every trade passes through exactly **3 steps** — and MEV is blocked at all 3.
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
-| App Platform | [Eitherway](https://eitherway.ai) | Full-stack generation & deployment |
-| Swap Execution | [DFlow Declarative Trade API](https://pond.dflow.net) | MEV-protected order routing |
-| Price Discovery | DFlow Quote API | Pre-trade quotes & risk scoring |
-| Blockchain Data | [Helius RPC](https://docs.helius.dev) | Fast on-chain confirmation & congestion |
-| Persistence | [Supabase](https://supabase.com) | Trade history per wallet address |
-| Wallet | Solflare / Phantom | Transaction signing |
-| Deployment | [Vercel](https://vercel.com) | Production hosting |
-| Network | Solana Mainnet | All transactions are real on-chain |
+| **App Platform** | [Eitherway](https://eitherway.ai) | Full-stack generation & deployment |
+| **Swap Execution** | [DFlow Declarative Trade API](https://pond.dflow.net) | MEV-protected order routing |
+| **Price Discovery** | DFlow Quote API | Pre-trade quotes & risk scoring |
+| **Blockchain Data** | [Helius RPC](https://docs.helius.dev) | Fast on-chain confirmation & congestion |
+| **Database** | [Supabase (PostgreSQL)](https://supabase.com) | Trade history, limit order, transactions & waitlists|
+| **Wallet** | Solflare / Phantom | Transaction signing |
+| **Deployment** | [Vercel](https://vercel.com) | Production hosting |
+| **Network** | Solana Mainnet | All transactions are real on-chain |
+| **Framework**      | React 18 + Vite 5                                     | Builds the UI and handles fast development with hot reload and optimized bundling |
+| **Styling**        | Tailwind CSS 3                                        | Provides utility-first CSS for rapid, consistent UI design                        |
+| **Animation**      | Framer Motion                                         | Handles smooth UI animations and transitions                                      |
+| **Solana SDK**     | `@solana/web3.js`, `@solana/wallet-adapter-react`     | Enables blockchain interaction and wallet connectivity for Solana                 |
+| **Wallet UI**      | `@solana/wallet-adapter-react-ui`                     | Provides prebuilt UI components for wallet connection flows                       |
+| **Auth**           | Supabase Auth (Google, GitHub, email)                 | Manages user authentication and identity                                          |
+| **Error tracking, Feedback, & Feature request** | [Sentry](https://sentry.io/)                                                | Monitors and logs runtime errors for debugging and stability, as well as user feedback                      |
+| **Charts**         | TradingView widget                                    | Displays market charts and trading data visualization                             |
+| **PWA**            | vite-plugin-pwa + Workbox                             | Enables offline support and installable app experience                            |
 
----
-
-## 🔌 DFlow Integration
-
-Mainstay is built **around** DFlow — not just on top of it. Four API touchpoints:
-
-### Quote API
-```javascript
-// Step 1 — Pre-trade price discovery + risk scoring input
-GET /v1/quote
-  ?inputMint=So11111111111111111111111111111111111111112
-  &outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
-  &amount=10000000
-  &slippageBps=20
-```
-
-### Declarative Trade API
-```javascript
-// Step 3 — MEV-protected swap execution
-POST /v1/trade
-{
-  "inputMint": "So111...112",
-  "outputMint": "EPjF...1v",
-  "amount": 10000000,
-  "userPublicKey": "wallet_public_key",
-  "slippageBps": 20,
-  "feeBps": 8,                    // 0.08% platform fee
-  "priorityFeeLamports": 5000     // auto-scaled: 1000 LOW / 5000 MED / 25000 HIGH
-}
-```
-
-### Priority Fee Escalation
-```javascript
-// Auto-escalated based on MEV risk score
-const priorityFee = {
-  LOW:    1000,   // lamports — standard protection
-  MEDIUM: 5000,   // lamports — elevated protection
-  HIGH:   25000,  // lamports — maximum protection
-}[riskLevel];
-```
-
-### Platform Fee
-```
-feeBps: 8  →  0.08% on all protected trades
-Revenue model: volume-based, no smart contract needed
-```
-
-📚 **DFlow docs:** [pond.dflow.net/build/introduction](https://pond.dflow.net/build/introduction)
 
 ---
 
