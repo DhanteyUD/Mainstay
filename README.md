@@ -4,13 +4,11 @@
 
 # Mainstay
 
-### The mainstay of clean execution on Solana
+**MEV-protected token swaps on Solana, powered by DFlow Protocol**
 
-**MEV-protected swaps powered by DFlow · Quote → Sign → Execute · Stay clean.**
-
-[![Live App](https://img.shields.io/badge/Live_App-mainstay.vercel.app-00C2A8?style=for-the-badge&logo=vercel&logoColor=white)](https://main-stay.vercel.app)
-[![Built on Eitherway](https://img.shields.io/badge/Built_on-Eitherway-185FA5?style=for-the-badge)](https://eitherway.ai)
-[![DFlow](https://img.shields.io/badge/Powered_by-DFlow-0A1F35?style=for-the-badge)](https://pond.dflow.net)
+[![Live App](https://img.shields.io/badge/Live_App-mainstay.pro-0a0b0f?style=for-the-badge&logo=vercel&logoColor=00e5ff)](https://mainstay.pro)
+[![Built on Eitherway](https://img.shields.io/badge/Built_on-Eitherway-0d00ff?style=for-the-badge)](https://eitherway.ai)
+[![DFlow](https://img.shields.io/badge/Powered_by-DFlow-66c5f6?style=for-the-badge)](https://pond.dflow.net)
 [![Solana](https://img.shields.io/badge/Network-Solana_Mainnet-9945FF?style=for-the-badge&logo=solana&logoColor=white)](https://solana.com)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
@@ -24,7 +22,7 @@
 
 ## 📖 Table of Contents
 
-- [What is Mainstay?](#-what-is-mainstay)
+- [Overview](#-overview)
 - [The Problem](#-the-problem)
 - [Why Mainstay Beats the Alternatives](#-why-mainstay-beats-the-alternatives)
 - [Features](#-features)
@@ -40,23 +38,13 @@
 
 ---
 
-## ⚓ What is Mainstay?
+## ⚓️ Overview
 
-Mainstay is a **production-ready MEV-protected swap terminal** on Solana mainnet. Every trade passes through DFlow's Just-In-Time (JIT) routing — and unlike every other swap interface on Solana, Mainstay **shows you the proof**.
+Mainstay is a non-custodial Solana DEX terminal that routes every swap through [DFlow Protocol's](https://dflow.net) order-flow auction network. This eliminates MEV (Maximal Extractable Value) attacks ` front-running, sandwich attacks, and back-running ` that silently drain value from retail traders on public mempools.
 
-> *A mainstay is the most critical structural support on a ship. Without it, the mast falls and the vessel loses direction. Mainstay is that support for your trades.*
+The interface also exposes real-time MEV risk scoring, execution grade analytics, limit orders, prediction market outcome-token trading, token transfers, and a full trade history dashboard — all in a single terminal-inspired UI.
 
-**Three things no other Solana swap terminal gives you:**
-
-| | Mainstay | Jupiter | Jito | bloXroute |
-|---|:---:|:---:|:---:|:---:|
-| MEV-protected execution | ✅ | ✅ | ✅ | ✅ |
-| Pre-trade MEV risk score | ✅ | ❌ | ❌ | ❌ |
-| Post-trade execution card | ✅ | ❌ | ❌ | ❌ |
-| Dollar savings shown | ✅ | ❌ | ❌ | ❌ |
-| Execution grade (A+ to F) | ✅ | ❌ | ❌ | ❌ |
-| Cumulative savings dashboard | ✅ | ❌ | ❌ | ❌ |
-| Prediction market protection | ✅ | ❌ | ❌ | ❌ |
+> *A mainstay is the most critical structural support on a ship. Without it, the mast falls, and the vessel loses direction. Mainstay is that support for your trades.*
 
 ---
 
