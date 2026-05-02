@@ -40,14 +40,16 @@ export default function PredictionComingSoon() {
     setLoading(true)
     if (supabase) {
       const { error: dbErr } = await supabase.from('waitingList').insert({ email: trimmed })
-      // Ignore unique-violation — user already signed up, still show success
       if (dbErr && !dbErr.message?.includes('duplicate') && !dbErr.code?.includes('23505')) {
         setLoading(false)
         setError('Something went wrong. Please try again.')
         return
       }
-      // Fire confirmation email — non-blocking, ignore failures
-      supabase.functions.invoke('send-waitlist-email', { body: { email: trimmed } }).catch(() => {})
+      fetch('/api/send-waitlist-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmed }),
+      }).catch(() => {})
     }
     setLoading(false)
     setSubmitted(true)
