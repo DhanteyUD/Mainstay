@@ -1,28 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
   <script src="/scripts/runtime-error-reporter.js"></script>
   <script src="/scripts/vite-error-monitor.js"></script>
   <script src="/scripts/component-inspector.js"></script>
-    <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0f0f1a" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Mainstay" />
-    <meta name="description" content="Protected swaps powered by Mainstay" />
-    <title>Mainstay — Stay Clean</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f0f1a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mainstay" />
+  <meta name="description" content="Protected swaps powered by Mainstay" />
+  <title>Mainstay — Stay Clean</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap"
+    rel="stylesheet" />
+  <style>
+    #ms-shell {
+      position: fixed; inset: 0; background: #0a0b0f;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #ms-shell::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; opacity: 0.015;
+      background-image:
+        linear-gradient(rgba(0,229,255,1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,1) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    #ms-shell span {
+      font-family: 'Space Mono', 'Courier New', monospace;
+      font-size: 11px; letter-spacing: 0.2em; color: #8892a4;
+      animation: ms-breathe 2s ease-in-out infinite;
+    }
+    @keyframes ms-breathe {
+      0%, 100% { opacity: 0.3; }
+      50%       { opacity: 0.7; }
+    }
+  </style>
+</head>
+
+<body style="background:#0a0b0f;margin:0">
+  <div id="root">
+    <div id="ms-shell"><span>Authenticating</span></div>
+  </div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>
