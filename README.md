@@ -22,49 +22,50 @@
 
 ## 📖 Table of Contents
 
-- [Overview](#-overview)
+- [Overview](#️-overview)
 - [The Problem](#-the-problem)
 - [Why Mainstay Beats the Alternatives](#-why-mainstay-beats-the-alternatives)
 - [Features](#-features)
-- [Architecture](#architecture)
-- [How It Works](#-how-it-works)
+- [Architecture](#️-architecture)
+- [How It Works](#️-how-it-works)
 - [Tech Stack](#-tech-stack)
 - [Getting Started](#-getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Environment Variables](#environment-variables)
-  - [Running Locally](#running-locally)
-- [Project Structure](#project-structure)
-- [Key Concepts](#key-concepts)
-  - [MEV Protection via DFlow](#mev-protection-via-dflow)
-  - [Network Modes (Mainnet / Devnet)](#network-modes-mainnet--devnet)
-  - [Proxy Architecture](#proxy-architecture)
+  - [Prerequisites](#-prerequisites)
+  - [Installation](#-installation)
+  - [Environment Variables](#-environment-variables)
+  - [Running Locally](#-running-locally)
+- [Project Structure](#-project-structure)
+- [Key Concepts](#️-key-concepts)
+  - [MEV Protection via DFlow](#️-mev-protection-via-dflow)
+  - [Network Modes (Mainnet / Devnet)](#-network-modes-mainnet--devnet)
+  - [Proxy Architecture](#️-proxy-architecture)
 - [DFlow Integration](#-dflow-integration)
-  - [Quote API](#-quote-api)
-  - [Declarative Trade API](#-declarative-trade-api)
-  - [Priority Fee Escalation](#-priority-fee-escalation)
-  - [Platform Fee](#-platform-fee)
-- [Features In Detail](#features-in-detail)
-  - [Token Swap](#token-swap)
-  - [Limit Orders](#limit-orders)
-  - [Prediction Markets](#prediction-markets)
-  - [Wallet Card & Portfolio](#wallet-card--portfolio)
-  - [Trade History](#trade-history)
-  - [MEV Risk Badge](#mev-risk-badge)
-  - [Network Status](#network-status)
-  - [Send & Deposit](#send--deposit)
-  - [Onboarding](#onboarding)
-  - [PWA Support](#pwa-support)
-- [Deployment](#deployment)
-  - [Vercel (Recommended)](#vercel-recommended)
-  - [Environment Variables in Production](#environment-variables-in-production)
-  - [API Proxy Setup](#api-proxy-setup)
+  - [Quote API](#quote-api)
+  - [Declarative Trade API](#declarative-trade-api)
+  - [Priority Fee Escalation](#priority-fee-escalation)
+  - [Platform Fee](#platform-fee)
+- [Features In Detail](#-features-in-detail)
+  - [Token Swap](#-token-swap)
+  - [Limit Orders](#-limit-orders)
+  - [Prediction Markets (devnet)](#-prediction-markets-devnet)
+  - [Wallet Card & Portfolio](#-wallet-card--portfolio)
+  - [Trade History](#-trade-history)
+  - [MEV Risk Badge](#️-mev-risk-badge)
+  - [Network Status](#-network-status)
+  - [Send & Deposit](#-send--deposit)
+  - [Onboarding](#-onboarding)
+  - [PWA Support](#-pwa-support)
+- [Deployment](#-deployment)
+  - [Via Eitherway (recommended)](#-via-eitherway-recommended)
+  - [Via Vercel CLI](#-via-vercel-cli)
+  - [Environment Variables in Production](#-environment-variables-in-production)
+  - [API Proxy Setup](#️-api-proxy-setup)
 - [Integrations](#-integrations)
-- [Supabase Schema](#-supabase-schema)
+- [Supabase Schema](#️-supabase-schema)
 - [Roadmap](#-roadmap)
-  - [v1.0 — Hackathon Submission](#-v1.0-hackathon-submission)
-  - [v1.1 — Post-Hackathon](#-v1.1-post-hackathon)
-  - [v2.0 — Q3 2026](#-v2.0-q3_2026)
+  - [v1.0 — Hackathon Submission](#-v10--hackathon-submission)
+  - [v1.1 — Post-Hackathon](#-v10--hackathon-submission)
+  - [v2.0 — Q3 2026](#-v20--q3-2026)
   - [Long Term](#-long-term)
 - [Contributing](#-contributing)
 - [License](#-license)
@@ -87,7 +88,7 @@ MEV (Maximal Extractable Value) bots extracted an estimated **$370M–$500M** fr
 
 **How a sandwich attack works:**
 
-```
+```text
 1. You broadcast a swap → SOL to USDC
 2. MEV bot spots your transaction in the mempool
 3. Bot front-runs → buys SOL first, drives price up
@@ -119,7 +120,7 @@ The cumulative savings dashboard turns individual receipts into a running total 
 ## ✨ Features
 
 | Feature | Description |
-|---|---|
+| --- | --- |
 | 🛡️ **MEV-Protected Swaps** | All mainnet swaps route through DFlow's JIT auction, bypassing the public mempool |
 | 📊 **MEV Risk Scoring** | Per-trade risk assessment based on order size, pool liquidity, and network TPS |
 | 🎯 **Limit Orders** | Price-triggered orders that monitor markets every 30 seconds and execute automatically |
@@ -140,7 +141,7 @@ The cumulative savings dashboard turns individual receipts into a running total 
 
 ## 🏗️ Architecture
 
-```
+```bash
 ┌─────────────────────────────────────────────────────┐
 │                Browser (React App)                  │
 │                                                     │
@@ -159,7 +160,7 @@ The cumulative savings dashboard turns individual receipts into a running total 
 ```
 
 > On **devnet**, the app routes directly through Jupiter v6's public API.
-> 
+>
 > On **mainnet**, all quote and swap transactions go through the DFlow proxy, which provides private order routing and MEV protection.
 
 ---
@@ -168,7 +169,7 @@ The cumulative savings dashboard turns individual receipts into a running total 
 
 Every trade passes through exactly **3 steps** — and MEV is blocked at all 3.
 
-```
+```bash
 ┌─────────────────────────────────────────────────────────────┐
 │                     MAINSTAY FLOW                           │
 ├─────────────────────────────────────────────────────────────┤
@@ -202,7 +203,7 @@ Every trade passes through exactly **3 steps** — and MEV is blocked at all 3.
 ## 🛠 Tech Stack
 
 | Layer | Technology | Purpose |
-|-------|-----------|---------|
+| --- | --- | --- |
 | **App Platform** | [Eitherway](https://eitherway.ai) | Full-stack generation & deployment |
 | **Swap Execution** | [DFlow Declarative Trade API](https://pond.dflow.net) | MEV-protected order routing |
 | **Price Discovery** | DFlow Quote API | Pre-trade quotes & risk scoring |
@@ -212,15 +213,15 @@ Every trade passes through exactly **3 steps** — and MEV is blocked at all 3.
 | **Wallet** | Solflare / Phantom | Transaction signing |
 | **Deployment** | [Vercel](https://vercel.com) | Production hosting |
 | **Network** | Solana Mainnet | All transactions are real on-chain |
-| **Framework**      | React 18 + Vite 5                                     | Builds the UI and handles fast development with hot reload and optimized bundling |
-| **Styling**        | Tailwind CSS 3                                        | Provides utility-first CSS for rapid, consistent UI design                        |
-| **Animation**      | Framer Motion                                         | Handles smooth UI animations and transitions                                      |
-| **Solana SDK**     | `@solana/web3.js`, `@solana/wallet-adapter-react`     | Enables blockchain interaction and wallet connectivity for Solana                 |
-| **Wallet UI**      | `@solana/wallet-adapter-react-ui`                     | Provides prebuilt UI components for wallet connection flows                       |
-| **Auth**           | Supabase Auth (Google, GitHub, email)                 | Manages user authentication and identity                                          |
-| **Error tracking, Feedback, & Feature request** | [Sentry](https://sentry.io/)                                                | Monitors and logs runtime errors for debugging and stability, as well as user feedback                      |
-| **Charts**         | TradingView widget                                    | Displays market charts and trading data visualization                             |
-| **PWA**            | vite-plugin-pwa + Workbox                             | Enables offline support and installable app experience                            |
+| **Framework** | React 18 + Vite 5 | Builds the UI and handles fast development with hot reload and optimized bundling |
+| **Styling** | Tailwind CSS 3 | Provides utility-first CSS for rapid, consistent UI design |
+| **Animation** | Framer Motion | Handles smooth UI animations and transitions |
+| **Solana SDK** | `@solana/web3.js`, `@solana/wallet-adapter-react` | Enables blockchain interaction and wallet connectivity for Solana |
+| **Wallet UI** | `@solana/wallet-adapter-react-ui` | Provides prebuilt UI components for wallet connection flows |
+| **Auth** | Supabase Auth (Google, GitHub, email) | Manages user authentication and identity |
+| **Error tracking, Feedback, & Feature request** | [Sentry](https://sentry.io/) | Monitors and logs runtime errors for debugging and stability, as well as user feedback |
+| **Charts** | TradingView widget | Displays market charts and trading data visualization |
+| **PWA** | vite-plugin-pwa + Workbox | Enables offline support and installable app experience |
 
 ---
 
@@ -267,7 +268,7 @@ npm run dev
 ```
 
 | Variable | Required | Description |
-|---|---|---|
+| --- | --- | --- |
 | `VITE_APP_ENVIRONMENT` | ✅ | `development` or `production` |
 | `VITE_APP_URL` | ✅ | Your deployed app URL (e.g. `https://mainstay.pro`) |
 | `VITE_SUPABASE_URL` | ⚠️ | Supabase project URL — enables auth and trade history |
@@ -284,7 +285,7 @@ npm run dev
 > **Note:**
 >
 > The app degrades gracefully without Supabase — swapping works fully, but trade history, limit order persistence across sessions, and authentication are disabled.
-> 
+>
 > When deploying to Vercel, add these as Environment Variables in your Vercel project settings.
 
 ### 🔌 Running Locally
@@ -302,9 +303,9 @@ The dev server starts at `http://localhost:5173`. API proxy requests are handled
 
 ---
 
-## 🎢 Project Structure
+##  🎢 Project Structure
 
-```
+```bash
 mainstay/
 ├── api/                                            # Vercel serverless functions
 │   └── sentry-tunnel.js                            # Sentry error tunnel proxy
@@ -373,6 +374,7 @@ mainstay/
 ├── vite.config.js
 └── package.json
 ```
+
 ---
 
 ## 🗝️ Key Concepts
@@ -392,7 +394,7 @@ DFlow solves this by routing orders through a **Just-In-Time (JIT) auction**: ma
 The active network is determined at build time by `VITE_APP_ENVIRONMENT`:
 
 | Value | Network | Routing | MEV Protection |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `production` | Solana Mainnet | DFlow JIT Auction | ✅ Active |
 | `development` | Solana Devnet | Jupiter v6 | ❌ Disabled |
 
@@ -403,7 +405,7 @@ Devnet mode uses real Solana devnet transactions (no real funds) and routes via 
 In production, all external API calls are routed through Vercel rewrites defined in `vercel.json`. This avoids CORS issues and keeps API keys server-side:
 
 | Path | Destination |
-|---|---|
+| --- | --- |
 | `/api/solana/rpc` | Solana mainnet RPC |
 | `/api/dialect/*` | Jupiter Price API v3 |
 | `/api/dflow/*` | DFlow Quote/Swap API |
@@ -414,9 +416,9 @@ In development, `src/config.js` points directly to `https://api.eitherway.ai` as
 
 ## 🔌 DFlow Integration
 
-Mainstay is built **around** DFlow — not just on top of it. Four API touchpoints:
+Mainstay is built **around** DFlow — not just on top. `4` API touchpoints:
 
-### Quote API
+### ¹ Quote API
 
 ```javascript
 // Step 1 — Pre-trade price discovery + risk scoring input
@@ -427,7 +429,7 @@ GET /v1/quote
   &slippageBps=20
 ```
 
-### Declarative Trade API
+### ² Declarative Trade API
 
 ```javascript
 // Step 3 — MEV-protected swap execution
@@ -443,7 +445,7 @@ POST /v1/trade
 }
 ```
 
-### Priority Fee Escalation
+### ³ Priority Fee Escalation
 
 ```javascript
 // Auto-escalated based on MEV risk score
@@ -454,9 +456,9 @@ const priorityFee = {
 }[riskLevel];
 ```
 
-### Platform Fee
+### ⁴ Platform Fee
 
-```
+```javascript
 feeBps: 8  →  0.08% on all protected trades
 Revenue model: volume-based, no smart contract needed
 ```
@@ -522,7 +524,7 @@ Full dashboard with:
 Per-quote risk indicator computed from three signals:
 
 | Signal | Weight | Scoring |
-|---|---|---|
+| --- | --- | --- |
 | Order size (USD) | 0–40 pts | >$10k = HIGH |
 | Pool liquidity | 0–40 pts | <$50k = HIGH |
 | Network TPS | 0–20 pts | >3000 TPS = HIGH |
@@ -539,6 +541,7 @@ Two floating edge cards (desktop only) that show:
 ### 💸 Send & Deposit
 
 **Send Modal:**
+
 - Select any token from wallet balances
 - Solana address validation with visual feedback
 - Optional label saved to Supabase address book
@@ -546,6 +549,7 @@ Two floating edge cards (desktop only) that show:
 - Confirmation screen with Solscan link
 
 **Deposit Modal:**
+
 - QR code generated from wallet address
 - One-click copy
 - Solscan explorer link
@@ -553,6 +557,7 @@ Two floating edge cards (desktop only) that show:
 ### 🎯 Onboarding
 
 Three-step animated onboarding screen explaining:
+
 1. What MEV is and how it affects traders
 2. How a sandwich attack works (interactive diagram)
 3. How DFlow's JIT auction protects your orders
@@ -575,7 +580,8 @@ Mainstay is installable as a Progressive Web App:
 
 Mainstay deploys automatically via Vercel. To deploy your own instance:
 
-### Via Eitherway (recommended)
+### 🪢 Via Eitherway (recommended)
+
 1. Open [eitherway.ai/chat](https://eitherway.ai/chat)
 2. Prompt: *"Deploy Mainstay to Vercel"*
 3. Connect your Vercel account in Eitherway Settings → Services Hub
@@ -622,7 +628,7 @@ The `vercel.json` rewrites proxy all API traffic so CORS never blocks your produ
     { "source": "/api/solana/rpc",      "destination": "https://..." },
     { "source": "/api/dialect/:path*",  "destination": "https://api.eitherway.ai/api/dialect/:path*" },
     { "source": "/api/dflow/:path*",    "destination": "https://api.eitherway.ai/api/dflow/:path*" },
-    { "source": "/(.*)",               "destination": "/index.html" }
+    { "source": "/(.*)",                "destination": "/index.html" }
   ]
 }
 ```
@@ -672,11 +678,58 @@ recipients (id, wallet_address, address, label, last_used_at)
 waitingList (id, email, created_at)
 ```
 
+For the Solana RPC endpoint specifically, use the `api/solana-rpc.js` serverless function (included in the `api/` directory) to proxy directly to `https://api.mainnet-beta.solana.com`, avoiding CORS restrictions from third-party proxies.
+
+---
+
+## 🔗 Integrations
+
+| Service | Purpose | Docs |
+|---|---|---|
+| **DFlow Protocol** | MEV-protected order routing | [dflow.net](https://dflow.net) |
+| **Jupiter Aggregator** | Devnet swap routing + price data | [jup.ag](https://jup.ag) |
+| **Helius** | High-reliability Solana RPC | [helius.dev](https://helius.dev) |
+| **Supabase** | Auth, trade history, limit orders, address book | [supabase.com](https://supabase.com) |
+| **Sentry** | Error tracking, user feedback | [sentry.io](https://sentry.io) |
+| **TradingView** | Price charts | [tradingview.com](https://tradingview.com) |
+| **Resend** | Waitlist confirmation emails | [resend.com](https://resend.com) |
+
+---
+
+## ⚡️ Supabase Schema
+
+The following tables are required for full functionality:
+
+```sql
+-- Mainnet trades
+trades (id, wallet_address, trade_type, input_token_symbol, output_token_symbol,
+        input_amount_raw, output_amount_raw, input_decimals, output_decimals,
+        execution_grade, slippage_pct, mev_saved_usd, signature, explorer_url, created_at)
+
+-- Devnet trades (same schema)
+devTrades (...)
+
+-- Limit orders
+limitOrders (id, wallet_address, network, status, direction, input_token_mint,
+             input_token_symbol, input_token_decimals, output_token_mint,
+             output_token_symbol, output_token_decimals, input_amount, target_price,
+             executed_at, signature, explorer_url, error, created_at)
+
+devLimitOrders (...)
+
+-- Saved recipient addresses
+recipients (id, wallet_address, address, label, last_used_at)
+
+-- Prediction market waitlist
+waitingList (id, email, created_at)
+```
+
 ---
 
 ## 🗺 Roadmap
 
 ### ✅ v1.0 — Hackathon Submission
+
 - [x] MEV risk meter (LOW / MEDIUM / HIGH)
 - [x] DFlow JIT swap execution on Solana mainnet
 - [x] Post-trade execution quality card (A+ to F)
@@ -685,21 +738,24 @@ waitingList (id, email, created_at)
 - [x] Prediction markets tab
 - [x] MEV education onboarding
 - [x] Solflare + Phantom wallet support
-- [x] Mobile-optimised layout
+- [x] Mobile-optimized layout
 - [x] Limit orders with DFlow-protected execution
 
 ### 🔄 v1.1 — Post-Hackathon
+
 - [ ] Solflare transaction scanner whitelisting
 - [ ] Telegram trade alerts for watched tokens
 - [ ] Expanded token pair support
 - [ ] Mainnet prediction markets
 
 ### 🔮 v2.0 — Q3 2026
+
 - [ ] TWAP execution — split large orders over time
 - [ ] Multi-wallet portfolio aggregation
 - [ ] MEV analytics dashboard — market-wide Solana data
 
 ### 🌐 Long Term
+
 - [ ] Cross-chain expansion (EVM)
 - [ ] On-chain execution quality reputation system
 - [ ] Mainstay Score — public benchmark for Solana DEX execution quality
@@ -726,7 +782,8 @@ git push origin feature/your-feature-name
 ```
 
 **Commit convention:**
-```
+
+```bash
 feat:     new feature
 fix:      bug fix
 docs:     documentation changes
@@ -759,7 +816,7 @@ MIT License © 2025 Mainstay — see [LICENSE](LICENSE) for details.
 
 <div align="center">
 
-**⚓ Mainstay**
+**⛨ Mainstay**
 
 *Protected DEX swaps on Solana*
 
