@@ -88,7 +88,7 @@ MEV (Maximal Extractable Value) bots extracted an estimated **$370M–$500M** fr
 
 **How a sandwich attack works:**
 
-```note
+```text
 1. You broadcast a swap → SOL to USDC
 2. MEV bot spots your transaction in the mempool
 3. Bot front-runs → buys SOL first, drives price up
@@ -120,7 +120,7 @@ The cumulative savings dashboard turns individual receipts into a running total 
 ## ✨ Features
 
 | Feature | Description |
-|---|---|
+| --- | --- |
 | 🛡️ **MEV-Protected Swaps** | All mainnet swaps route through DFlow's JIT auction, bypassing the public mempool |
 | 📊 **MEV Risk Scoring** | Per-trade risk assessment based on order size, pool liquidity, and network TPS |
 | 🎯 **Limit Orders** | Price-triggered orders that monitor markets every 30 seconds and execute automatically |
@@ -141,7 +141,7 @@ The cumulative savings dashboard turns individual receipts into a running total 
 
 ## 🏗️ Architecture
 
-```
+```bash
 ┌─────────────────────────────────────────────────────┐
 │                Browser (React App)                  │
 │                                                     │
@@ -169,7 +169,7 @@ The cumulative savings dashboard turns individual receipts into a running total 
 
 Every trade passes through exactly **3 steps** — and MEV is blocked at all 3.
 
-```
+```bash
 ┌─────────────────────────────────────────────────────────────┐
 │                     MAINSTAY FLOW                           │
 ├─────────────────────────────────────────────────────────────┤
@@ -203,7 +203,7 @@ Every trade passes through exactly **3 steps** — and MEV is blocked at all 3.
 ## 🛠 Tech Stack
 
 | Layer | Technology | Purpose |
-|-------|-----------|---------|
+| --- | --- | --- |
 | **App Platform** | [Eitherway](https://eitherway.ai) | Full-stack generation & deployment |
 | **Swap Execution** | [DFlow Declarative Trade API](https://pond.dflow.net) | MEV-protected order routing |
 | **Price Discovery** | DFlow Quote API | Pre-trade quotes & risk scoring |
@@ -213,15 +213,15 @@ Every trade passes through exactly **3 steps** — and MEV is blocked at all 3.
 | **Wallet** | Solflare / Phantom | Transaction signing |
 | **Deployment** | [Vercel](https://vercel.com) | Production hosting |
 | **Network** | Solana Mainnet | All transactions are real on-chain |
-| **Framework**      | React 18 + Vite 5                                     | Builds the UI and handles fast development with hot reload and optimized bundling |
-| **Styling**        | Tailwind CSS 3                                        | Provides utility-first CSS for rapid, consistent UI design                        |
-| **Animation**      | Framer Motion                                         | Handles smooth UI animations and transitions                                      |
-| **Solana SDK**     | `@solana/web3.js`, `@solana/wallet-adapter-react`     | Enables blockchain interaction and wallet connectivity for Solana                 |
-| **Wallet UI**      | `@solana/wallet-adapter-react-ui`                     | Provides prebuilt UI components for wallet connection flows                       |
-| **Auth**           | Supabase Auth (Google, GitHub, email)                 | Manages user authentication and identity                                          |
-| **Error tracking, Feedback, & Feature request** | [Sentry](https://sentry.io/)                                                | Monitors and logs runtime errors for debugging and stability, as well as user feedback                      |
-| **Charts**         | TradingView widget                                    | Displays market charts and trading data visualization                             |
-| **PWA**            | vite-plugin-pwa + Workbox                             | Enables offline support and installable app experience                            |
+| **Framework** | React 18 + Vite 5 | Builds the UI and handles fast development with hot reload and optimized bundling |
+| **Styling** | Tailwind CSS 3 | Provides utility-first CSS for rapid, consistent UI design |
+| **Animation** | Framer Motion | Handles smooth UI animations and transitions |
+| **Solana SDK** | `@solana/web3.js`, `@solana/wallet-adapter-react` | Enables blockchain interaction and wallet connectivity for Solana |
+| **Wallet UI** | `@solana/wallet-adapter-react-ui` | Provides prebuilt UI components for wallet connection flows |
+| **Auth** | Supabase Auth (Google, GitHub, email) | Manages user authentication and identity |
+| **Error tracking, Feedback, & Feature request** | [Sentry](https://sentry.io/) | Monitors and logs runtime errors for debugging and stability, as well as user feedback |
+| **Charts** | TradingView widget | Displays market charts and trading data visualization |
+| **PWA** | vite-plugin-pwa + Workbox | Enables offline support and installable app experience |
 
 ---
 
@@ -268,7 +268,7 @@ npm run dev
 ```
 
 | Variable | Required | Description |
-|---|---|---|
+| --- | --- | --- |
 | `VITE_APP_ENVIRONMENT` | ✅ | `development` or `production` |
 | `VITE_APP_URL` | ✅ | Your deployed app URL (e.g. `https://mainstay.pro`) |
 | `VITE_SUPABASE_URL` | ⚠️ | Supabase project URL — enables auth and trade history |
@@ -305,7 +305,7 @@ The dev server starts at `http://localhost:5173`. API proxy requests are handled
 
 ##  🎢 Project Structure
 
-```
+```bash
 mainstay/
 ├── api/                                            # Vercel serverless functions
 │   └── sentry-tunnel.js                            # Sentry error tunnel proxy
@@ -394,7 +394,7 @@ DFlow solves this by routing orders through a **Just-In-Time (JIT) auction**: ma
 The active network is determined at build time by `VITE_APP_ENVIRONMENT`:
 
 | Value | Network | Routing | MEV Protection |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `production` | Solana Mainnet | DFlow JIT Auction | ✅ Active |
 | `development` | Solana Devnet | Jupiter v6 | ❌ Disabled |
 
@@ -405,7 +405,7 @@ Devnet mode uses real Solana devnet transactions (no real funds) and routes via 
 In production, all external API calls are routed through Vercel rewrites defined in `vercel.json`. This avoids CORS issues and keeps API keys server-side:
 
 | Path | Destination |
-|---|---|
+| --- | --- |
 | `/api/solana/rpc` | Solana mainnet RPC |
 | `/api/dialect/*` | Jupiter Price API v3 |
 | `/api/dflow/*` | DFlow Quote/Swap API |
@@ -416,9 +416,9 @@ In development, `src/config.js` points directly to `https://api.eitherway.ai` as
 
 ## 🔌 DFlow Integration
 
-Mainstay is built **around** DFlow — not just on top of it. Four API touchpoints:
+Mainstay is built **around** DFlow — not just on top. `4` API touchpoints:
 
-### Quote API
+### ¹ Quote API
 
 ```javascript
 // Step 1 — Pre-trade price discovery + risk scoring input
@@ -429,7 +429,7 @@ GET /v1/quote
   &slippageBps=20
 ```
 
-### Declarative Trade API
+### ² Declarative Trade API
 
 ```javascript
 // Step 3 — MEV-protected swap execution
@@ -445,7 +445,7 @@ POST /v1/trade
 }
 ```
 
-### Priority Fee Escalation
+### ³ Priority Fee Escalation
 
 ```javascript
 // Auto-escalated based on MEV risk score
@@ -456,9 +456,9 @@ const priorityFee = {
 }[riskLevel];
 ```
 
-### Platform Fee
+### ⁴ Platform Fee
 
-```
+```javascript
 feeBps: 8  →  0.08% on all protected trades
 Revenue model: volume-based, no smart contract needed
 ```
@@ -524,7 +524,7 @@ Full dashboard with:
 Per-quote risk indicator computed from three signals:
 
 | Signal | Weight | Scoring |
-|---|---|---|
+| --- | --- | --- |
 | Order size (USD) | 0–40 pts | >$10k = HIGH |
 | Pool liquidity | 0–40 pts | <$50k = HIGH |
 | Network TPS | 0–20 pts | >3000 TPS = HIGH |
@@ -628,7 +628,7 @@ The `vercel.json` rewrites proxy all API traffic so CORS never blocks your produ
     { "source": "/api/solana/rpc",      "destination": "https://..." },
     { "source": "/api/dialect/:path*",  "destination": "https://api.eitherway.ai/api/dialect/:path*" },
     { "source": "/api/dflow/:path*",    "destination": "https://api.eitherway.ai/api/dflow/:path*" },
-    { "source": "/(.*)",               "destination": "/index.html" }
+    { "source": "/(.*)",                "destination": "/index.html" }
   ]
 }
 ```
@@ -693,7 +693,7 @@ waitingList (id, email, created_at)
 - [x] Prediction markets tab
 - [x] MEV education onboarding
 - [x] Solflare + Phantom wallet support
-- [x] Mobile-optimised layout
+- [x] Mobile-optimized layout
 - [x] Limit orders with DFlow-protected execution
 
 ### 🔄 v1.1 — Post-Hackathon
@@ -738,7 +738,7 @@ git push origin feature/your-feature-name
 
 **Commit convention:**
 
-```
+```bash
 feat:     new feature
 fix:      bug fix
 docs:     documentation changes
@@ -771,7 +771,7 @@ MIT License © 2025 Mainstay — see [LICENSE](LICENSE) for details.
 
 <div align="center">
 
-**⚓ Mainstay**
+**⛨ Mainstay**
 
 *Protected DEX swaps on Solana*
 
