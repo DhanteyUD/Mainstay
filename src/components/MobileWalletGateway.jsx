@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { ExternalLink, X } from "lucide-react";
+import { ExternalLink, LogOut, ArrowLeft } from "lucide-react";
 import logo from "../assets/mainstay-logo.png";
 import phantomLogo from "../assets/phantom-logo.png";
 import solflareLogo from "../assets/solflare-logo.jpeg";
@@ -11,7 +11,20 @@ function walletDeepLink(wallet) {
   return `https://solflare.com/ul/v1/browse/${url}`;
 }
 
+function detectWalletName() {
+  if (Boolean(window.phantom?.solana) || Boolean(window.solana?.isPhantom))
+    return "Phantom";
+  if (
+    Boolean(window.solflare?.isSolflare) ||
+    Boolean(window.solana?.isSolflare)
+  )
+    return "Solflare";
+  return "your wallet";
+}
+
 export function WalletBrowserSignedOut() {
+  const walletName = detectWalletName();
+
   return (
     <motion.div
       className="fixed inset-0 bg-terminal-bg z-50 flex flex-col items-center justify-center p-4"
@@ -48,21 +61,41 @@ export function WalletBrowserSignedOut() {
           transition={{ duration: 0.4, delay: 0.2 }}
         >
           <div className="w-12 h-12 rounded-full bg-terminal-dim/10 border border-terminal-border flex items-center justify-center mx-auto mb-4">
-            <X size={20} className="text-terminal-dim" />
+            <LogOut size={18} className="text-terminal-dim" />
           </div>
           <h1 className="font-mono font-bold text-terminal-text text-sm tracking-widest uppercase mb-2">
             Signed Out
           </h1>
-          <p className="font-mono text-xs text-terminal-dim leading-relaxed">
-            You've been signed out. Close this browser tab to return to the
-            main app.
+          <p className="font-mono text-xs text-terminal-dim leading-relaxed mb-4">
+            You've been signed out of Mainstay.
           </p>
-          <button
-            onClick={() => window.close()}
-            className="mt-5 w-full py-2.5 rounded-xl font-mono font-bold text-xs bg-terminal-accent/10 border border-terminal-accent/40 text-terminal-accent hover:bg-terminal-accent/20 transition-all duration-200"
-          >
-            Close Tab
-          </button>
+
+          <div className="rounded-xl border border-terminal-border bg-terminal-surface px-4 py-3 text-left space-y-2">
+            <p className="font-mono text-xs text-terminal-dim/60 uppercase tracking-widest mb-1">
+              To continue
+            </p>
+            <div className="flex items-start gap-2">
+              <ArrowLeft
+                size={12}
+                className="text-terminal-accent mt-0.5 shrink-0"
+              />
+              <p className="font-mono text-xs text-terminal-dim leading-relaxed">
+                Tap the{" "}
+                <span className="text-terminal-text font-semibold">
+                  back arrow
+                </span>{" "}
+                or{" "}
+                <span className="text-terminal-text font-semibold">
+                  close button
+                </span>{" "}
+                at the top of the {walletName} browser or{" "}
+                <span className="text-terminal-text font-semibold">
+                  swipe out
+                </span>{" "}
+                to return to the app.
+              </p>
+            </div>
+          </div>
         </motion.div>
       </div>
     </motion.div>
@@ -182,7 +215,11 @@ function WalletButton({ name, href, logo }) {
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.98 }}
     >
-      <img src={logo} alt={name} className="w-5 h-5 rounded-md object-cover shrink-0" />
+      <img
+        src={logo}
+        alt={name}
+        className="w-5 h-5 rounded-md object-cover shrink-0"
+      />
       <span className="flex-1 text-left">Open in {name}</span>
       <ExternalLink size={12} className="text-terminal-dim/50 shrink-0" />
     </motion.a>
