@@ -26,7 +26,9 @@ function buildEmailHtml(email, appUrl) {
     .card { background: #111111; border: 1px solid #1e2631; border-radius: 16px; overflow: hidden; }
     .header { padding: 20px 28px; border-bottom: 1px solid #1e2631; display: flex; align-items: center; gap: 10px; }
     .logo-img { width: 35px; height: 35px; object-fit: contain; margin-right: 5px; }
-    .header-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #22d3ee; text-transform: uppercase; }
+    .header-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #ffffff; text-transform: uppercase; }
+    .header-label-sub { color: #22d3ee; }
+    .body-header { font-size: 14px; font-weight: 700; letter-spacing: 0.12em; color: #ffffff; }
     .body { padding: 28px; }
     .hero { background: rgba(34,211,238,0.06); border: 1px solid rgba(34,211,238,0.2); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; }
     .hero-title { font-size: 18px; font-weight: 700; color: #22d3ee; margin-bottom: 8px; letter-spacing: 0.04em; }
@@ -43,18 +45,20 @@ function buildEmailHtml(email, appUrl) {
     .confirmed-email { color: #22c55e; font-weight: 700; }
     .cta-button { display: inline-block; padding: 12px 24px; background: #22d3ee; color: #000; font-family: 'Syne', 'Poppins', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; border-radius: 8px; }
     .footer { padding: 20px 28px; border-top: 1px solid #1e2631; text-align: center; }
-    .footer-text { font-size: 11px; color: #334155; line-height: 1.6; }
+    .footer-text { font-size: 11px; color: #82A0BC; line-height: 1.6; }
     .footer-text a { color: #22d3ee; text-decoration: none; }
   </style>
 </head>
+
 <body>
   <div class="wrapper">
     <div class="card">
       <div class="header">
         <img src="https://res.cloudinary.com/dhantey/image/upload/v1777367316/Mainstay/mainstay-logo_vydcnr.png" class="logo-img" alt="Mainstay" />
-        <span class="header-label">Mainstay &mdash; Prediction Markets</span>
+        <span class="header-label">Main<span class="header-label-sub">stay</span></span>
       </div>
       <div class="body">
+      <h2 class="body-header">Prediction Markets</h2>
         <div class="hero">
           <div class="hero-title">You're on the list.</div>
           <div class="hero-subtitle">
@@ -85,7 +89,7 @@ function buildEmailHtml(email, appUrl) {
       <div class="footer">
         <p class="footer-text">
           You're receiving this because you requested to be on the waitlist at
-          <a href="${appUrl}">${appUrl.replace(/^https?:\/\//, '')}</a>.<br />
+          <a href="${appUrl}">${appUrl.replace(/^https?:\/\//, "")}</a>.<br />
           &copy; ${new Date().getFullYear()} Mainstay. All rights reserved.
         </p>
       </div>
@@ -101,7 +105,8 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Method not allowed" });
 
   const { email } = req.body ?? {};
   if (!email) return res.status(400).json({ error: "Email is required" });
