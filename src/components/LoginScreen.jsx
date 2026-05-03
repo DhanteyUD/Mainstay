@@ -213,7 +213,6 @@ export default function LoginScreen() {
                     type="submit"
                     disabled={!!loading}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-mono font-bold text-xs bg-terminal-accent/10 border border-terminal-accent/40 text-terminal-accent hover:bg-terminal-accent/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                    whileHover={{ scale: loading ? 1 : 1.01 }}
                     whileTap={{ scale: loading ? 1 : 0.98 }}
                   >
                     {loading === "email" ? (
