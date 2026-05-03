@@ -28,7 +28,6 @@ function buildEmailHtml(email, appUrl) {
     .logo-img { width: 35px; height: 35px; object-fit: contain; margin-right: 5px; }
     .header-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #ffffff; text-transform: uppercase; }
     .header-label-sub { color: #22d3ee; }
-    .body-header { font-size: 14px; font-weight: 700; letter-spacing: 0.12em; color: #ffffff; }
     .body { padding: 28px; }
     .hero { background: rgba(34,211,238,0.06); border: 1px solid rgba(34,211,238,0.2); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; }
     .hero-title { font-size: 18px; font-weight: 700; color: #22d3ee; margin-bottom: 8px; letter-spacing: 0.04em; }
@@ -42,8 +41,8 @@ function buildEmailHtml(email, appUrl) {
     .confirmed-block { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
     .check-icon { font-size: 16px; color: #22c55e; flex-shrink: 0; margin-right: 5px; }
     .confirmed-text { font-size: 12px; color: #86efac; line-height: 1.5; }
-    .confirmed-email { color: #22c55e; font-weight: 700; }
-    .cta-button { display: inline-block; padding: 12px 24px; background: #22d3ee; color: #000; font-family: 'Syne', 'Poppins', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; border-radius: 8px; }
+    .confirmed-email { color: #22c55e !important; font-weight: 700; }
+    .cta-button { display: inline-block; padding: 12px 24px; background: #22d3ee; color: #000000 !important; font-family: 'Syne', 'Poppins', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; border-radius: 8px; }
     .footer { padding: 20px 28px; border-top: 1px solid #1e2631; text-align: center; }
     .footer-text { font-size: 11px; color: #82A0BC; line-height: 1.6; }
     .footer-text a { color: #22d3ee; text-decoration: none; }
@@ -58,7 +57,7 @@ function buildEmailHtml(email, appUrl) {
         <span class="header-label">Main<span class="header-label-sub">stay</span></span>
       </div>
       <div class="body">
-      <h2 class="body-header">Prediction Markets</h2>
+      <h2 class="section-label">Prediction Markets</h2>
         <div class="hero">
           <div class="hero-title">You're on the list.</div>
           <div class="hero-subtitle">
