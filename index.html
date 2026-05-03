@@ -16,7 +16,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Mainstay" />
-  <meta name="description" content="Protected DEX swaps on Solana • powered by Mainstay" />
+  <meta name="description" content="Protected DEX swaps on Solana •  Powered by DFlow Protocol" />
   <title>Mainstay — Stay Clean</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -25,25 +25,44 @@
     rel="stylesheet" />
   <style>
     #ms-shell {
-      position: fixed; inset: 0; background: #0a0b0f;
-      display: flex; align-items: center; justify-content: center;
+      position: fixed;
+      inset: 0;
+      background: #0a0b0f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+
     #ms-shell::before {
       content: '';
-      position: fixed; inset: 0; pointer-events: none; opacity: 0.015;
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.015;
       background-image:
-        linear-gradient(rgba(0,229,255,1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,229,255,1) 1px, transparent 1px);
+        linear-gradient(rgba(0, 229, 255, 1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 255, 1) 1px, transparent 1px);
       background-size: 40px 40px;
     }
+
     #ms-shell span {
       font-family: 'Space Mono', 'Courier New', monospace;
-      font-size: 11px; letter-spacing: 0.2em; color: #8892a4;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: #8892a4;
       animation: ms-breathe 2s ease-in-out infinite;
     }
+
     @keyframes ms-breathe {
-      0%, 100% { opacity: 0.3; }
-      50%       { opacity: 0.7; }
+
+      0%,
+      100% {
+        opacity: 0.3;
+      }
+
+      50% {
+        opacity: 0.7;
+      }
     }
   </style>
 </head>
