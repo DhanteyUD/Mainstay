@@ -28,7 +28,6 @@ function buildEmailHtml(email, appUrl) {
     .logo-img { width: 35px; height: 35px; object-fit: contain; margin-right: 5px; }
     .header-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #ffffff; text-transform: uppercase; }
     .header-label-sub { color: #22d3ee; }
-    .body-header { font-size: 14px; font-weight: 700; letter-spacing: 0.12em; color: #ffffff; }
     .body { padding: 28px; }
     .hero { background: rgba(34,211,238,0.06); border: 1px solid rgba(34,211,238,0.2); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; }
     .hero-title { font-size: 18px; font-weight: 700; color: #22d3ee; margin-bottom: 8px; letter-spacing: 0.04em; }
@@ -58,7 +57,7 @@ function buildEmailHtml(email, appUrl) {
         <span class="header-label">Main<span class="header-label-sub">stay</span></span>
       </div>
       <div class="body">
-      <h2 class="body-header">Prediction Markets</h2>
+      <h2 class="section-label">Prediction Markets</h2>
         <div class="hero">
           <div class="hero-title">You're on the list.</div>
           <div class="hero-subtitle">
