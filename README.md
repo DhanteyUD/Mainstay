@@ -213,6 +213,7 @@ Every trade passes through exactly **3 steps** — and MEV is blocked at all 3.
 | **Wallet** | Solflare / Phantom | Transaction signing |
 | **Deployment** | [Vercel](https://vercel.com) | Production hosting |
 | **Network** | Solana Mainnet | All transactions are real on-chain |
+| **Language** | TypeScript | End-to-end type safety across all components, hooks, and utilities |
 | **Framework** | React 18 + Vite 5 | Builds the UI and handles fast development with hot reload and optimized bundling |
 | **Styling** | Tailwind CSS 3 | Provides utility-first CSS for rapid, consistent UI design |
 | **Animation** | Framer Motion | Handles smooth UI animations and transitions |
@@ -317,61 +318,69 @@ mainstay/
 ├── src/
 │   ├── assets/                                     # Logo, wallet images
 │   ├── components/                                 # All UI components
-│   │   ├── AppHeader.jsx
-│   │   ├── AppFooter.jsx
-│   │   ├── SwapInterface.jsx                       # Main swap terminal
-│   │   ├── LimitOrderForm.jsx                      # Limit order placement
-│   │   ├── LimitOrderList.jsx                      # Pending/executed orders
-│   │   ├── PredictionMarketsInterface.jsx
-│   │   ├── PostTradeCard.jsx                       # Execution analytics modal
-│   │   ├── TradeHistory.jsx                        # Full history dashboard
-│   │   ├── WalletCard.jsx                          # Portfolio overview
-│   │   ├── MevRiskBadge.jsx                        # Per-quote risk indicator
-│   │   ├── PriceChart.jsx                          # TradingView chart
-│   │   ├── TokenSelector.jsx                       # Token picker (mobile sheet + desktop panel)
-│   │   ├── QuoteDisplay.jsx                        # Quote details breakdown
-│   │   ├── SendModal.jsx                           # Token transfer flow
-│   │   ├── DepositModal.jsx                        # QR deposit UI
-│   │   ├── EdgeStatusCard.jsx                      # Floating network status cards
-│   │   ├── OnboardingScreen.jsx
-│   │   ├── LoginScreen.jsx
-│   │   └── FeedbackModal.jsx
+│   │   ├── AppHeader.tsx
+│   │   ├── AppFooter.tsx
+│   │   ├── SwapInterface.tsx                       # Main swap terminal
+│   │   ├── SwapConfirmation.tsx                    # Swap confirmation screen
+│   │   ├── LimitOrderForm.tsx                      # Limit order placement
+│   │   ├── LimitOrderList.tsx                      # Pending/executed orders
+│   │   ├── PredictionMarketsInterface.tsx
+│   │   ├── PostTradeCard.tsx                       # Execution analytics modal
+│   │   ├── TradeHistory.tsx                        # Full history dashboard
+│   │   ├── WalletCard.tsx                          # Portfolio overview
+│   │   ├── StatCard.tsx                            # Reusable stat display card
+│   │   ├── MevRiskBadge.tsx                        # Per-quote risk indicator
+│   │   ├── MobileWalletGateway.tsx                 # Mobile wallet deep-link gate
+│   │   ├── PriceChart.tsx                          # TradingView chart
+│   │   ├── TokenSelector.tsx                       # Token picker (mobile sheet + desktop panel)
+│   │   ├── QuoteDisplay.tsx                        # Quote details breakdown
+│   │   ├── SendModal.tsx                           # Token transfer flow
+│   │   ├── DepositModal.tsx                        # QR deposit UI
+│   │   ├── EdgeStatusCard.tsx                      # Floating network status cards
+│   │   ├── OnboardingScreen.tsx
+│   │   ├── LoginScreen.tsx
+│   │   └── FeedbackModal.tsx
 │   ├── config/
-│   │   └── index.js                                # Centralised env config
-│   ├── config.js                                   # API base URLs and token definitions
+│   │   └── index.ts                                # CentraliZed env config
+│   ├── config.ts                                   # API base URLs and token definitions
 │   ├── constants/
-│   │   ├── index.js                                # Tab keys, style maps
-│   │   └── wallets.js                              # Wallet metadata (Phantom, Solflare)
+│   │   ├── index.ts                                # Tab keys, style maps
+│   │   └── wallets.ts                              # Wallet metadata (Phantom, Solflare)
 │   ├── contexts/
-│   │   └── NetworkContext.jsx                      # Mainnet/devnet toggle, RPC endpoint
+│   │   └── NetworkContext.tsx                      # Mainnet/devnet toggle, RPC endpoint
 │   ├── functions/
-│   │   └── cn.jsx                                  # Tailwind class merge utility
+│   │   └── cn.ts                                   # Tailwind class merge utility
 │   ├── hooks/
-│   │   ├── useSwap.js                              # Quote fetch + swap execution
-│   │   ├── useLimitOrders.js                       # Order management + price polling
-│   │   ├── useMevRisk.js                           # Per-quote MEV risk scoring
-│   │   ├── useNetworkStats.js                      # SOL price + TPS + uptime
-│   │   ├── useTrades.js                            # Supabase trade persistence
-│   │   ├── useReceivedTransfers.js                 # On-chain receive detection
-│   │   ├── useWalletBalance.js
-│   │   ├── useSend.js
-│   │   ├── useSavedAddresses.js
-│   │   └── useJupiterTokens.js
+│   │   ├── useSwap.ts                              # Quote fetch + swap execution
+│   │   ├── useLimitOrders.ts                       # Order management + price polling
+│   │   ├── useMevRisk.ts                           # Per-quote MEV risk scoring
+│   │   ├── useNetworkStats.ts                      # SOL price + TPS + uptime
+│   │   ├── useTrades.ts                            # Supabase trade persistence
+│   │   ├── useReceivedTransfers.ts                 # On-chain receive detection
+│   │   ├── useTokens.ts                            # Token list management
+│   │   ├── useWalletBalance.ts
+│   │   ├── useSend.ts
+│   │   ├── useSavedAddresses.ts
+│   │   └── useJupiterTokens.ts
 │   ├── lib/
-│   │   ├── auth-context.jsx                        # Supabase Auth provider
-│   │   ├── supabase.js                             # Supabase client
-│   │   ├── useSupabase.js                          # Authenticated client hook
-│   │   └── device.js                               # Mobile / wallet browser detection
-│   ├── App.jsx                                     # Root component + auth gate
-│   ├── main.jsx                                    # React entry, wallet providers
+│   │   ├── auth-context.tsx                        # Supabase Auth provider
+│   │   ├── supabase.ts                             # Supabase client
+│   │   ├── useSupabase.ts                          # Authenticated client hook
+│   │   └── device.ts                               # Mobile / wallet browser detection
+│   ├── App.tsx                                     # Root component + auth gate
+│   ├── main.tsx                                    # React entry, wallet providers
+│   ├── types.ts                                    # Shared TypeScript type definitions
+│   ├── vite-env.d.ts                               # Vite environment type declarations
 │   ├── index.css                                   # Global styles + wallet adapter overrides
-│   └── sentry.js                                   # Sentry initialisation
+│   └── sentry.ts                                   # Sentry initialisation
 ├── supabase/
 │   └── functions/
 │       └── send-waitlist-email/                    # Deno edge function (Resend email)
-├── .env.example  
+├── .env.example
+├── tsconfig.json                                   # TypeScript project config
+├── tsconfig.node.json                              # TypeScript config for Vite/Node tooling
 ├── vercel.json                                     # Rewrite rules for API proxying
-├── vite.config.js
+├── vite.config.ts
 └── package.json
 ```
 
@@ -418,9 +427,9 @@ In development, `src/config.js` points directly to `https://api.eitherway.ai` as
 
 Mainstay is built **around** DFlow — not just on top. `4` API touchpoints:
 
-### ¹ Quote API
+### Quote API
 
-```javascript
+```typescript
 // Step 1 — Pre-trade price discovery + risk scoring input
 GET /v1/quote
   ?inputMint=So11111111111111111111111111111111111111112
@@ -429,9 +438,9 @@ GET /v1/quote
   &slippageBps=20
 ```
 
-### ² Declarative Trade API
+### Declarative Trade API
 
-```javascript
+```typescript
 // Step 3 — MEV-protected swap execution
 POST /v1/trade
 {
@@ -445,9 +454,9 @@ POST /v1/trade
 }
 ```
 
-### ³ Priority Fee Escalation
+### Priority Fee Escalation
 
-```javascript
+```typescript
 // Auto-escalated based on MEV risk score
 const priorityFee = {
   LOW:    1000,                               // lamports — standard protection
@@ -456,9 +465,9 @@ const priorityFee = {
 }[riskLevel];
 ```
 
-### ⁴ Platform Fee
+### Platform Fee
 
-```javascript
+```typescript
 feeBps: 8  →  0.08% on all protected trades
 Revenue model: volume-based, no smart contract needed
 ```
@@ -471,7 +480,7 @@ Revenue model: volume-based, no smart contract needed
 
 ### 🔃 Token Swap
 
-The core interface (`SwapInterface.jsx`) supports:
+The core interface (`SwapInterface.tsx`) supports:
 
 - Any-to-any SPL token swaps from a curated list of 15+ tokens
 - Real-time quote fetching with 600ms debounce
@@ -483,7 +492,7 @@ The core interface (`SwapInterface.jsx`) supports:
 
 ### ⏳ Limit Orders
 
-The limit order system (`useLimitOrders.js`) polls prices every 30 seconds and executes automatically when the target is hit:
+The limit order system (`useLimitOrders.ts`) polls prices every 30 seconds and executes automatically when the target is hit:
 
 - Place orders with a target USD price and direction (above/below)
 - Visual progress bar tracking distance to target
@@ -650,52 +659,6 @@ For the Solana RPC endpoint specifically, use the `api/solana-rpc.js` serverless
 
 ---
 
-## Supabase Schema
-
-The following tables are required for full functionality:
-
-```sql
--- Mainnet trades
-trades (id, wallet_address, trade_type, input_token_symbol, output_token_symbol,
-        input_amount_raw, output_amount_raw, input_decimals, output_decimals,
-        execution_grade, slippage_pct, mev_saved_usd, signature, explorer_url, created_at)
-
--- Devnet trades (same schema)
-devTrades (...)
-
--- Limit orders
-limitOrders (id, wallet_address, network, status, direction, input_token_mint,
-             input_token_symbol, input_token_decimals, output_token_mint,
-             output_token_symbol, output_token_decimals, input_amount, target_price,
-             executed_at, signature, explorer_url, error, created_at)
-
-devLimitOrders (...)
-
--- Saved recipient addresses
-recipients (id, wallet_address, address, label, last_used_at)
-
--- Prediction market waitlist
-waitingList (id, email, created_at)
-```
-
-For the Solana RPC endpoint specifically, use the `api/solana-rpc.js` serverless function (included in the `api/` directory) to proxy directly to `https://api.mainnet-beta.solana.com`, avoiding CORS restrictions from third-party proxies.
-
----
-
-## 🔗 Integrations
-
-| Service | Purpose | Docs |
-|---|---|---|
-| **DFlow Protocol** | MEV-protected order routing | [dflow.net](https://dflow.net) |
-| **Jupiter Aggregator** | Devnet swap routing + price data | [jup.ag](https://jup.ag) |
-| **Helius** | High-reliability Solana RPC | [helius.dev](https://helius.dev) |
-| **Supabase** | Auth, trade history, limit orders, address book | [supabase.com](https://supabase.com) |
-| **Sentry** | Error tracking, user feedback | [sentry.io](https://sentry.io) |
-| **TradingView** | Price charts | [tradingview.com](https://tradingview.com) |
-| **Resend** | Waitlist confirmation emails | [resend.com](https://resend.com) |
-
----
-
 ## ⚡️ Supabase Schema
 
 The following tables are required for full functionality:
@@ -793,7 +756,7 @@ test:     adding tests
 chore:    build process, dependencies
 ```
 
-Please keep PRs focused — one feature or fix per PR. Preserve existing code style (JSX not TSX, `react-query` naming conventions, minimal-touch component changes).
+Please keep PRs focused — one feature or fix per PR. Preserve existing code style (TypeScript throughout, `react-query` naming conventions, minimal-touch component changes).
 
 ---
 
