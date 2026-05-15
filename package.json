@@ -30,8 +30,10 @@
   },
   "devDependencies": {
     "@sentry/vite-plugin": "^5.2.0",
+    "@types/node": "^25.8.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vercel/node": "^5.8.1",
     "@vitejs/plugin-react": "^4.3.0",
     "autoprefixer": "^10.4.18",
     "postcss": "^8.4.35",
