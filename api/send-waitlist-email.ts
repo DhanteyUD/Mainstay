@@ -1,8 +1,10 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const APP_URL = process.env.VITE_APP_URL ?? "https://mainstay.pro";
 const FROM_EMAIL = "Mainstay <noreply@mainstay.pro>";
 
-function buildEmailHtml(email, appUrl) {
+function buildEmailHtml(email: string, appUrl: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -98,7 +100,7 @@ function buildEmailHtml(email, appUrl) {
 </html>`;
 }
 
-export default async function handler(req, res) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -107,7 +109,7 @@ export default async function handler(req, res) {
   if (req.method !== "POST")
     return res.status(405).json({ error: "Method not allowed" });
 
-  const { email } = req.body ?? {};
+  const { email } = (req.body as { email?: string }) ?? {};
   if (!email) return res.status(400).json({ error: "Email is required" });
 
   if (!RESEND_API_KEY) {
