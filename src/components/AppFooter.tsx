@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, BookOpen } from "lucide-react";
 import { useNetwork } from "../contexts/NetworkContext";
 import { AnimatePresence } from "framer-motion";
 import logo from "../assets/mainstay-logo.png";
@@ -28,6 +28,13 @@ export default function AppFooter() {
                 <MessageSquare size={11} />
                 Feedback
               </button>
+              <a
+                href="/documentation"
+                className="flex items-center gap-1 font-mono text-xs text-terminal-dim/60 hover:text-terminal-accent transition-colors duration-150"
+              >
+                <BookOpen size={11} />
+                Docs
+              </a>
               <div className="w-1 h-1 rounded-full bg-terminal-border" />
               <span className="font-mono text-xs text-terminal-dim/40">
                 v1.0.0

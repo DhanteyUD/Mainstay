@@ -14,7 +14,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "./lib/auth-context";
 import FeedbackButton from "./components/FeedbackButton";
 
-import LandingPage from "./components/LandingPage";
+import Documentation from "./pages/documentation";
+import LandingPage from "./pages/landing";
 import LoginScreen from "./components/LoginScreen";
 import AppHeader from "./components/AppHeader";
 import AppFooter from "./components/AppFooter";
@@ -82,6 +83,13 @@ function useIsWalletBrowser() {
 }
 
 export default function App() {
+  if (window.location.pathname === "/documentation") {
+    return <Documentation />;
+  }
+  return <AppInner />;
+}
+
+function AppInner() {
   const { user, loading: authLoading, signedOut } = useAuth();
   const { dismissed, dismiss } = useOnboarding();
   const isWalletBrowser = useIsWalletBrowser();

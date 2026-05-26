@@ -24,6 +24,7 @@ export default {
         sans: ['Syne', 'sans-serif'],
         display: ['Syne', 'sans-serif'],
         mono: ['Space Mono', 'Courier New', 'monospace'],
+        'dm-mono': ['DM Mono', 'Courier New', 'monospace'],
       },
       animation: {
         'pulse-glow': 'pulseGlow 2s ease-in-out infinite',

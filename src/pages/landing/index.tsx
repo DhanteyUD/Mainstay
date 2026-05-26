@@ -1,15 +1,12 @@
 import Nav from "./components/Nav";
 import Hero from "./components/Hero";
-import StatsBar from "./components/StatsBar";
 import ProblemSection from "./components/ProblemSection";
 import HowItWorksSection from "./components/HowItWorksSection";
 import FeaturesSection from "./components/FeaturesSection";
-import ResultsSection from "./components/ResultsSection";
 import QuotesSection from "./components/QuotesSection";
 import ComparisonSection from "./components/ComparisonSection";
 import PartnersSection from "./components/PartnersSection";
 import WaitlistSection from "./components/WaitlistSection";
-import CtaSection from "./components/CtaSection";
 import PageFooter from "./components/PageFooter";
 import type { Props } from "./types";
 
@@ -58,16 +55,13 @@ export default function LandingPage({ onLaunch }: Props) {
 
       <main className="relative z-10">
         <Hero onLaunch={onLaunch} />
-        <StatsBar />
         <ProblemSection />
         <HowItWorksSection />
         <FeaturesSection />
-        <ResultsSection />
         <QuotesSection />
         <ComparisonSection />
         <PartnersSection />
         <WaitlistSection onLaunch={onLaunch} />
-        <CtaSection onLaunch={onLaunch} />
       </main>
 
       <PageFooter />
