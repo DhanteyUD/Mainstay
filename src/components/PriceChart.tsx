@@ -38,6 +38,16 @@ import type { Token } from "../types";
 const CONTAINER_ID = "mainstay_sol_chart";
 const USD_LIKE = new Set(["USDC", "USDT", "USD"]);
 
+const INTERVALS = [
+  { label: "15m", value: "15"  },
+  { label: "1H",  value: "60"  },
+  { label: "4H",  value: "240" },
+  { label: "1D",  value: "D"   },
+  { label: "1W",  value: "W"   },
+] as const;
+
+type IntervalValue = (typeof INTERVALS)[number]["value"];
+
 interface ChartStyle {
   value: string;
   Icon: React.ComponentType<{ size?: number | string; className?: string }>;
@@ -98,6 +108,7 @@ export default function PriceChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetReady = useRef(false);
   const [styleIndex, setStyleIndex] = useState(1);
+  const [interval, setInterval] = useState<IntervalValue>("15");
   const chartStyle = CHART_STYLES[styleIndex].value;
 
   const {
@@ -155,7 +166,7 @@ export default function PriceChart({
       new window.TradingView.widget({
         autosize: true,
         symbol: chartSymbol,
-        interval: "15",
+        interval,
         timezone: "Etc/UTC",
         theme: "dark",
         style: chartStyle,
@@ -207,7 +218,7 @@ export default function PriceChart({
       if (el) el.innerHTML = "";
       widgetReady.current = false;
     };
-  }, [chartSymbol, chartStyle]);
+  }, [chartSymbol, chartStyle, interval]);
 
   return (
     <div className="rounded-xl border border-terminal-border bg-terminal-card overflow-hidden mb-6">
@@ -250,9 +261,17 @@ export default function PriceChart({
               <ChevronRight size={12} />
             </button>
           </div>
-          <span className="text-[9px] uppercase tracking-wider text-terminal-dim font-mono">
-            15m
-          </span>
+          <select
+            value={interval}
+            onChange={(e) => setInterval(e.target.value as IntervalValue)}
+            className="bg-terminal-border/30 text-terminal-accent text-[9px] font-mono uppercase tracking-wider rounded-md px-2 py-1 border border-terminal-border/40 cursor-pointer outline-none hover:border-terminal-accent/40 transition-colors"
+          >
+            {INTERVALS.map(({ label, value }) => (
+              <option key={value} value={value} className="bg-terminal-card text-terminal-text">
+                {label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
