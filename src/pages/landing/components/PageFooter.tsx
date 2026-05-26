@@ -4,7 +4,7 @@ export default function PageFooter() {
   return (
     <footer className="relative z-10 border-t border-terminal-border/40 py-8 px-4">
       <div className="max-w-6xl mx-auto text-center">
-        <div className="font-dm-mono font-black text-xl text-terminal-text tracking-widest mb-2">
+        <div className="font-dm-mono font-black text-xl text-terminal-text mb-2">
           Main<span className="text-terminal-accent">stay</span>
         </div>
         <p className="font-dm-mono text-xs text-terminal-dim/40 mb-4">
