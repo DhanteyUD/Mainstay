@@ -47,7 +47,7 @@ export default function WaitlistSection({ onLaunch }: Props) {
   }
 
   return (
-    <section className="relative z-10 py-20 px-4 border-t border-terminal-border/30 bg-terminal-surface/20">
+    <section className="relative z-10 py-20 px-8 md:px-4 border-t border-terminal-border/30 bg-terminal-surface/20">
       <div className="relative max-w-xl mx-auto text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
