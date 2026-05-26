@@ -63,6 +63,7 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
+          maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MiB — covers jupiter-logo (2.44 MB) and solana-logo (2.1 MB)
           globPatterns: ["**/*.{js,css,html,png,ico,woff2}"],
           navigateFallback: "index.html",
           runtimeCaching: [
