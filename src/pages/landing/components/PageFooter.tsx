@@ -22,7 +22,7 @@ export default function PageFooter() {
             Documentation
           </a>
           <a
-            href="https://dflow.net"
+            href="https://pond.dflow.net/build/introduction"
             target="_blank"
             rel="noopener noreferrer"
             className="font-dm-mono text-xs text-terminal-dim/50 hover:text-terminal-dim transition-colors"
