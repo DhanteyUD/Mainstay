@@ -61,19 +61,6 @@ export default function Hero({ onLaunch }: Props) {
       />
 
       <div className="relative z-10 max-w-4xl mx-auto text-center">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex items-center justify-center gap-3 mb-8"
-        >
-          <div className="flex-1 max-w-[60px] h-px bg-terminal-border" />
-          <span className="font-dm-mono text-xs text-terminal-dim/60 tracking-[0.18em] uppercase">
-            Solana Trading Terminal
-          </span>
-          <div className="flex-1 max-w-[60px] h-px bg-terminal-border" />
-        </motion.div>
-
         <div
           className="mb-4 select-none"
           style={{
@@ -170,7 +157,7 @@ export default function Hero({ onLaunch }: Props) {
         >
           <motion.button
             onClick={onLaunch}
-            className="flex items-center gap-2 px-8 py-3.5 rounded-xl font-dm-mono font-bold text-sm bg-terminal-accent text-terminal-bg hover:opacity-85 transition-all group"
+            className="hidden sm:flex items-center gap-2 px-8 py-3.5 rounded-xl font-dm-mono font-bold text-sm bg-terminal-accent text-terminal-bg hover:opacity-85 transition-all group"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -188,15 +175,6 @@ export default function Hero({ onLaunch }: Props) {
             View Documentation
           </a>
         </motion.div>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.65 }}
-          className="mt-6 font-dm-mono text-xs text-terminal-dim/35 tracking-widest"
-        >
-          NON-CUSTODIAL · DECENTRALIZED · FRONTIER HACKATHON 2026
-        </motion.p>
       </div>
     </section>
   );

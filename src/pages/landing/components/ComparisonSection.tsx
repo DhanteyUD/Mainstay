@@ -49,7 +49,7 @@ export default function ComparisonSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 gap-4"
+          className="grid grid-cols-1 md:grid-cols-2 gap-4"
         >
           <div className="bg-terminal-card border border-terminal-green/20 rounded-2xl p-5 sm:p-6">
             <div className="font-dm-mono text-xs font-bold text-terminal-green mb-4 tracking-wider">

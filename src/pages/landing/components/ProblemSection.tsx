@@ -73,7 +73,7 @@ export default function ProblemSection() {
             <br />
             <span className="text-terminal-red">STOLEN IN 2024</span>
           </h2>
-          <p className="font-dm-mono text-sm text-terminal-dim max-w-xl leading-relaxed">
+          <p className="font-dm-mono text-xs sm:text-sm text-terminal-dim max-w-xl leading-relaxed">
             Not from hacks. Not from exploits. From bots — silently — on every
             public DEX, on every swap. MEV bots monitor the Solana mempool and
             exploit your trades before they confirm.

@@ -3,13 +3,10 @@ import { BookOpen } from "lucide-react";
 export default function PageFooter() {
   return (
     <footer className="relative z-10 border-t border-terminal-border/40 py-8 px-4">
-      <div className="max-w-6xl mx-auto text-center">
-        <div className="font-dm-mono font-black text-xl text-terminal-text mb-2">
+      <div className="max-w-6xl mx-auto text-center flex flex-col items-center justify-center gap-6 flex-wrap">
+        <div className="font-dm-mono font-black text-xl text-terminal-text">
           Main<span className="text-terminal-accent">stay</span>
         </div>
-        <p className="font-dm-mono text-xs text-terminal-dim/40 mb-4">
-          Powered by DFlow Protocol
-        </p>
         <div className="flex items-center justify-center gap-6 flex-wrap">
           <a
             href="https://mainstay.pro"
@@ -33,7 +30,7 @@ export default function PageFooter() {
             DFlow Protocol
           </a>
           <span className="font-dm-mono text-xs text-terminal-dim/25">
-            Frontier Hackathon 2026 · MIT License
+            Powered by DFlow Protocol · MIT License
           </span>
         </div>
       </div>

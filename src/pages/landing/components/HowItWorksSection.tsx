@@ -58,14 +58,14 @@ export default function HowItWorksSection() {
             <br />
             <span className="text-terminal-green">BOTS BLOCKED.</span>
           </h2>
-          <p className="font-dm-mono text-sm text-terminal-dim max-w-xl leading-relaxed">
+          <p className="font-dm-mono text-xs sm:text-sm text-terminal-dim max-w-xl leading-relaxed">
             Mainstay routes every mainnet swap through DFlow Protocol's
             Just-In-Time (JIT) order-flow auction. Your transaction never touches the
             public mempool.
           </p>
         </motion.div>
 
-        <div className="relative grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="relative grid grid-cols-1 md:grid-cols-5 gap-8 md:gap-4">
           <div className="hidden md:block absolute top-8 left-[10%] right-[10%] h-px bg-terminal-border/50 pointer-events-none" />
 
           {steps.map((s, i) => (

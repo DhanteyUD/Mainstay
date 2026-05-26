@@ -7,11 +7,11 @@ import supabaseLogo from "../../../assets/supabase-logo.png";
 import jupiterLogo from "../../../assets/jupiter-logo.png";
 
 const partners = [
-  { name: "DFlow Protocol", logo: dflowLogo, height: "h-32" },
-  { name: "Solana", logo: solanaLogo, height: "h-28" },
-  { name: "Helius", logo: heliusLogo, height: "h-20" },
-  { name: "Supabase", logo: supabaseLogo, height: "h-28" },
-  { name: "Jupiter", logo: jupiterLogo, height: "h-28" },
+  { name: "DFlow Protocol", logo: dflowLogo, height: "h-20 md:h-32" },
+  { name: "Solana", logo: solanaLogo, height: "h-16 md:h-28" },
+  { name: "Helius", logo: heliusLogo, height: "h-14 md:h-20" },
+  { name: "Supabase", logo: supabaseLogo, height: "h-16 md:h-28" },
+  { name: "Jupiter", logo: jupiterLogo, height: "h-16 md:h-28" },
 ];
 
 const SPEED = 60; // px per second

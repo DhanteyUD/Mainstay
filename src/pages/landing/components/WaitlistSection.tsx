@@ -62,7 +62,7 @@ export default function WaitlistSection({ onLaunch }: Props) {
             <br />
             <span className="text-terminal-accent">NEW FEATURES DROP</span>
           </h2>
-          <p className="font-dm-mono text-sm text-terminal-dim mb-8 leading-relaxed">
+          <p className="font-dm-mono text-xs md:text-sm text-terminal-dim mb-8 leading-relaxed">
             Prediction markets on mainnet. Telegram limit order alerts. Portfolio
             analytics. Get notified before anyone else — and help shape what we
             build next.
@@ -85,19 +85,19 @@ export default function WaitlistSection({ onLaunch }: Props) {
               </div>
             </motion.div>
           ) : (
-            <form onSubmit={handleSubmit} className="flex gap-2 mb-3 flex-wrap justify-center">
+            <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-2 mb-3 flex-wrap justify-center">
               <input
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(""); }}
                 placeholder="your@email.com"
                 required
-                className="flex-1 min-w-[220px] max-w-xs bg-terminal-card border border-terminal-border focus:border-terminal-accent/50 outline-none rounded-lg px-4 py-3 font-dm-mono text-sm text-terminal-text placeholder-terminal-dim/30 transition-colors"
+                className="flex-1 w-full md:min-w-[220px] md:max-w-xs bg-terminal-card border border-terminal-border focus:border-terminal-accent/50 outline-none rounded-lg px-4 py-3 font-dm-mono text-sm text-terminal-text placeholder-terminal-dim/30 transition-colors"
               />
               <motion.button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-3 rounded-lg bg-terminal-accent text-terminal-bg font-dm-mono text-sm font-bold tracking-wider hover:opacity-85 transition-all disabled:opacity-60 flex items-center gap-2"
+                className="px-6 py-3 rounded-lg bg-terminal-accent text-terminal-bg font-dm-mono text-sm font-bold tracking-wider hover:opacity-85 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
                 whileHover={loading ? {} : { scale: 1.02 }}
                 whileTap={loading ? {} : { scale: 0.97 }}
               >
