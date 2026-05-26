@@ -12,6 +12,7 @@ import {
   Info,
   RefreshCw,
   X,
+  Settings,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RiTokenSwapFill } from "react-icons/ri";
@@ -84,6 +85,9 @@ export default function SwapInterface({
     null,
   );
   const [flipRotation, setFlipRotation] = useState(0);
+  const [showSettings, setShowSettings] = useState(false);
+  const [slippageBps, setSlippageBps] = useState("50");
+  const [customSlippage, setCustomSlippage] = useState("");
 
   const [postSwapCooldown, setPostSwapCooldown] = useState(false);
   const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -129,6 +133,7 @@ export default function SwapInterface({
         amount: inputAmount,
         decimals: inputToken.decimals,
         walletPublicKey: publicKey?.toBase58() ?? undefined,
+        slippageBps,
       };
       lastFetchParamsRef.current = params;
       fetchQuote(params);
@@ -136,7 +141,7 @@ export default function SwapInterface({
       clearQuote();
       lastFetchParamsRef.current = null;
     }
-  }, [inputToken, outputToken, inputAmount, publicKey, isDevnet]);
+  }, [inputToken, outputToken, inputAmount, publicKey, isDevnet, slippageBps]);
 
   useEffect(() => {
     if (!connected) {
@@ -348,11 +353,90 @@ export default function SwapInterface({
                   {networkLabel}
                 </span>
               </div>
-              <div className="shrink-0 max-w-[180px] sm:max-w-none">
-                <WalletMultiButton />
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setShowSettings((s) => !s)}
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border font-mono text-xs transition-colors duration-150 ${
+                    showSettings
+                      ? "border-terminal-accent/60 bg-terminal-accent/10 text-terminal-accent"
+                      : "border-terminal-border bg-transparent text-terminal-dim hover:border-terminal-accent/40 hover:text-terminal-accent/80"
+                  }`}
+                  title="Swap settings"
+                >
+                  <Settings size={12} />
+                  <span>{(Number(slippageBps) / 100).toFixed(2).replace(/\.?0+$/, "")}%</span>
+                </button>
+                <div className="max-w-[180px] sm:max-w-none">
+                  <WalletMultiButton />
+                </div>
               </div>
             </div>
           </div>
+
+          <AnimatePresence>
+            {showSettings && (
+              <motion.div
+                key="settings-panel"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.18, ease: "easeInOut" }}
+                className="overflow-hidden border-b border-terminal-border"
+              >
+                <div className="px-4 py-3 space-y-2">
+                  <span className="font-mono text-xs text-terminal-dim tracking-wider">
+                    Slippage Tolerance
+                  </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {[
+                      { label: "0.1%", bps: "10" },
+                      { label: "0.5%", bps: "50" },
+                      { label: "1%",   bps: "100" },
+                    ].map(({ label, bps }) => (
+                      <button
+                        key={bps}
+                        onClick={() => { setSlippageBps(bps); setCustomSlippage(""); }}
+                        className={`px-3 py-1 rounded-lg border font-mono text-xs transition-colors duration-150 ${
+                          slippageBps === bps && !customSlippage
+                            ? "border-terminal-accent bg-terminal-accent/10 text-terminal-accent"
+                            : "border-terminal-border text-terminal-dim hover:border-terminal-accent/40 hover:text-terminal-accent/70"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                    <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-mono transition-colors duration-150 ${
+                      customSlippage
+                        ? "border-terminal-accent bg-terminal-accent/10"
+                        : "border-terminal-border"
+                    }`}>
+                      <input
+                        type="number"
+                        placeholder="Custom"
+                        value={customSlippage}
+                        min="0.01"
+                        max="50"
+                        step="0.1"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCustomSlippage(val);
+                          const bps = Math.round(Number(val) * 100);
+                          if (bps >= 1 && bps <= 5000) setSlippageBps(String(bps));
+                        }}
+                        className="w-16 bg-transparent outline-none text-terminal-text placeholder-terminal-muted/40"
+                      />
+                      <span className="text-terminal-dim">%</span>
+                    </div>
+                  </div>
+                  {Number(slippageBps) > 100 && (
+                    <p className="font-mono text-xs text-terminal-yellow">
+                      High slippage — risk of an unfavorable fill.
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="p-4 sm:p-5 space-y-3">
             <div className="rounded-xl bg-terminal-surface border border-terminal-border focus-within:border-terminal-accent/40 transition-colors">

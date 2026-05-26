@@ -14,6 +14,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "./lib/auth-context";
 import FeedbackButton from "./components/FeedbackButton";
 
+import Documentation from "./pages/documentation";
+import LandingPage from "./pages/landing";
 import LoginScreen from "./components/LoginScreen";
 import AppHeader from "./components/AppHeader";
 import AppFooter from "./components/AppFooter";
@@ -81,9 +83,33 @@ function useIsWalletBrowser() {
 }
 
 export default function App() {
+  if (window.location.pathname === "/documentation") {
+    return <Documentation />;
+  }
+  return <AppInner />;
+}
+
+function AppInner() {
   const { user, loading: authLoading, signedOut } = useAuth();
   const { dismissed, dismiss } = useOnboarding();
   const isWalletBrowser = useIsWalletBrowser();
+
+  const [appLaunched, setAppLaunched] = useState(() => {
+    try {
+      return localStorage.getItem("mainstay_app_launched") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  function handleLaunch() {
+    try {
+      localStorage.setItem("mainstay_app_launched", "true");
+    } catch {
+      /* silent */
+    }
+    setAppLaunched(true);
+  }
 
   if (authLoading) {
     return (
@@ -100,6 +126,15 @@ export default function App() {
           Authenticating
         </span>
       </div>
+    );
+  }
+
+  if (!user && !appLaunched && !(isMobile && isWalletBrowser)) {
+    return (
+      <>
+        <LandingPage onLaunch={handleLaunch} />
+        <FeedbackButton />
+      </>
     );
   }
 
