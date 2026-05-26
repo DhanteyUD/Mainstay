@@ -21,6 +21,7 @@ interface FetchQuoteParams {
   walletPublicKey?: string;
   feeBps?: number | null;
   prioritizationFeeLamports?: string | null;
+  slippageBps?: string;
 }
 
 interface ExecuteSwapParams {
@@ -76,13 +77,14 @@ async function fetchJupiterQuote({
   outputMint,
   amount,
   decimals,
+  slippageBps = "50",
 }: FetchQuoteParams) {
   const rawAmount = Math.floor(Number(amount) * Math.pow(10, decimals));
   const params = new URLSearchParams({
     inputMint,
     outputMint,
     amount: rawAmount.toString(),
-    slippageBps: "50",
+    slippageBps,
     swapMode: "ExactIn",
   });
   const res = await fetch(`${JUPITER_QUOTE_API}?${params}`);
@@ -146,6 +148,7 @@ export function useSwap() {
       walletPublicKey,
       feeBps,
       prioritizationFeeLamports,
+      slippageBps = "50",
     } = params;
     setQuoteLoading(true);
     setQuoteError(null);
@@ -160,6 +163,7 @@ export function useSwap() {
           outputMint,
           amount,
           decimals,
+          slippageBps,
         });
       } else {
         let lastErr: Error | null = null;
@@ -173,7 +177,7 @@ export function useSwap() {
               inputMint,
               outputMint,
               amount: rawAmount.toString(),
-              slippageBps: "auto",
+              slippageBps,
               prioritizationFeeLamports: prioritizationFeeLamports ?? "auto",
               wrapAndUnwrapSol: "true",
             });
