@@ -12,6 +12,7 @@ import {
   Server,
   Zap,
   Lock,
+  Code2,
 } from "lucide-react";
 
 import DocHeader from "./components/DocHeader";
@@ -28,6 +29,7 @@ import HistorySection from "./components/HistorySection";
 import NetworkSection from "./components/NetworkSection";
 import DashboardSection from "./components/DashboardSection";
 import SecuritySection from "./components/SecuritySection";
+import DeveloperSection from "./components/DeveloperSection";
 import type { Section } from "./types";
 
 const SECTIONS: Section[] = [
@@ -43,6 +45,7 @@ const SECTIONS: Section[] = [
   { id: "network", label: "Network Status", icon: <Server size={13} /> },
   { id: "dashboard", label: "Dashboard", icon: <Settings size={13} /> },
   { id: "security", label: "Security", icon: <Lock size={13} /> },
+  { id: "developer", label: "Developer", icon: <Code2 size={13} /> },
 ];
 
 export default function Documentation() {
@@ -87,6 +90,7 @@ export default function Documentation() {
           <NetworkSection />
           <DashboardSection />
           <SecuritySection />
+          <DeveloperSection />
         </main>
       </div>
     </div>
