@@ -77,7 +77,7 @@ export function CallOut({
   );
 }
 
-export function Steps({ items }: { items: { title: string; desc: string }[] }) {
+export function Steps({ items }: { items: { title: string; desc: React.ReactNode }[] }) {
   return (
     <ol className="space-y-4 mb-4">
       {items.map((item, i) => (
@@ -100,7 +100,7 @@ export function Steps({ items }: { items: { title: string; desc: string }[] }) {
 export function FeatureGrid({
   items,
 }: {
-  items: { icon: React.ReactNode; title: string; desc: string }[];
+  items: { icon: React.ReactNode; title: string; desc: React.ReactNode }[];
 }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">

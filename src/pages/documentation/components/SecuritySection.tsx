@@ -1,5 +1,5 @@
 import { Lock, Shield, AlertTriangle, Server } from "lucide-react";
-import { SectionHeader, FeatureGrid, CallOut, ExternalAnchor } from "./ui";
+import { SectionHeader, FeatureGrid, CallOut } from "./ui";
 
 export default function SecuritySection() {
   return (
@@ -40,26 +40,6 @@ export default function SecuritySection() {
         Mainstay, it is a scam. Close the tab immediately.
       </CallOut>
 
-      <div className="mt-8 pt-6 border-t border-terminal-border/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 md:gap-3">
-        <div>
-          <p className="font-mono text-xs text-terminal-dim/80 tracking-widest uppercase mb-1">
-            Questions or issues?
-          </p>
-          <p className="text-xs md:text-sm text-terminal-dim">
-            Open an issue on{" "}
-            <ExternalAnchor href="https://github.com/DhanteyUD/Mainstay">
-              GitHub
-            </ExternalAnchor>{" "}
-            or use the Feedback button inside the app.
-          </p>
-        </div>
-        <button
-          onClick={() => (window.location.href = "/")}
-          className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg font-mono font-bold text-xs bg-terminal-accent text-terminal-bg hover:opacity-85 transition-all"
-        >
-          LAUNCH APP
-        </button>
-      </div>
     </section>
   );
 }

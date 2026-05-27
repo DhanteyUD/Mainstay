@@ -28,7 +28,14 @@ export default function DocHeader() {
             v1.0.0
           </span>
           <button
-            onClick={() => (window.location.href = "/")}
+            onClick={() => {
+              try {
+                localStorage.setItem("mainstay_app_launched", "true");
+              } catch {
+                /* silent */
+              }
+              window.location.href = "/";
+            }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono font-bold text-xs bg-terminal-accent text-terminal-bg hover:opacity-85 transition-all"
           >
             LAUNCH APP
