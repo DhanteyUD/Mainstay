@@ -1,7 +1,9 @@
 import { ChevronRight } from "lucide-react";
 import logo from "../../../assets/mainstay-logo.png";
+import { useAuth } from "../../../lib/auth-context";
 
 export default function DocHeader() {
+  const { user, loading } = useAuth();
   return (
     <header className="sticky top-0 z-50 border-b border-terminal-border bg-terminal-surface/90 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
@@ -27,19 +29,21 @@ export default function DocHeader() {
           <span className="hidden sm:block font-mono text-xs text-terminal-dim/80 border border-terminal-border/80 px-2 py-1 rounded tracking-widest">
             v1.0.0
           </span>
-          <button
-            onClick={() => {
-              try {
-                localStorage.setItem("mainstay_app_launched", "true");
-              } catch {
-                /* silent */
-              }
-              window.location.href = "/";
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono font-bold text-xs bg-terminal-accent text-terminal-bg hover:opacity-85 transition-all"
-          >
-            LAUNCH APP
-          </button>
+          {!loading && !user && (
+            <button
+              onClick={() => {
+                try {
+                  localStorage.setItem("mainstay_app_launched", "true");
+                } catch {
+                  /* silent */
+                }
+                window.location.href = "/";
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono font-bold text-xs bg-terminal-accent text-terminal-bg hover:opacity-85 transition-all"
+            >
+              LAUNCH APP
+            </button>
+          )}
         </div>
       </div>
     </header>
