@@ -7,6 +7,7 @@ import {
   Terminal,
   AlertTriangle,
 } from "lucide-react";
+import { useAuth } from "../../../lib/auth-context";
 import {
   SectionHeader,
   SubHeading,
@@ -74,6 +75,7 @@ const PCode = ({ children }: { children: ReactNode }) => (
 );
 
 export default function DeveloperSection() {
+  const { user, loading } = useAuth();
   return (
     <section id="developer" className="scroll-mt-20">
       <SectionHeader icon={<Code2 size={16} />} title="Developer Reference" />
@@ -735,19 +737,21 @@ export default function DeveloperSection() {
             or use the Feedback button inside the app.
           </p>
         </div>
-        <button
-          onClick={() => {
-            try {
-              localStorage.setItem("mainstay_app_launched", "true");
-            } catch {
-              /* silent */
-            }
-            window.location.href = "/";
-          }}
-          className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg font-mono font-bold text-xs bg-terminal-accent text-terminal-bg hover:opacity-85 transition-all"
-        >
-          LAUNCH APP
-        </button>
+        {!loading && !user && (
+          <button
+            onClick={() => {
+              try {
+                localStorage.setItem("mainstay_app_launched", "true");
+              } catch {
+                /* silent */
+              }
+              window.location.href = "/";
+            }}
+            className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg font-mono font-bold text-xs bg-terminal-accent text-terminal-bg hover:opacity-85 transition-all"
+          >
+            LAUNCH APP
+          </button>
+        )}
       </div>
     </section>
   );
