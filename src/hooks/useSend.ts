@@ -4,7 +4,6 @@ import {
   PublicKey,
   SystemProgram,
   Transaction,
-  LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
 import {
   getAssociatedTokenAddress,
@@ -13,11 +12,10 @@ import {
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import type { WalletContextState } from "@solana/wallet-adapter-react";
-import { SOLANA_RPC_PROXY, SOLANA_DEVNET_RPC } from "../config";
+import { SOLANA_RPC_PROXY, SOLANA_DEVNET_RPC, SOL_MINT } from "../config";
 import { useNetwork } from "../contexts/NetworkContext";
+import { notify } from "../lib/toast";
 import type { Token, SendResult } from "../types";
-
-const SOL_MINT = "So11111111111111111111111111111111111111112";
 
 type SendStatus = "idle" | "signing" | "confirming" | "success" | "error";
 
@@ -27,6 +25,12 @@ interface ExecuteSendParams {
   token: Token | null;
   amount: string;
   recipient: string;
+}
+
+function parseTokenAmount(amountStr: string, decimals: number): bigint {
+  const [whole, frac = ""] = Number(amountStr).toFixed(decimals).split(".");
+  const paddedFrac = frac.padEnd(decimals, "0").slice(0, decimals);
+  return BigInt(whole) * BigInt(10 ** decimals) + BigInt(paddedFrac);
 }
 
 async function confirmPolling(
@@ -95,16 +99,20 @@ export function useSend() {
       recipient,
     }: ExecuteSendParams): Promise<SendResult | null> => {
       if (!wallet?.publicKey) {
-        setSendError("Wallet not connected.");
-        return null;
+        const msg = "Wallet not connected.";
+        setSendError(msg);
+        notify.error(msg);
+        throw new Error(msg);
       }
 
       let recipientKey: PublicKey;
       try {
         recipientKey = new PublicKey(recipient);
       } catch {
-        setSendError("Invalid recipient address.");
-        return null;
+        const msg = "Invalid recipient address.";
+        setSendError(msg);
+        notify.error(msg);
+        throw new Error(msg);
       }
 
       setSendStatus("signing");
@@ -115,7 +123,7 @@ export function useSend() {
         const tx = new Transaction({ feePayer: wallet.publicKey });
 
         if (!token || token.mint === SOL_MINT) {
-          const lamports = Math.floor(Number(amount) * LAMPORTS_PER_SOL);
+          const lamports = parseTokenAmount(amount, 9);
           tx.add(
             SystemProgram.transfer({
               fromPubkey: wallet.publicKey,
@@ -144,9 +152,7 @@ export function useSend() {
             );
           }
 
-          const rawAmount = BigInt(
-            Math.floor(Number(amount) * Math.pow(10, token.decimals)),
-          );
+          const rawAmount = parseTokenAmount(amount, token.decimals);
           tx.add(
             createTransferInstruction(
               fromATA,
@@ -162,9 +168,13 @@ export function useSend() {
           : SOLANA_RPC_PROXY;
         const sendConn = new Connection(rpcUrl, "confirmed");
 
+        if (!wallet.sendTransaction) {
+          throw new Error("Connected wallet does not support sendTransaction.");
+        }
+
         let signature: string;
         try {
-          signature = await wallet.sendTransaction!(tx, sendConn, {
+          signature = await wallet.sendTransaction(tx, sendConn, {
             skipPreflight: false,
             preflightCommitment: "confirmed",
           });
@@ -175,7 +185,7 @@ export function useSend() {
         }
 
         setSendStatus("confirming");
-        await confirmPolling(connection, signature);
+        await confirmPolling(sendConn, signature);
 
         const explorerUrl = isDevnetRef.current
           ? `https://solscan.io/tx/${signature}?cluster=devnet`
@@ -192,8 +202,10 @@ export function useSend() {
         setSendStatus("success");
         return result;
       } catch (err) {
-        setSendError(humanizeSendError((err as Error)?.message));
+        const msg = humanizeSendError((err as Error)?.message);
+        setSendError(msg);
         setSendStatus("error");
+        notify.error({ title: "Transaction failed", description: msg });
         return null;
       }
     },

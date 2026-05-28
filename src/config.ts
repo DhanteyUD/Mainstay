@@ -129,6 +129,8 @@ export const TOKENS: Record<string, Token> = {
 
 export const TOKEN_LIST: Token[] = Object.values(TOKENS);
 
+export const SOL_MINT = TOKENS.SOL.mint;
+
 const JITOSOL: Token = {
   symbol: 'jitoSOL',
   name: 'Jito Staked SOL',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   X,
   Send,
@@ -16,10 +16,8 @@ import { PublicKey } from "@solana/web3.js";
 import { useSend } from "../hooks/useSend";
 import { useSavedAddresses } from "../hooks/useSavedAddresses";
 import { useNetwork } from "../contexts/NetworkContext";
-import { TOKEN_LIST } from "../config";
+import { TOKEN_LIST, SOL_MINT } from "../config";
 import type { Token, SendResult } from "../types";
-
-const SOL_MINT = "So11111111111111111111111111111111111111112";
 
 function fmtBal(v: number | null): string {
   if (v == null || v === 0) return "0";
@@ -154,25 +152,29 @@ export default function SendModal({
     if (balance == null || !selectedToken) return;
     if (selectedToken.mint === SOL_MINT) {
       const maxSol = Math.max(0, balance - 0.005);
-      setAmount(maxSol > 0 ? fmtBal(maxSol) : "0");
+      setAmount(maxSol > 0 ? String(maxSol) : "0");
     } else {
-      setAmount(fmtBal(balance));
+      setAmount(String(balance));
     }
   }
 
   async function handleSend() {
     if (!canSend) return;
-    const result = await executeSend({
-      wallet,
-      connection,
-      token: selectedToken,
-      amount: String(amountNum),
-      recipient,
-    });
-    if (result) {
-      saveAddress(recipient, recipientLabel.trim() || null);
-      fetchBalance(selectedToken);
-      onSendSuccess(result);
+    try {
+      const result = await executeSend({
+        wallet,
+        connection,
+        token: selectedToken,
+        amount: String(amountNum),
+        recipient,
+      });
+      if (result) {
+        saveAddress(recipient, recipientLabel.trim() || null);
+        fetchBalance(selectedToken);
+        onSendSuccess(result);
+      }
+    } catch {
+      // errors already handled in useSend (state + toast)
     }
   }
 
