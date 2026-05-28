@@ -245,11 +245,7 @@ export default function SendModal({
                   SENT SUCCESSFULLY
                 </p>
                 <p className="font-mono text-xs text-terminal-dim">
-                  {fmtBal(
-                    sendResult?.amount != null
-                      ? Number(sendResult.amount)
-                      : null,
-                  )}{" "}
+                  {sendResult?.amount ?? "0"}{" "}
                   {selectedToken?.symbol} sent
                 </p>
               </div>
