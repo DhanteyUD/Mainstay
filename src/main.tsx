@@ -1,8 +1,13 @@
 import "@solana/wallet-adapter-react-ui/styles.css";
+import "react-toastify/dist/ReactToastify.css";
 import "./index.css";
 import "./sentry";
 import React, { useMemo, useEffect } from "react";
 import ReactDOM from "react-dom/client";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { ToastContainer, cssTransition } from "react-toastify";
+import { queryClient } from "./lib/queryClient";
 import {
   ConnectionProvider,
   WalletProvider,
@@ -13,6 +18,11 @@ import { AuthProvider } from "./lib/auth-context";
 import { registerSW } from "virtual:pwa-register";
 import App from "./App";
 import * as Sentry from "@sentry/react";
+
+const ToastSlide = cssTransition({
+  enter: "ms-toast-enter",
+  exit: "ms-toast-exit",
+});
 
 const connectionConfig = {
   commitment: "confirmed" as const,
@@ -169,13 +179,26 @@ root.render(
         </div>
       }
     >
-      <NetworkContextProvider>
-        <AuthProvider>
-          <WalletContextProvider>
-            <App />
-          </WalletContextProvider>
-        </AuthProvider>
-      </NetworkContextProvider>
+      <QueryClientProvider client={queryClient}>
+        <NetworkContextProvider>
+          <AuthProvider>
+            <WalletContextProvider>
+              <App />
+              <ToastContainer
+                position="bottom-left"
+                autoClose={5000}
+                hideProgressBar={true}
+                newestOnTop
+                closeOnClick
+                pauseOnHover
+                draggable
+                transition={ToastSlide}
+              />
+            </WalletContextProvider>
+          </AuthProvider>
+        </NetworkContextProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
     </Sentry.ErrorBoundary>
   </React.StrictMode>,
 );
