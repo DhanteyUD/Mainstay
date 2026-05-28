@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
@@ -86,8 +87,23 @@ export default function SwapInterface({
   );
   const [flipRotation, setFlipRotation] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  const [slippageBps, setSlippageBps] = useState("50");
-  const [customSlippage, setCustomSlippage] = useState("");
+
+  const [autoSlippage, setAutoSlippage] = useState(
+    () => localStorage.getItem("auto_slippage") !== "false",
+  );
+  const [slippageBps, setSlippageBps] = useState(
+    () => localStorage.getItem("slippage_bps") ?? "50",
+  );
+  const [customSlippage, setCustomSlippage] = useState(
+    () => localStorage.getItem("custom_slippage") ?? "",
+  );
+  const [priorityFeeMode, setPriorityFeeMode] = useState<"max" | "exact">(
+    () =>
+      (localStorage.getItem("priority_fee_mode") as "max" | "exact") ?? "max",
+  );
+  const [priorityFeeAmount, setPriorityFeeAmount] = useState(
+    () => localStorage.getItem("priority_fee_amount") ?? "0.0001",
+  );
 
   const [postSwapCooldown, setPostSwapCooldown] = useState(false);
   const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -121,6 +137,22 @@ export default function SwapInterface({
   }, [inputToken, outputToken]);
 
   useEffect(() => {
+    localStorage.setItem("auto_slippage", String(autoSlippage));
+  }, [autoSlippage]);
+  useEffect(() => {
+    localStorage.setItem("slippage_bps", slippageBps);
+  }, [slippageBps]);
+  useEffect(() => {
+    localStorage.setItem("custom_slippage", customSlippage);
+  }, [customSlippage]);
+  useEffect(() => {
+    localStorage.setItem("priority_fee_mode", priorityFeeMode);
+  }, [priorityFeeMode]);
+  useEffect(() => {
+    localStorage.setItem("priority_fee_amount", priorityFeeAmount);
+  }, [priorityFeeAmount]);
+
+  useEffect(() => {
     if (
       inputToken &&
       outputToken &&
@@ -134,6 +166,7 @@ export default function SwapInterface({
         decimals: inputToken.decimals,
         walletPublicKey: publicKey?.toBase58() ?? undefined,
         slippageBps,
+        autoSlippage,
       };
       lastFetchParamsRef.current = params;
       fetchQuote(params);
@@ -260,7 +293,14 @@ export default function SwapInterface({
   const handleSwap = async () => {
     if (!quote || !connected || postSwapCooldown) return;
     setSavedQuote(quote);
-    await executeSwap({ quote, wallet, inputToken, outputToken });
+    await executeSwap({
+      quote,
+      wallet,
+      inputToken,
+      outputToken,
+      priorityFeeMode,
+      priorityFeeAmountSol: priorityFeeAmount,
+    });
   };
 
   const handleRetryQuote = useCallback(() => {
@@ -364,7 +404,12 @@ export default function SwapInterface({
                   title="Swap settings"
                 >
                   <Settings size={12} />
-                  <span>{(Number(slippageBps) / 100).toFixed(2).replace(/\.?0+$/, "")}%</span>
+                  <span className="hidden md:block">
+                    {(Number(slippageBps) / 100)
+                      .toFixed(2)
+                      .replace(/\.?0+$/, "")}
+                    %
+                  </span>
                 </button>
                 <div className="max-w-[180px] sm:max-w-none">
                   <WalletMultiButton />
@@ -384,20 +429,42 @@ export default function SwapInterface({
                 className="overflow-hidden border-b border-terminal-border"
               >
                 <div className="px-4 py-3 space-y-2">
-                  <span className="font-mono text-xs text-terminal-dim tracking-wider">
-                    Slippage Tolerance
-                  </span>
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-xs text-terminal-dim tracking-wider">
+                      Slippage Tolerance
+                    </span>
+                    <InfoTooltip text="The maximum price difference you're willing to accept between placing and executing a swap. Higher slippage increases the chance of a successful trade but may result in a worse price." />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setAutoSlippage(true);
+                        setCustomSlippage("");
+                      }}
+                      className={`px-3 py-1 rounded-lg border font-mono text-xs transition-colors duration-150 ${
+                        autoSlippage
+                          ? "border-terminal-accent bg-terminal-accent/10 text-terminal-accent"
+                          : "border-terminal-border text-terminal-dim hover:border-terminal-accent/40 hover:text-terminal-accent/70"
+                      }`}
+                    >
+                      Auto
+                    </button>
                     {[
                       { label: "0.1%", bps: "10" },
                       { label: "0.5%", bps: "50" },
-                      { label: "1%",   bps: "100" },
+                      { label: "1%", bps: "100" },
                     ].map(({ label, bps }) => (
                       <button
                         key={bps}
-                        onClick={() => { setSlippageBps(bps); setCustomSlippage(""); }}
+                        onClick={() => {
+                          setAutoSlippage(false);
+                          setSlippageBps(bps);
+                          setCustomSlippage("");
+                        }}
                         className={`px-3 py-1 rounded-lg border font-mono text-xs transition-colors duration-150 ${
-                          slippageBps === bps && !customSlippage
+                          !autoSlippage &&
+                          slippageBps === bps &&
+                          !customSlippage
                             ? "border-terminal-accent bg-terminal-accent/10 text-terminal-accent"
                             : "border-terminal-border text-terminal-dim hover:border-terminal-accent/40 hover:text-terminal-accent/70"
                         }`}
@@ -405,11 +472,7 @@ export default function SwapInterface({
                         {label}
                       </button>
                     ))}
-                    <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-mono transition-colors duration-150 ${
-                      customSlippage
-                        ? "border-terminal-accent bg-terminal-accent/10"
-                        : "border-terminal-border"
-                    }`}>
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-lg border border-terminal-border text-xs font-mono ml-auto">
                       <input
                         type="number"
                         placeholder="Custom"
@@ -419,20 +482,66 @@ export default function SwapInterface({
                         step="0.1"
                         onChange={(e) => {
                           const val = e.target.value;
+                          setAutoSlippage(false);
                           setCustomSlippage(val);
                           const bps = Math.round(Number(val) * 100);
-                          if (bps >= 1 && bps <= 5000) setSlippageBps(String(bps));
+                          if (bps >= 1 && bps <= 5000)
+                            setSlippageBps(String(bps));
                         }}
-                        className="w-16 bg-transparent outline-none text-terminal-text placeholder-terminal-muted/40"
+                        className="w-16 bg-transparent outline-none text-terminal-text placeholder-terminal-muted/80"
                       />
                       <span className="text-terminal-dim">%</span>
                     </div>
                   </div>
-                  {Number(slippageBps) > 100 && (
-                    <p className="font-mono text-xs text-terminal-yellow">
-                      High slippage — risk of an unfavorable fill.
+                  <p
+                    className={`font-mono text-[10px] md:text-xs ${!autoSlippage && Number(slippageBps) > 100 ? "text-terminal-yellow" : "text-terminal-dim/60"}`}
+                  >
+                    {autoSlippage
+                      ? "We'll determine the optimal allowed slippage automatically for each swap."
+                      : Number(slippageBps) > 100
+                        ? "High slippage — risk of an unfavorable fill."
+                        : `Your trade will revert if the price moves more than ${(Number(slippageBps) / 100).toFixed(2).replace(/\.?0+$/, "")}%.`}
+                  </p>
+
+                  <div className="border-t border-terminal-border pt-3 space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-xs text-terminal-dim tracking-wider">
+                        Priority Fee
+                      </span>
+                      <InfoTooltip text="An additional fee paid to speed up confirmation during network congestion. Max: Automatically selects an optimal fee, up to the maximum you set. Exact: Uses the fee you specify for every swap." />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {(["max", "exact"] as const).map((mode) => (
+                        <button
+                          key={mode}
+                          onClick={() => setPriorityFeeMode(mode)}
+                          className={`px-3 py-1 rounded-lg border font-mono text-xs capitalize transition-colors duration-150 ${
+                            priorityFeeMode === mode
+                              ? "border-terminal-accent bg-terminal-accent/10 text-terminal-accent"
+                              : "border-terminal-border text-terminal-dim hover:border-terminal-accent/40 hover:text-terminal-accent/70"
+                          }`}
+                        >
+                          {mode === "max" ? "Max" : "Exact"}
+                        </button>
+                      ))}
+                      <div className="flex items-center gap-1 px-2 py-1 rounded-lg border border-terminal-border text-xs font-mono ml-auto">
+                        <input
+                          type="number"
+                          value={priorityFeeAmount}
+                          min="0"
+                          step="0.0001"
+                          onChange={(e) => setPriorityFeeAmount(e.target.value)}
+                          className="w-16 bg-transparent outline-none text-terminal-text"
+                        />
+                        <span className="text-terminal-dim">SOL</span>
+                      </div>
+                    </div>
+                    <p className="font-mono text-[10px] md:text-xs text-terminal-dim/60">
+                      {priorityFeeMode === "max"
+                        ? "We'll automatically choose the optimal fee, up to the maximum you set."
+                        : "Uses the fee you specify for every swap."}
                     </p>
-                  )}
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -767,6 +876,52 @@ export default function SwapInterface({
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+function InfoTooltip({ text }: { text: string }) {
+  const [visible, setVisible] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const ref = useRef<HTMLSpanElement>(null);
+
+  const show = () => {
+    if (ref.current) {
+      const r = ref.current.getBoundingClientRect();
+      setPos({
+        top: r.top + window.scrollY,
+        left: r.left + r.width / 2 + window.scrollX,
+      });
+    }
+    setVisible(true);
+  };
+
+  return (
+    <span
+      ref={ref}
+      className="inline-flex items-center"
+      onMouseEnter={show}
+      onMouseLeave={() => setVisible(false)}
+    >
+      <Info size={12} className="text-terminal-dim/60 cursor-pointer" />
+      {createPortal(
+        <div
+          style={{
+            position: "absolute",
+            top: pos.top - 8,
+            left: pos.left,
+            transform: "translate(-50%, -100%)",
+            zIndex: 9999,
+            opacity: visible ? 1 : 0,
+            pointerEvents: "none",
+            transition: "opacity 0.1s",
+          }}
+          className="w-80 rounded-lg bg-terminal-card border border-terminal-muted px-3 py-2 text-xs font-mono text-terminal-dim leading-relaxed shadow-lg"
+        >
+          {text}
+        </div>,
+        document.body,
+      )}
+    </span>
   );
 }
 

@@ -22,6 +22,7 @@ interface FetchQuoteParams {
   feeBps?: number | null;
   prioritizationFeeLamports?: string | null;
   slippageBps?: string;
+  autoSlippage?: boolean;
 }
 
 interface ExecuteSwapParams {
@@ -29,6 +30,8 @@ interface ExecuteSwapParams {
   wallet: WalletContextState;
   inputToken: Token;
   outputToken: Token;
+  priorityFeeMode?: "max" | "exact";
+  priorityFeeAmountSol?: string;
 }
 
 interface SecurityError extends Error {
@@ -78,15 +81,21 @@ async function fetchJupiterQuote({
   amount,
   decimals,
   slippageBps = "50",
+  autoSlippage = false,
 }: FetchQuoteParams) {
   const rawAmount = Math.floor(Number(amount) * Math.pow(10, decimals));
   const params = new URLSearchParams({
     inputMint,
     outputMint,
     amount: rawAmount.toString(),
-    slippageBps,
     swapMode: "ExactIn",
   });
+  if (autoSlippage) {
+    params.set("autoSlippage", "true");
+    params.set("maxAutoSlippageBps", "500");
+  } else {
+    params.set("slippageBps", slippageBps);
+  }
   const res = await fetch(`${JUPITER_QUOTE_API}?${params}`);
   if (!res.ok) {
     const text = await res.text();
@@ -100,7 +109,13 @@ async function fetchJupiterQuote({
 async function fetchJupiterSwapTx(
   quoteResponse: Record<string, unknown>,
   userPublicKey: string,
+  priorityFeeMode: "max" | "exact" = "max",
+  priorityFeeAmountSol: string = "0.0001",
 ) {
+  const prioritizationFeeLamports =
+    priorityFeeMode === "exact"
+      ? Math.round(parseFloat(priorityFeeAmountSol || "0.0001") * 1e9)
+      : "auto";
   const res = await fetch(JUPITER_SWAP_API, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -108,7 +123,7 @@ async function fetchJupiterSwapTx(
       quoteResponse,
       userPublicKey,
       wrapAndUnwrapSol: true,
-      prioritizationFeeLamports: "auto",
+      prioritizationFeeLamports,
     }),
   });
   if (!res.ok) {
@@ -149,6 +164,7 @@ export function useSwap() {
       feeBps,
       prioritizationFeeLamports,
       slippageBps = "50",
+      autoSlippage = false,
     } = params;
     setQuoteLoading(true);
     setQuoteError(null);
@@ -164,6 +180,7 @@ export function useSwap() {
           amount,
           decimals,
           slippageBps,
+          autoSlippage,
         });
       } else {
         let lastErr: Error | null = null;
@@ -177,13 +194,18 @@ export function useSwap() {
               inputMint,
               outputMint,
               amount: rawAmount.toString(),
-              slippageBps,
               prioritizationFeeLamports: prioritizationFeeLamports ?? "auto",
               wrapAndUnwrapSol: "true",
             });
             if (walletPublicKey)
               urlParams.set("userPublicKey", walletPublicKey);
             if (feeBps != null) urlParams.set("feeBps", String(feeBps));
+            if (autoSlippage) {
+              urlParams.set("autoSlippage", "true");
+              urlParams.set("maxAutoSlippageBps", "500");
+            } else {
+              urlParams.set("slippageBps", slippageBps);
+            }
 
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 14000);
@@ -257,6 +279,8 @@ export function useSwap() {
       wallet,
       inputToken,
       outputToken,
+      priorityFeeMode = "max",
+      priorityFeeAmountSol = "0.0001",
     }: ExecuteSwapParams): Promise<SwapResult | null> => {
       if (!wallet?.publicKey) {
         setSwapError("Missing wallet.");
@@ -276,6 +300,8 @@ export function useSwap() {
           const swapData = await fetchJupiterSwapTx(
             quote,
             wallet.publicKey.toBase58(),
+            priorityFeeMode,
+            priorityFeeAmountSol,
           );
           const txBytes = Uint8Array.from(atob(swapData.swapTransaction), (c) =>
             c.charCodeAt(0),
