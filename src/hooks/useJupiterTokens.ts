@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import type { Token } from "../types";
@@ -24,33 +25,16 @@ interface JupiterToken {
   logoURI?: string;
 }
 
-let _jupiterCache: JupiterToken[] | null = null;
-let _jupiterMap: Map<string, JupiterToken> | null = null;
-let _jupiterPromise: Promise<JupiterToken[]> | null = null;
-
-function getJupiterTokens(): Promise<JupiterToken[]> {
-  if (_jupiterCache) return Promise.resolve(_jupiterCache);
-  if (_jupiterPromise) return _jupiterPromise;
-  
-  _jupiterPromise = fetch("https://token.jup.ag/strict")
-    .then((r) => r.json())
-    .then((data: JupiterToken[]) => {
-      _jupiterCache = data;
-      _jupiterMap = new Map(data.map((t) => [t.address, t]));
-      return data;
-    });
-  return _jupiterPromise;
-}
-
 export function getLogoForMint(mint: string): string | null {
-  return _jupiterMap?.get(mint)?.logoURI ?? null;
+  return _jupiterMapRef.get(mint)?.logoURI ?? null;
 }
+
+const _jupiterMapRef = new Map<string, JupiterToken>();
 
 export function useJupiterTokens() {
   const { publicKey, connected } = useWallet();
   const { connection } = useConnection();
 
-  const [allTokens, setAllTokens] = useState<JupiterToken[]>([]);
   const [walletTokens, setWalletTokens] = useState<
     (Token & { balance: number })[]
   >([]);
@@ -59,11 +43,19 @@ export function useJupiterTokens() {
 
   const refetch = useCallback(() => setRefreshKey((k) => k + 1), []);
 
-  useEffect(() => {
-    getJupiterTokens()
-      .then(setAllTokens)
-      .catch(() => {});
-  }, []);
+  const { data: allTokens = [] } = useQuery<JupiterToken[]>({
+    queryKey: ["jupiter-tokens"],
+    queryFn: async () => {
+      const data: JupiterToken[] = await fetch(
+        "https://token.jup.ag/strict",
+      ).then((r) => r.json());
+      _jupiterMapRef.clear();
+      for (const t of data) _jupiterMapRef.set(t.address, t);
+      return data;
+    },
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
+  });
 
   useEffect(() => {
     if (!connected || !publicKey || allTokens.length === 0) {

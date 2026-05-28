@@ -485,9 +485,9 @@ function TransferRow({ item: t, index, isDevnet }: TransferRowProps) {
     addr ? `${addr.slice(0, 4)}…${addr.slice(-4)}` : "—";
 
   const r = t as TradeRecord;
-  const counterparty = isSent
-    ? truncate(r.output_token_symbol)
-    : truncate(r.wallet_address);
+  // For received: sender is in ReceivedTransfer.sender (live) or TradeRecord.output_token_symbol (DB)
+  const sender = (t as ReceivedTransfer).sender ?? r.output_token_symbol;
+  const counterparty = isSent ? truncate(r.output_token_symbol) : truncate(sender);
 
   return (
     <motion.div

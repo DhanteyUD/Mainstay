@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useNetwork } from "../contexts/NetworkContext";
 import type {
@@ -41,12 +41,38 @@ function buildRow(walletAddress: string, payload: TradeSavePayload) {
 
 export function useTrades(walletAddress: string | null) {
   const { isDevnet } = useNetwork();
-  const [trades, setTrades] = useState<TradeRecord[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const qc = useQueryClient();
+  const key = ["trades", walletAddress, isDevnet];
 
-  const saveTrade = useCallback(
-    async (payload: TradeSavePayload & { mevSaved?: number | null }) => {
+  const {
+    data: trades = [],
+    isLoading: loading,
+    error: queryError,
+    refetch,
+  } = useQuery<TradeRecord[]>({
+    queryKey: key,
+    queryFn: async () => {
+      if (!walletAddress || !DB_ENABLED) return [];
+      const table = isDevnet ? "devTrades" : "trades";
+      const { data, error } = await supabase!
+        .from(table)
+        .select("*")
+        .eq("wallet_address", walletAddress)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return (data || []) as TradeRecord[];
+    },
+    enabled: !!walletAddress,
+    staleTime: 1000 * 30,
+  });
+
+  const error = queryError ? (queryError as Error).message : null;
+
+  const saveTradeM = useMutation({
+    mutationFn: async (
+      payload: TradeSavePayload & { mevSaved?: number | null },
+    ) => {
       if (!walletAddress || !DB_ENABLED) return;
       const table = isDevnet ? "devTrades" : "trades";
       const row = {
@@ -57,52 +83,44 @@ export function useTrades(walletAddress: string | null) {
             ? Number(payload.mevSaved)
             : null,
       };
-      const { data, error: err } = await supabase!
-        .from(table)
-        .insert(row)
-        .select()
-        .single();
-      if (err) {
+      const { error: err } = await supabase!.from(table).insert(row);
+      if (err)
         console.warn(`[useTrades] save to ${table} failed:`, err.message);
-        return;
-      }
-      if (data) setTrades((prev) => [data as TradeRecord, ...prev]);
     },
-    [walletAddress, isDevnet],
-  );
+    onSuccess: () => qc.invalidateQueries({ queryKey: key }),
+  });
 
-  const fetchTrades = useCallback(async () => {
-    if (!walletAddress) {
-      setTrades([]);
-      return;
-    }
-    if (!DB_ENABLED) {
-      setTrades([]);
-      setError(null);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    const table = isDevnet ? "devTrades" : "trades";
-    try {
-      const { data, error: err } = await supabase!
-        .from(table)
-        .select("*")
-        .eq("wallet_address", walletAddress)
-        .order("created_at", { ascending: false })
-        .limit(100);
-      if (err) throw err;
-      setTrades((data || []) as TradeRecord[]);
-    } catch (e) {
-      setError((e as Error).message);
-      setTrades([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [walletAddress, isDevnet]);
+  const saveTransferM = useMutation({
+    mutationFn: async (payload: SendResult) => {
+      if (!walletAddress || !DB_ENABLED) return;
+      const table = isDevnet ? "devTrades" : "trades";
+      const decimals = payload.token?.decimals ?? 9;
+      const raw = String(
+        Math.round(Number(payload.amount) * Math.pow(10, decimals)),
+      );
+      const row = {
+        wallet_address: walletAddress,
+        trade_type: "sent",
+        input_token_symbol: payload.token?.symbol || "SOL",
+        output_token_symbol: payload.recipient || null,
+        input_amount_raw: raw,
+        output_amount_raw: "0",
+        input_decimals: decimals,
+        output_decimals: 9,
+        execution_grade: null,
+        slippage_pct: null,
+        mev_saved_usd: null,
+        signature: payload.signature || null,
+        explorer_url: payload.explorerUrl || null,
+      };
+      const { error: err } = await supabase!.from(table).insert(row);
+      if (err) console.warn(`[useTrades] saveTransfer failed:`, err.message);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: key }),
+  });
 
-  const saveReceived = useCallback(
-    async (item: ReceivedTransfer) => {
+  const saveReceivedM = useMutation({
+    mutationFn: async (item: ReceivedTransfer) => {
       if (!walletAddress || !DB_ENABLED || !item.signature) return;
       const table = isDevnet ? "devTrades" : "trades";
       const { data: existing } = await supabase!
@@ -127,70 +145,20 @@ export function useTrades(walletAddress: string | null) {
         signature: item.signature,
         explorer_url: item.explorer_url || null,
       };
-      const { data, error: err } = await supabase!
-        .from(table)
-        .insert(row)
-        .select()
-        .single();
-      if (err) {
-        console.warn("[useTrades] saveReceived failed:", err.message);
-        return;
-      }
-      if (data)
-        setTrades((prev) =>
-          prev.some((t) => t.signature === (data as TradeRecord).signature)
-            ? prev
-            : [data as TradeRecord, ...prev],
-        );
+      const { error: err } = await supabase!.from(table).insert(row);
+      if (err) console.warn("[useTrades] saveReceived failed:", err.message);
     },
-    [walletAddress, isDevnet],
-  );
-
-  const saveTransfer = useCallback(
-    async (payload: SendResult) => {
-      if (!walletAddress || !DB_ENABLED) return;
-      const table = isDevnet ? "devTrades" : "trades";
-      const decimals = payload.token?.decimals ?? 9;
-      const raw = String(
-        Math.round(Number(payload.amount) * Math.pow(10, decimals)),
-      );
-      const row = {
-        wallet_address: walletAddress,
-        trade_type: "sent",
-        input_token_symbol: payload.token?.symbol || "SOL",
-        output_token_symbol: payload.recipient || null,
-        input_amount_raw: raw,
-        output_amount_raw: "0",
-        input_decimals: decimals,
-        output_decimals: 9,
-        execution_grade: null,
-        slippage_pct: null,
-        mev_saved_usd: null,
-        signature: payload.signature || null,
-        explorer_url: payload.explorerUrl || null,
-      };
-      const { data, error: err } = await supabase!
-        .from(table)
-        .insert(row)
-        .select()
-        .single();
-      if (err) {
-        console.warn(`[useTrades] saveTransfer failed:`, err.message);
-        return;
-      }
-      if (data) setTrades((prev) => [data as TradeRecord, ...prev]);
-    },
-    [walletAddress, isDevnet],
-  );
+    onSuccess: () => qc.invalidateQueries({ queryKey: key }),
+  });
 
   return {
     trades,
     loading,
     error,
-    saveTrade,
-    saveTransfer,
-    saveReceived,
-    fetchTrades,
+    saveTrade: saveTradeM.mutateAsync,
+    saveTransfer: saveTransferM.mutateAsync,
+    saveReceived: saveReceivedM.mutateAsync,
+    fetchTrades: refetch,
     dbEnabled: DB_ENABLED,
   };
 }

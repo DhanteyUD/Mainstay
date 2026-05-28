@@ -76,6 +76,13 @@ export function useReceivedTransfers(walletAddress: string | null) {
 
         const tx = result.value;
         const accounts = tx.transaction.message.accountKeys ?? [];
+
+        const feePayerKey = accounts[0]?.pubkey;
+        const feePayerAddr =
+          typeof feePayerKey === "string"
+            ? feePayerKey
+            : (feePayerKey as PublicKey)?.toBase58?.();
+        if (feePayerAddr === walletAddress) continue;
         const explorerUrl = isDevnet
           ? `https://solscan.io/tx/${sigInfo.signature}?cluster=devnet`
           : `https://solscan.io/tx/${sigInfo.signature}`;
@@ -83,31 +90,43 @@ export function useReceivedTransfers(walletAddress: string | null) {
           ? new Date(sigInfo.blockTime * 1000).toISOString()
           : null;
 
-        const allIxs = [
-          ...(tx.transaction.message.instructions ?? []),
-          ...(tx.meta?.innerInstructions?.flatMap((g) => g.instructions) ?? []),
-        ];
-        for (const ix of allIxs) {
-          if (
-            "parsed" in ix &&
-            ix.program === "system" &&
-            ix.parsed?.type === "transfer" &&
-            ix.parsed?.info?.destination === walletAddress
-          ) {
-            const lamports = ix.parsed.info.lamports as number;
-            if (lamports < 1000) continue;
+        const myIdx = accounts.findIndex((acct) => {
+          const pk = acct.pubkey;
+          const addr =
+            typeof pk === "string" ? pk : (pk as PublicKey)?.toBase58?.();
+          return addr === walletAddress;
+        });
+        if (myIdx >= 0) {
+          const preBals = tx.meta?.preBalances ?? [];
+          const postBals = tx.meta?.postBalances ?? [];
+          const netSol = (postBals[myIdx] ?? 0) - (preBals[myIdx] ?? 0);
+          if (netSol >= 5000) {
+            // Heuristic: the sender is whichever account lost the most SOL.
+            let senderAddr: string | null = null;
+            let maxDrop = 0;
+            for (let j = 0; j < accounts.length; j++) {
+              if (j === myIdx) continue;
+              const drop = (preBals[j] ?? 0) - (postBals[j] ?? 0);
+              if (drop > maxDrop) {
+                maxDrop = drop;
+                const k = accounts[j]?.pubkey;
+                senderAddr =
+                  typeof k === "string"
+                    ? k
+                    : ((k as PublicKey)?.toBase58?.() ?? null);
+              }
+            }
             items.push({
               id: `${sigInfo.signature}-sol`,
               trade_type: "received",
               input_token_symbol: "SOL",
-              input_amount_raw: String(lamports),
+              input_amount_raw: String(netSol),
               input_decimals: 9,
-              sender: ix.parsed.info.source as string,
+              sender: senderAddr,
               signature: sigInfo.signature,
               explorer_url: explorerUrl,
               created_at: createdAt,
             });
-            break;
           }
         }
 

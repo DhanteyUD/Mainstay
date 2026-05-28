@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import type { WalletContextState } from "@solana/wallet-adapter-react";
+import { notify } from "../lib/toast";
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import {
   DIALECT_PROXY,
@@ -384,6 +385,10 @@ export function useLimitOrders() {
       };
       persist((prev) => [order, ...prev]);
       dbInsert(getTable(isDevnetRef.current), buildRow(order));
+      notify.info({
+        title: "Limit Order Placed",
+        description: `${params.inputToken.symbol} → ${params.outputToken.symbol} at $${params.targetPrice}`,
+      });
       return order.id;
     },
     [persist],
@@ -516,6 +521,13 @@ export function useLimitOrders() {
               signature: sig,
               explorer_url: explorerUrl,
             });
+            notify.success({
+              title: "Limit Order Executed",
+              description: `${order.inputToken.symbol} → ${order.outputToken.symbol}`,
+              ...(explorerUrl && {
+                link: { href: explorerUrl, label: "View on Solscan" },
+              }),
+            });
           } catch (err) {
             const errorMsg = humanizeError(err);
             persist((prev) =>
@@ -528,6 +540,10 @@ export function useLimitOrders() {
             dbUpdate(getTable(isDevnetRef.current), order.id, {
               status: "failed",
               error: errorMsg,
+            });
+            notify.error({
+              title: "Limit Order Failed",
+              description: `${order.inputToken.symbol} → ${order.outputToken.symbol}: ${errorMsg}`,
             });
           } finally {
             executingSet.current.delete(order.id);
