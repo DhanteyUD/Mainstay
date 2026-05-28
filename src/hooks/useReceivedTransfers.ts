@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { SOLANA_RPC_PROXY, SOLANA_DEVNET_RPC, TOKEN_LIST } from "../config";
@@ -11,6 +11,12 @@ const MINT_TO_SYMBOL = Object.fromEntries(
 const MINT_TO_DECIMALS = Object.fromEntries(
   TOKEN_LIST.map((t) => [t.mint, t.decimals]),
 );
+
+function pubkeyToString(key: string | PublicKey | null | undefined): string | null {
+  if (!key) return null;
+  if (typeof key === "string") return key;
+  return key.toBase58?.() ?? null;
+}
 
 async function fetchConcurrent<T>(
   fns: Array<() => Promise<T>>,
@@ -31,6 +37,15 @@ export function useReceivedTransfers(walletAddress: string | null) {
   const [received, setReceived] = useState<ReceivedTransfer[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const connection = useMemo(
+    () =>
+      new Connection(isDevnet ? SOLANA_DEVNET_RPC : SOLANA_RPC_PROXY, {
+        commitment: "confirmed",
+        wsEndpoint: "",
+      }),
+    [isDevnet],
+  );
+
   const fetchReceived = useCallback(async () => {
     if (!walletAddress) {
       setReceived([]);
@@ -38,11 +53,6 @@ export function useReceivedTransfers(walletAddress: string | null) {
     }
     setLoading(true);
     try {
-      const rpcUrl = isDevnet ? SOLANA_DEVNET_RPC : SOLANA_RPC_PROXY;
-      const connection = new Connection(rpcUrl, {
-        commitment: "confirmed",
-        wsEndpoint: "",
-      });
       const pubkey = new PublicKey(walletAddress);
 
       const sigs = await connection.getSignaturesForAddress(pubkey, {
@@ -60,7 +70,6 @@ export function useReceivedTransfers(walletAddress: string | null) {
               maxSupportedTransactionVersion: 0,
             }),
         ),
-        3,
       );
 
       const items: ReceivedTransfer[] = [];
@@ -77,11 +86,7 @@ export function useReceivedTransfers(walletAddress: string | null) {
         const tx = result.value;
         const accounts = tx.transaction.message.accountKeys ?? [];
 
-        const feePayerKey = accounts[0]?.pubkey;
-        const feePayerAddr =
-          typeof feePayerKey === "string"
-            ? feePayerKey
-            : (feePayerKey as PublicKey)?.toBase58?.();
+        const feePayerAddr = pubkeyToString(accounts[0]?.pubkey);
         if (feePayerAddr === walletAddress) continue;
         const explorerUrl = isDevnet
           ? `https://solscan.io/tx/${sigInfo.signature}?cluster=devnet`
@@ -90,12 +95,9 @@ export function useReceivedTransfers(walletAddress: string | null) {
           ? new Date(sigInfo.blockTime * 1000).toISOString()
           : null;
 
-        const myIdx = accounts.findIndex((acct) => {
-          const pk = acct.pubkey;
-          const addr =
-            typeof pk === "string" ? pk : (pk as PublicKey)?.toBase58?.();
-          return addr === walletAddress;
-        });
+        const myIdx = accounts.findIndex(
+          (acct) => pubkeyToString(acct.pubkey) === walletAddress,
+        );
         if (myIdx >= 0) {
           const preBals = tx.meta?.preBalances ?? [];
           const postBals = tx.meta?.postBalances ?? [];
@@ -109,11 +111,7 @@ export function useReceivedTransfers(walletAddress: string | null) {
               const drop = (preBals[j] ?? 0) - (postBals[j] ?? 0);
               if (drop > maxDrop) {
                 maxDrop = drop;
-                const k = accounts[j]?.pubkey;
-                senderAddr =
-                  typeof k === "string"
-                    ? k
-                    : ((k as PublicKey)?.toBase58?.() ?? null);
+                senderAddr = pubkeyToString(accounts[j]?.pubkey);
               }
             }
             items.push({
@@ -141,12 +139,9 @@ export function useReceivedTransfers(walletAddress: string | null) {
                 new PublicKey(post.mint),
                 pubkey,
               );
-              const acctKey = accounts[post.accountIndex]?.pubkey;
-              const acctAddr =
-                typeof acctKey === "string"
-                  ? acctKey
-                  : (acctKey as PublicKey)?.toBase58?.();
-              isWalletOwned = acctAddr === ata.toBase58();
+              isWalletOwned =
+                pubkeyToString(accounts[post.accountIndex]?.pubkey) ===
+                ata.toBase58();
             } catch {
               /* non-ATA token account — skip */
             }
@@ -172,13 +167,9 @@ export function useReceivedTransfers(walletAddress: string | null) {
               ? Number(postMatch.uiTokenAmount.amount)
               : 0;
             if (prevAmt - nextAmt > 0) {
-              const acctKey = accounts[preTokEntry.accountIndex]?.pubkey;
               sender =
                 preTokEntry.owner ??
-                (typeof acctKey === "string"
-                  ? acctKey
-                  : (acctKey as PublicKey)?.toBase58?.()) ??
-                null;
+                pubkeyToString(accounts[preTokEntry.accountIndex]?.pubkey);
               break;
             }
           }
@@ -203,12 +194,15 @@ export function useReceivedTransfers(walletAddress: string | null) {
 
       setReceived(items);
     } catch (e) {
-      console.warn("[useReceivedTransfers]", (e as Error).message);
+      console.warn(
+        "[useReceivedTransfers]",
+        e instanceof Error ? e.message : String(e),
+      );
       setReceived([]);
     } finally {
       setLoading(false);
     }
-  }, [walletAddress, isDevnet]);
+  }, [walletAddress, isDevnet, connection]);
 
   return { received, loading, fetchReceived };
 }

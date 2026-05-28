@@ -70,9 +70,7 @@ export function useTrades(walletAddress: string | null) {
   const error = queryError ? (queryError as Error).message : null;
 
   const saveTradeM = useMutation({
-    mutationFn: async (
-      payload: TradeSavePayload & { mevSaved?: number | null },
-    ) => {
+    mutationFn: async (payload: TradeSavePayload) => {
       if (!walletAddress || !DB_ENABLED) return;
       const table = isDevnet ? "devTrades" : "trades";
       const row = {
@@ -95,9 +93,7 @@ export function useTrades(walletAddress: string | null) {
       if (!walletAddress || !DB_ENABLED) return;
       const table = isDevnet ? "devTrades" : "trades";
       const decimals = payload.token?.decimals ?? 9;
-      const raw = String(
-        Math.round(Number(payload.amount) * Math.pow(10, decimals)),
-      );
+      const raw = String(Math.round(Number(payload.amount) * 10 ** decimals));
       const row = {
         wallet_address: walletAddress,
         trade_type: "sent",

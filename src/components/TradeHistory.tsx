@@ -34,7 +34,7 @@ function fmtUSD(n: number | null | undefined): string {
 
 function fmtAmount(raw: string | undefined, decimals: number): string {
   if (!raw) return "—";
-  const v = Number(raw) / Math.pow(10, decimals);
+  const v = Number(raw) / 10 ** decimals;
   if (v < 0.000001) return v.toExponential(4);
   if (v < 1) return v.toFixed(4);
   if (v >= 1_000_000) return (v / 1_000_000).toFixed(2) + "M";
@@ -106,11 +106,7 @@ function gradeScore(label: string): number {
 }
 
 function isSpot(t: AnyItem): boolean {
-  return (
-    !("trade_type" in t) ||
-    t.trade_type === "spot" ||
-    (t.trade_type as string) === undefined
-  );
+  return t.trade_type === "spot";
 }
 function isPredict(t: AnyItem): boolean {
   return (t.trade_type as string) === "prediction";
@@ -156,7 +152,6 @@ function computeStats(items: AnyItem[]): ComputedStats {
 
   const pairCounts: Record<string, number> = {};
   trades.forEach((t) => {
-    if (isTransfer(t)) return;
     const key = `${t.input_token_symbol}/${t.output_token_symbol}`;
     pairCounts[key] = (pairCounts[key] || 0) + 1;
   });
@@ -497,7 +492,7 @@ function TransferRow({ item: t, index, isDevnet }: TransferRowProps) {
       initial={{ opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 12, transition: { duration: 0.15 } }}
-      transition={{ delay: index * 0.05 }}
+      transition={{ delay: Math.min(index * 0.05, 0.3) }}
       layout
     >
       <div
@@ -603,7 +598,7 @@ function TradeRow({ trade: t, index, isDevnet }: TradeRowProps) {
       initial={{ opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 12, transition: { duration: 0.15 } }}
-      transition={{ delay: index * 0.05 }}
+      transition={{ delay: Math.min(index * 0.05, 0.3) }}
       layout
     >
       <div className="shrink-0">
