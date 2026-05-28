@@ -396,7 +396,7 @@ export default function SwapInterface({
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => setShowSettings((s) => !s)}
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border font-mono text-xs transition-colors duration-150 ${
+                  className={`flex items-center gap-1.5 p-2 rounded-lg border font-mono text-xs transition-colors duration-150 ${
                     showSettings
                       ? "border-terminal-accent/60 bg-terminal-accent/10 text-terminal-accent"
                       : "border-terminal-border bg-transparent text-terminal-dim hover:border-terminal-accent/40 hover:text-terminal-accent/80"
@@ -881,15 +881,31 @@ export default function SwapInterface({
 
 function InfoTooltip({ text }: { text: string }) {
   const [visible, setVisible] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const [pos, setPos] = useState<{
+    top: number;
+    left: number;
+    transform: string;
+  }>({ top: 0, left: 0, transform: "translate(-50%, -100%)" });
   const ref = useRef<HTMLSpanElement>(null);
 
   const show = () => {
     if (ref.current) {
       const r = ref.current.getBoundingClientRect();
+      const TOOLTIP_W = 320; // w-80
+      const GAP = 8;
+
+      const rawCenterX = r.left + r.width / 2;
+      const clampedCenterX = Math.max(
+        TOOLTIP_W / 2 + GAP,
+        Math.min(window.innerWidth - TOOLTIP_W / 2 - GAP, rawCenterX),
+      );
+
+      const above = r.top >= 60;
+
       setPos({
-        top: r.top + window.scrollY,
-        left: r.left + r.width / 2 + window.scrollX,
+        top: (above ? r.top - GAP : r.bottom + GAP) + window.scrollY,
+        left: clampedCenterX + window.scrollX,
+        transform: above ? "translate(-50%, -100%)" : "translate(-50%, 0)",
       });
     }
     setVisible(true);
@@ -907,9 +923,9 @@ function InfoTooltip({ text }: { text: string }) {
         <div
           style={{
             position: "absolute",
-            top: pos.top - 8,
+            top: pos.top,
             left: pos.left,
-            transform: "translate(-50%, -100%)",
+            transform: pos.transform,
             zIndex: 9999,
             opacity: visible ? 1 : 0,
             pointerEvents: "none",
