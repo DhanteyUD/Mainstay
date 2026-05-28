@@ -10,7 +10,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { LimitOrder, MevRisk } from "../types";
+import type { LimitOrder } from "../types";
 
 type OrderStatus = LimitOrder["status"];
 
