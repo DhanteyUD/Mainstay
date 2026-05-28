@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import type { WalletContextState } from "@solana/wallet-adapter-react";
+import { notify } from "../lib/toast";
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import {
   DIALECT_PROXY,
@@ -18,6 +19,10 @@ import type { LimitOrder } from "../types";
 const STORAGE_KEY = "mainstay_limit_orders_v1";
 const POLL_MS = 30_000;
 const DB_ENABLED = supabase !== null;
+
+function base64ToUint8Array(b64: string): Uint8Array {
+  return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+}
 
 function getTable(devnet: boolean) {
   return devnet ? "devLimitOrders" : "limitOrders";
@@ -89,7 +94,7 @@ function rowToOrder(row: OrderRow): LimitOrder {
       logo: logoForMint(row.output_token_mint),
     },
     inputAmount: row.input_amount,
-    targetPrice: Number(row.target_price),
+    targetPrice: Number(row.target_price) || 0,
     createdAt: row.created_at,
     executedAt: row.executed_at ?? null,
     signature: row.signature ?? null,
@@ -174,7 +179,7 @@ async function fetchJupiterQuoteForOrder({
   amount: string | number;
   decimals: number;
 }) {
-  const rawAmount = Math.floor(Number(amount) * Math.pow(10, decimals));
+  const rawAmount = Math.floor(Number(amount) * 10 ** decimals);
   const params = new URLSearchParams({
     inputMint,
     outputMint,
@@ -251,8 +256,8 @@ function dbUpdate(table: string, id: string, patch: Record<string, unknown>) {
     });
 }
 
-function genId() {
-  return `lo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+function genId(): string {
+  return `lo_${crypto.randomUUID()}`;
 }
 
 function humanizeError(err: unknown): string {
@@ -270,10 +275,6 @@ function humanizeError(err: unknown): string {
   if (/swap tx failed/i.test(raw)) return "Swap transaction could not be built";
   if (/insufficient.*balance/i.test(raw)) return "Insufficient balance";
   if (/blockhash/i.test(raw)) return "Transaction expired — try again";
-
-  if (/^\s*(import|export|const|let|var|function)\s/.test(raw)) {
-    return "Order execution failed";
-  }
 
   return raw.slice(0, 120);
 }
@@ -336,23 +337,25 @@ export function useLimitOrders() {
           return;
         }
         if (data && data.length > 0) {
-          const mapped = (data as OrderRow[]).map(rowToOrder);
-          setOrders(mapped);
-          storeOrders(walletAddress, mapped);
+          setOrders((data as OrderRow[]).map(rowToOrder));
         } else {
-          const local = loadStored(walletAddress);
-          setOrders(local);
+          setOrders(loadStored(walletAddress));
         }
       });
   }, [walletAddress, isDevnet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const persist = useCallback((updater: OrdersUpdater | LimitOrder[]) => {
-    setOrders((prev) => {
-      const next = typeof updater === "function" ? updater(prev) : updater;
-      if (addrRef.current) storeOrders(addrRef.current, next);
-      return next;
-    });
+    setOrders((prev) =>
+      typeof updater === "function" ? updater(prev) : updater,
+    );
   }, []);
+
+  // Sync to localStorage whenever orders change (pure alternative to side
+  // effects inside the setOrders updater, which can fire twice in Strict Mode)
+  useEffect(() => {
+    if (!addrRef.current) return;
+    storeOrders(addrRef.current, orders);
+  }, [orders]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const addOrder = useCallback(
     (
@@ -384,6 +387,10 @@ export function useLimitOrders() {
       };
       persist((prev) => [order, ...prev]);
       dbInsert(getTable(isDevnetRef.current), buildRow(order));
+      notify.info({
+        title: "Limit Order Placed",
+        description: `${params.inputToken.symbol} → ${params.outputToken.symbol} at $${params.targetPrice}`,
+      });
       return order.id;
     },
     [persist],
@@ -461,10 +468,7 @@ export function useLimitOrders() {
                 commitment: "confirmed",
                 wsEndpoint: "",
               });
-              const txBytes = Uint8Array.from(
-                atob(swapData.swapTransaction),
-                (c) => c.charCodeAt(0),
-              );
+              const txBytes = base64ToUint8Array(swapData.swapTransaction);
               const tx = VersionedTransaction.deserialize(txBytes);
               const signed = await wlt.signTransaction!(tx);
               sig = await conn.sendRawTransaction(signed.serialize(), {
@@ -484,9 +488,7 @@ export function useLimitOrders() {
                 commitment: "confirmed",
                 wsEndpoint: "",
               });
-              const txBytes = Uint8Array.from(atob(quote.transaction), (c) =>
-                c.charCodeAt(0),
-              );
+              const txBytes = base64ToUint8Array(quote.transaction);
               const tx = VersionedTransaction.deserialize(txBytes);
               const signed = await wlt.signTransaction!(tx);
               sig = await conn.sendRawTransaction(signed.serialize(), {
@@ -516,6 +518,13 @@ export function useLimitOrders() {
               signature: sig,
               explorer_url: explorerUrl,
             });
+            notify.success({
+              title: "Limit Order Executed",
+              description: `${order.inputToken.symbol} → ${order.outputToken.symbol}`,
+              ...(explorerUrl && {
+                link: { href: explorerUrl, label: "View on Solscan" },
+              }),
+            });
           } catch (err) {
             const errorMsg = humanizeError(err);
             persist((prev) =>
@@ -528,6 +537,10 @@ export function useLimitOrders() {
             dbUpdate(getTable(isDevnetRef.current), order.id, {
               status: "failed",
               error: errorMsg,
+            });
+            notify.error({
+              title: "Limit Order Failed",
+              description: `${order.inputToken.symbol} → ${order.outputToken.symbol}: ${errorMsg}`,
             });
           } finally {
             executingSet.current.delete(order.id);

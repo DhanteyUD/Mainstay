@@ -1,38 +1,25 @@
-import { useState, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 
 export function useWalletBalance() {
   const { publicKey, connected } = useWallet();
   const { connection } = useConnection();
-  const [balance, setBalance] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
+  const qc = useQueryClient();
 
-  const fetchBalance = useCallback(async () => {
-    if (!publicKey || !connected) {
-      setBalance(null);
-      return;
-    }
-    setLoading(true);
-    try {
-      const lamports = await connection.getBalance(publicKey, "confirmed");
-      setBalance(lamports / 1e9);
-    } catch (err) {
-      console.warn("[useWalletBalance] failed:", err);
-      setBalance(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [publicKey, connected, connection]);
+  const key = ["wallet-balance", publicKey?.toBase58()];
 
-  useEffect(() => {
-    fetchBalance();
-  }, [fetchBalance]);
+  const { data: balance = null, isLoading: loading } = useQuery({
+    queryKey: key,
+    queryFn: async () => {
+      const lamports = await connection.getBalance(publicKey!, "confirmed");
+      return lamports / 1e9;
+    },
+    enabled: !!publicKey && connected,
+    refetchInterval: 30_000,
+    staleTime: 10_000,
+  });
 
-  useEffect(() => {
-    if (!connected) return;
-    const id = setInterval(fetchBalance, 30_000);
-    return () => clearInterval(id);
-  }, [connected, fetchBalance]);
+  const refresh = () => qc.invalidateQueries({ queryKey: key });
 
-  return { balance, loading, refresh: fetchBalance };
+  return { balance, loading, refresh };
 }

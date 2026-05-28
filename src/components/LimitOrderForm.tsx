@@ -109,7 +109,8 @@ export default function LimitOrderForm({ onAddOrder }: LimitOrderFormProps) {
     parseFloat(inputAmount) > 0 &&
     !isNaN(parseFloat(inputAmount)) &&
     target > 0 &&
-    !isNaN(target);
+    !isNaN(target) &&
+    direction !== null;
 
   const handleInputTokenChange = (t: Token) => {
     if (t.mint === outputToken?.mint) setOutputToken(inputToken);
@@ -150,7 +151,9 @@ export default function LimitOrderForm({ onAddOrder }: LimitOrderFormProps) {
       ? "Enter Amount"
       : !targetPrice
         ? "Set Target Price"
-        : "Place Limit Order";
+        : direction === null
+          ? "Fetching Price…"
+          : "Place Limit Order";
 
   return (
     <motion.div
