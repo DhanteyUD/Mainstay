@@ -41,15 +41,15 @@ export default function SwapConfirmation({
   onClose,
   onNewSwap,
 }: SwapConfirmationProps) {
-  if (!result) return null;
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
+    if (!result) return;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
     };
-  }, []);
+  }, [result]);
+
+  if (!result) return null;
 
   const actualOutput = formatAmount(
     result.outputAmount,

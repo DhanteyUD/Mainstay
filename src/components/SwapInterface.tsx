@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { PublicKey } from "@solana/web3.js";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { FaSquareXmark } from "react-icons/fa6";
 import {
   ArrowUpDown,
@@ -26,14 +26,9 @@ import MevRiskBadge from "./MevRiskBadge";
 import { useSwap } from "../hooks/useSwap";
 import { useMevRisk } from "../hooks/useMevRisk";
 import { useWalletBalance } from "../hooks/useWalletBalance";
-import { TOKENS } from "../config";
+import { TOKENS, SOL_MINT } from "../config";
 import { useNetwork } from "../contexts/NetworkContext";
 import type { Token } from "../types";
-
-const TOKEN_PROGRAM_ID = new PublicKey(
-  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-);
-const SOL_MINT = "So11111111111111111111111111111111111111112";
 
 const fadeSlide = {
   initial: { opacity: 0, y: -6 },
@@ -134,7 +129,7 @@ export default function SwapInterface({
 
   useEffect(() => {
     onTokensChange?.({ inputToken, outputToken });
-  }, [inputToken, outputToken]);
+  }, [inputToken, outputToken, onTokensChange]);
 
   useEffect(() => {
     localStorage.setItem("auto_slippage", String(autoSlippage));
@@ -174,7 +169,7 @@ export default function SwapInterface({
       clearQuote();
       lastFetchParamsRef.current = null;
     }
-  }, [inputToken, outputToken, inputAmount, publicKey, isDevnet, slippageBps]);
+  }, [inputToken, outputToken, inputAmount, publicKey, isDevnet, slippageBps, autoSlippage, fetchQuote, clearQuote]);
 
   useEffect(() => {
     if (!connected) {
@@ -242,7 +237,6 @@ export default function SwapInterface({
         }
       }, 3000);
     }
-    return () => {};
   }, [swapStatus, swapResult]);
 
   useEffect(() => {
@@ -508,7 +502,13 @@ export default function SwapInterface({
                       <span className="font-mono text-xs text-terminal-dim tracking-wider">
                         Priority Fee
                       </span>
-                      <InfoTooltip text="An additional fee paid to speed up confirmation during network congestion. Max: Automatically selects an optimal fee, up to the maximum you set. Exact: Uses the fee you specify for every swap." />
+                      <InfoTooltip text={
+                        <span>
+                          An additional fee paid to speed up confirmation during network congestion.
+                          <span className="block mt-1 pl-2"><span className="font-bold text-terminal-dim">Max:</span> Automatically selects an optimal fee, up to the maximum you set.</span>
+                          <span className="block pl-2"><span className="font-bold text-terminal-dim">Exact:</span> Uses the fee you specify for every swap.</span>
+                        </span>
+                      } />
                     </div>
                     <div className="flex items-center gap-2">
                       {(["max", "exact"] as const).map((mode) => (
@@ -879,7 +879,7 @@ export default function SwapInterface({
   );
 }
 
-function InfoTooltip({ text }: { text: string }) {
+function InfoTooltip({ text }: { text: React.ReactNode }) {
   const [visible, setVisible] = useState(false);
   const [pos, setPos] = useState<{
     top: number;
