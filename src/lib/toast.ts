@@ -1,7 +1,7 @@
 import { toast, type ToastOptions } from "react-toastify";
 
 const base: ToastOptions = {
-  position: "bottom-right",
+  position: "bottom-left",
   autoClose: 4000,
   hideProgressBar: false,
   closeOnClick: true,
