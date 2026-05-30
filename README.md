@@ -213,10 +213,13 @@ Every trade passes through exactly **3 steps** — and MEV is blocked at all 3.
 | **Wallet** | Solflare / Phantom | Transaction signing |
 | **Deployment** | [Vercel](https://vercel.com) | Production hosting |
 | **Network** | Solana Mainnet | All transactions are real on-chain |
-| **Language** | TypeScript | End-to-end type safety across all components, hooks, and utilities |
-| **Framework** | React 18 + Vite 5 | Builds the UI and handles fast development with hot reload and optimized bundling |
+| **Language** | TypeScript 6 | End-to-end type safety across all components, hooks, and utilities |
+| **Framework** | React 19 + Vite 5 | Builds the UI and handles fast development with hot reload and optimized bundling |
 | **Styling** | Tailwind CSS 3 | Provides utility-first CSS for rapid, consistent UI design |
-| **Animation** | Framer Motion | Handles smooth UI animations and transitions |
+| **Animation** | Framer Motion + GSAP | Framer Motion handles component transitions; GSAP drives complex sequences on the landing page and onboarding |
+| **Data Fetching** | `@tanstack/react-query` v5 | Server-state management, automatic caching, and query invalidation for trade history |
+| **HTTP Client** | `axios` | API requests to DFlow and Jupiter endpoints with timeout and error handling |
+| **Notifications** | `react-toastify` | Non-blocking toast notifications for trade confirmations, limit order events, and errors |
 | **Solana SDK** | `@solana/web3.js`, `@solana/wallet-adapter-react` | Enables blockchain interaction and wallet connectivity for Solana |
 | **Wallet UI** | `@solana/wallet-adapter-react-ui` | Provides prebuilt UI components for wallet connection flows |
 | **Auth** | Supabase Auth (Google, GitHub, email) | Manages user authentication and identity |
@@ -495,9 +498,11 @@ The core interface (`SwapInterface.tsx`) supports:
 The limit order system (`useLimitOrders.ts`) polls prices every 30 seconds and executes automatically when the target is hit:
 
 - Place orders with a target USD price and direction (above/below)
+- Current price must be confirmed before submission — prevents placing orders with an indeterminate trigger direction; button shows **"Fetching Price…"** while the live price is loading
 - Visual progress bar tracking distance to target
 - Status lifecycle: `pending → executing → executed / failed / cancelled`
-- Persisted to Supabase
+- Order IDs use `crypto.randomUUID()` — collision-resistant and cryptographically random
+- Persisted to Supabase with localStorage fallback; synced via `useEffect` to be React 19 Strict Mode compliant
 - Separate order history tabs: All, Pending, Executed, Cancelled
 - On devnet, executes via Jupiter; on mainnet, via DFlow
 
@@ -526,7 +531,10 @@ Full dashboard with:
 - Summary stats: total trades, total MEV saved, average execution grade, top trading pair
 - Filter tabs: All, Spot, Prediction, Transfers
 - Unified view of swaps, limit executions, sent tokens, and received tokens
+- Received transfers detected on-chain via concurrent RPC parsing — up to 3 transactions parsed in parallel per poll to minimize latency
+- Trade history fetched and cached with `@tanstack/react-query` — 30-second stale time, automatic re-fetch on window focus, instant invalidation after new trades
 - Chronological sorting, Solscan explorer links
+- Animation stagger capped at 300 ms so large histories (100+ trades) don't suffer delayed rendering
 
 ### ⚠️ MEV Risk Badge
 
