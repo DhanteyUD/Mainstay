@@ -5,13 +5,17 @@ import solanaLogo from "../../../assets/solana-logo.png";
 import heliusLogo from "../../../assets/helius-logo.png";
 import supabaseLogo from "../../../assets/supabase-logo.png";
 import jupiterLogo from "../../../assets/jupiter-logo.png";
+import resendLogo from "../../../assets/resend.png";
+import vercelLogo from "../../../assets/vercel.png";
 
 const partners = [
   { name: "DFlow Protocol", logo: dflowLogo, height: "h-20 md:h-32" },
   { name: "Solana", logo: solanaLogo, height: "h-16 md:h-28" },
-  { name: "Helius", logo: heliusLogo, height: "h-14 md:h-20" },
   { name: "Supabase", logo: supabaseLogo, height: "h-16 md:h-28" },
+  { name: "Helius", logo: heliusLogo, height: "h-14 md:h-20" },
   { name: "Jupiter", logo: jupiterLogo, height: "h-16 md:h-28" },
+  { name: "Resend", logo: resendLogo, height: "h-16 md:h-20" },
+  { name: "Vercel", logo: vercelLogo, height: "h-16 md:h-20" },
 ];
 
 const SPEED = 60; // px per second
@@ -31,7 +35,10 @@ function MarqueeTrack() {
   return (
     <motion.div ref={trackRef} className="flex w-max" style={{ x }}>
       {[...partners, ...partners].map((p, i) => (
-        <div key={i} className="flex items-center justify-center px-10 shrink-0">
+        <div
+          key={i}
+          className="flex items-center justify-center px-10 shrink-0"
+        >
           <img
             src={p.logo}
             alt={p.name}

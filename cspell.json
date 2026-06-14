@@ -11,6 +11,7 @@
     "OHLCV",
     "solana",
     "solscan",
-    "supabase"
+    "supabase",
+    "Vercel"
   ]
 }
