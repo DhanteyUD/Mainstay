@@ -20,7 +20,6 @@ async function initSentry() {
         enabled: environment !== "development",
         dsn: sentryDsn,
         tunnel: useTunnel ? '/api/sentry-tunnel' : undefined,
-        sendDefaultPii: true,
         integrations: [
             Sentry.browserTracingIntegration(),
             Sentry.replayIntegration(),
