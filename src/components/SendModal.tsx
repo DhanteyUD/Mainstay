@@ -486,10 +486,10 @@ export default function SendModal({
                   <AnimatePresence>
                     {showAddressDropdown && (
                       <motion.div
-                        className="absolute z-10 top-full left-0 right-0 mt-1 bg-terminal-card border border-terminal-border rounded-xl shadow-2xl overflow-hidden"
-                        initial={{ opacity: 0, y: -6 }}
+                        className="absolute z-10 bottom-full left-0 right-0 mb-1 bg-terminal-card border border-terminal-border rounded-xl shadow-2xl overflow-hidden"
+                        initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
+                        exit={{ opacity: 0, y: 6 }}
                         transition={{ duration: 0.13 }}
                       >
                         <div className="px-3 py-1.5 border-b border-terminal-border/50">
@@ -497,46 +497,48 @@ export default function SendModal({
                             SAVED
                           </span>
                         </div>
-                        {filteredSavedAddresses.map(({ address, label }) => (
-                          <div
-                            key={address}
-                            className="flex items-center gap-2 px-3 py-2.5 hover:bg-terminal-surface cursor-pointer group"
-                            onMouseDown={() => {
-                              setRecipient(address);
-                              setRecipientLabel(label || "");
-                            }}
-                          >
-                            <Clock
-                              size={10}
-                              className="text-terminal-dim/40 shrink-0"
-                            />
-                            <div className="flex-1 min-w-0">
-                              {label ? (
-                                <>
-                                  <div className="font-mono text-xs font-bold text-terminal-text truncate">
-                                    {label}
-                                  </div>
-                                  <div className="font-mono text-xs text-terminal-dim/50">
+                        <div className="max-h-52 overflow-y-auto">
+                          {filteredSavedAddresses.map(({ address, label }) => (
+                            <div
+                              key={address}
+                              className="flex items-center gap-2 px-3 py-2.5 hover:bg-terminal-surface cursor-pointer group"
+                              onMouseDown={() => {
+                                setRecipient(address);
+                                setRecipientLabel(label || "");
+                              }}
+                            >
+                              <Clock
+                                size={10}
+                                className="text-terminal-dim/40 shrink-0"
+                              />
+                              <div className="flex-1 min-w-0">
+                                {label ? (
+                                  <>
+                                    <div className="font-mono text-xs font-bold text-terminal-text truncate">
+                                      {label}
+                                    </div>
+                                    <div className="font-mono text-xs text-terminal-dim/50">
+                                      {address.slice(0, 6)}…{address.slice(-6)}
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="font-mono text-xs text-terminal-text truncate">
                                     {address.slice(0, 6)}…{address.slice(-6)}
                                   </div>
-                                </>
-                              ) : (
-                                <div className="font-mono text-xs text-terminal-text truncate">
-                                  {address.slice(0, 6)}…{address.slice(-6)}
-                                </div>
-                              )}
+                                )}
+                              </div>
+                              <button
+                                onMouseDown={(e) => {
+                                  e.stopPropagation();
+                                  removeAddress(address);
+                                }}
+                                className="opacity-0 group-hover:opacity-100 text-terminal-dim/50 hover:text-terminal-red transition-all shrink-0"
+                              >
+                                <X size={10} />
+                              </button>
                             </div>
-                            <button
-                              onMouseDown={(e) => {
-                                e.stopPropagation();
-                                removeAddress(address);
-                              }}
-                              className="opacity-0 group-hover:opacity-100 text-terminal-dim/50 hover:text-terminal-red transition-all shrink-0"
-                            >
-                              <X size={10} />
-                            </button>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
