@@ -3,6 +3,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import {
   callFunction,
   clearSession,
+  getAuthError,
   functionsEnabled,
   getSessionToken,
   hasValidSession,
@@ -40,7 +41,7 @@ export function useTelegramLink() {
       if (!prompt && !hasValidSession(s.address)) return null;
       const token = await getSessionToken(s);
       if (!token) {
-        setError("Wallet signature is required to connect Telegram.");
+        setError(getAuthError() ?? "Wallet signature is required to connect Telegram.");
         return null;
       }
       const res = await callFunction<{

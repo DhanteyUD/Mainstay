@@ -16,6 +16,9 @@ export interface MessageSigner {
   signMessage: ((message: Uint8Array) => Promise<Uint8Array>) | undefined;
 }
 
+let lastError: string | null = null;
+export const getAuthError = () => lastError;
+
 const memory = new Map<string, Session>();
 const inflight = new Map<string, Promise<string | null>>();
 
@@ -81,7 +84,11 @@ export function getSessionToken(signer: MessageSigner): Promise<string | null> {
   if (pending) return pending;
 
   const run = (async () => {
-    if (!signer.signMessage) return null;
+    lastError = null;
+    if (!signer.signMessage) {
+      lastError = "Your wallet doesn't support message signing. Try Solflare or Phantom.";
+      return null;
+    }
     try {
       const ch = await callFunction<{
         message: string;
@@ -89,7 +96,10 @@ export function getSessionToken(signer: MessageSigner): Promise<string | null> {
         ts: number;
         mac: string;
       }>("wallet-auth", { action: "challenge", wallet: signer.address });
-      if (!ch.ok) return null;
+      if (!ch.ok) {
+        lastError = `Sign-in service error (${ch.status}). Try again shortly.`;
+        return null;
+      }
 
       const sig = await signer.signMessage(
         new TextEncoder().encode(ch.data.message),
@@ -104,14 +114,23 @@ export function getSessionToken(signer: MessageSigner): Promise<string | null> {
         mac: ch.data.mac,
         signature,
       });
-      if (!verified.ok) return null;
+      if (!verified.ok) {
+        lastError = "Signature could not be verified. Try again.";
+        return null;
+      }
 
       store(signer.address, {
         token: verified.data.token,
         expiresAt: verified.data.expiresAt,
       });
       return verified.data.token;
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      lastError = /reject|denied|decline|cancel/i.test(msg)
+        ? "Signature request was declined in your wallet."
+        : /failed to fetch|network|load failed/i.test(msg)
+          ? "Could not reach the sign-in service (network or CORS). If this isn't mainstay.pro, add this site to ALLOWED_ORIGIN."
+          : `Wallet sign-in failed: ${msg.slice(0, 120)}`;
       return null;
     } finally {
       inflight.delete(signer.address);
