@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import type { WalletContextState } from "@solana/wallet-adapter-react";
 import {
-  DFLOW_PROXY,
+  DFLOW_QUOTE_API,
   SOLANA_RPC_PROXY,
   SOLANA_DEVNET_RPC,
   JUPITER_QUOTE_API,
@@ -288,7 +288,7 @@ export function useSwap() {
             let res: Response;
             try {
               res = await fetch(
-                `${DFLOW_PROXY}/e.quote-api.dflow.net/order?${urlParams}`,
+                `${DFLOW_QUOTE_API}/order?${urlParams}`,
                 {
                   method: "GET",
                   mode: "cors",

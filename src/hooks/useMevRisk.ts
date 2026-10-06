@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Connection } from "@solana/web3.js";
-import { DIALECT_PROXY, SOLANA_RPC_PROXY } from "../config";
+import { JUPITER_PRICE_API, SOLANA_RPC_PROXY } from "../config";
 import type { MevRisk, Token } from "../types";
 
 interface UseMevRiskParams {
@@ -38,7 +38,7 @@ export function useMevRisk({
         > = {};
         try {
           const priceRes = await fetch(
-            `${DIALECT_PROXY}/api.jup.ag/price/v3?ids=${mints}`,
+            `${JUPITER_PRICE_API}?ids=${mints}`,
           );
           if (priceRes.ok) priceData = await priceRes.json();
         } catch {
