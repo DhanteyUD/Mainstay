@@ -23,6 +23,7 @@ import PriceChart from "./components/PriceChart";
 import SwapInterface from "./components/SwapInterface";
 import LimitOrderForm from "./components/LimitOrderForm";
 import LimitOrderList from "./components/LimitOrderList";
+import TelegramConnect from "./components/TelegramConnect";
 import TradeHistory from "./components/TradeHistory";
 import OnboardingScreen, { useOnboarding } from "./components/OnboardingScreen";
 import MobileWalletBanner from "./components/MobileWalletBanner";
@@ -375,6 +376,7 @@ function MainApp() {
                           </span>
                         )}
                       </div>
+                      <TelegramConnect />
                       <LimitOrderList
                         orders={orders}
                         currentPrices={currentPrices}

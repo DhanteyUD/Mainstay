@@ -6,6 +6,7 @@ build/
 .env.development
 .env.test
 .env.production
+supabase/.env.secrets
 .DS_Store
 *.log
 .idea/

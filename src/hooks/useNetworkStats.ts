@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Connection } from "@solana/web3.js";
-import { DIALECT_PROXY, SOLANA_RPC_PROXY, TOKENS } from "../config";
+import { JUPITER_PRICE_API, SOLANA_RPC_PROXY, TOKENS } from "../config";
 import type { RiskLevel } from "../types";
 
 const SOL_MINT = TOKENS.SOL.mint;
@@ -9,7 +9,7 @@ const SOL_MINT = TOKENS.SOL.mint;
 async function fetchSolPrice(): Promise<number | null> {
   try {
     const res = await fetch(
-      `${DIALECT_PROXY}/api.jup.ag/price/v3?ids=${SOL_MINT}`,
+      `${JUPITER_PRICE_API}?ids=${SOL_MINT}`,
     );
     if (res.ok) {
       const data = await res.json();

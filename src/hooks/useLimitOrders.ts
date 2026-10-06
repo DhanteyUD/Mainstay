@@ -4,8 +4,8 @@ import type { WalletContextState } from "@solana/wallet-adapter-react";
 import { notify } from "../lib/toast";
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import {
-  DIALECT_PROXY,
-  DFLOW_PROXY,
+  JUPITER_PRICE_API,
+  DFLOW_QUOTE_API,
   SOLANA_RPC_PROXY,
   SOLANA_DEVNET_RPC,
   JUPITER_QUOTE_API,
@@ -15,6 +15,13 @@ import {
 import { useNetwork } from "../contexts/NetworkContext";
 import { supabase } from "../lib/supabase";
 import type { LimitOrder } from "../types";
+import { insertOrder, updateOrder } from "../lib/ordersApi";
+import { functionsEnabled } from "../lib/walletAuth";
+import type { MessageSigner } from "../lib/walletAuth";
+import {
+  requestPushPermission,
+  showSystemNotification,
+} from "../lib/pushNotifications";
 
 const STORAGE_KEY = "mainstay_limit_orders_v1";
 const POLL_MS = 30_000;
@@ -121,7 +128,7 @@ function storeOrders(walletAddress: string, orders: LimitOrder[]) {
 }
 
 export async function fetchTokenPriceUsd(mint: string): Promise<number | null> {
-  const res = await fetch(`${DIALECT_PROXY}/api.jup.ag/price/v3?ids=${mint}`);
+  const res = await fetch(`${JUPITER_PRICE_API}?ids=${mint}`);
   if (!res.ok) throw new Error("price fetch failed");
   const data = await res.json();
   return data[mint]?.usdPrice ?? null;
@@ -131,7 +138,7 @@ async function fetchPricesBatch(
   mints: string[],
 ): Promise<Record<string, { usdPrice?: number }>> {
   const ids = [...new Set(mints)].join(",");
-  const res = await fetch(`${DIALECT_PROXY}/api.jup.ag/price/v3?ids=${ids}`);
+  const res = await fetch(`${JUPITER_PRICE_API}?ids=${ids}`);
   if (!res.ok) throw new Error("price fetch failed");
   return await res.json();
 }
@@ -160,7 +167,7 @@ async function fetchDFlowQuote({
     feeBps: "8",
   });
   if (walletPublicKey) p.set("userPublicKey", walletPublicKey);
-  const res = await fetch(`${DFLOW_PROXY}/e.quote-api.dflow.net/order?${p}`);
+  const res = await fetch(`${DFLOW_QUOTE_API}/order?${p}`);
   if (!res.ok) throw new Error(`quote failed (${res.status})`);
   const data = await res.json();
   if (!data?.outAmount && !data?.outputAmount)
@@ -227,35 +234,6 @@ async function confirmTx(connection: Connection, sig: string) {
   throw new Error("confirmation timeout — check your wallet");
 }
 
-function dbInsert(table: string, row: ReturnType<typeof buildRow>) {
-  if (!DB_ENABLED) return;
-  supabase!
-    .from(table)
-    .insert(row)
-    .then(({ error: err }) => {
-      if (err)
-        console.warn(
-          `[useLimitOrders] insert to ${table} failed:`,
-          err.message,
-        );
-    });
-}
-
-function dbUpdate(table: string, id: string, patch: Record<string, unknown>) {
-  if (!DB_ENABLED) return;
-  supabase!
-    .from(table)
-    .update(patch)
-    .eq("id", id)
-    .then(({ error: err }) => {
-      if (err)
-        console.warn(
-          `[useLimitOrders] update on ${table} failed:`,
-          err.message,
-        );
-    });
-}
-
 function genId(): string {
   return `lo_${crypto.randomUUID()}`;
 }
@@ -310,6 +288,48 @@ export function useLimitOrders() {
   useEffect(() => {
     isDevnetRef.current = isDevnet;
   }, [isDevnet]);
+
+  const writeChain = useRef<Promise<unknown>>(Promise.resolve());
+  const warnedRef = useRef(false);
+
+  const enqueueWrite = useCallback(
+    (op: (signer: MessageSigner, network: "mainnet" | "devnet") => Promise<boolean>) => {
+      const address = addrRef.current;
+      if (!functionsEnabled || !address) return;
+      const signer: MessageSigner = {
+        address,
+        signMessage: walletRef.current.signMessage,
+      };
+      const network = isDevnetRef.current ? "devnet" : "mainnet";
+      writeChain.current = writeChain.current
+        .then(() => op(signer, network))
+        .then((ok) => {
+          if (ok || warnedRef.current) return;
+          warnedRef.current = true;
+          notify.warning({
+            title: "Order not synced",
+            description:
+              "Sign in with your wallet to sync orders and enable Telegram alerts.",
+          });
+        })
+        .catch(() => {});
+    },
+    [],
+  );
+
+  const syncInsert = useCallback(
+    (order: LimitOrder) =>
+      enqueueWrite((signer, network) =>
+        insertOrder(signer, network, buildRow(order)),
+      ),
+    [enqueueWrite],
+  );
+
+  const syncUpdate = useCallback(
+    (id: string, patch: Record<string, unknown>) =>
+      enqueueWrite((signer, network) => updateOrder(signer, network, id, patch)),
+    [enqueueWrite],
+  );
 
   useEffect(() => {
     if (!walletAddress) {
@@ -386,14 +406,15 @@ export function useLimitOrders() {
         ...params,
       };
       persist((prev) => [order, ...prev]);
-      dbInsert(getTable(isDevnetRef.current), buildRow(order));
+      syncInsert(order);
+      void requestPushPermission();
       notify.info({
         title: "Limit Order Placed",
         description: `${params.inputToken.symbol} → ${params.outputToken.symbol} at $${params.targetPrice}`,
       });
       return order.id;
     },
-    [persist],
+    [persist, syncInsert],
   );
 
   const cancelOrder = useCallback(
@@ -405,9 +426,9 @@ export function useLimitOrders() {
             : o,
         ),
       );
-      dbUpdate(getTable(isDevnetRef.current), id, { status: "cancelled" });
+      syncUpdate(id, { status: "cancelled" });
     },
-    [persist],
+    [persist, syncUpdate],
   );
 
   useEffect(() => {
@@ -437,12 +458,17 @@ export function useLimitOrders() {
         if (!triggered) continue;
 
         executingSet.current.add(order.id);
+        void showSystemNotification({
+          title: "Limit Order Triggered",
+          body: `${order.inputToken.symbol} hit $${order.targetPrice}. Executing ${order.inputToken.symbol} → ${order.outputToken.symbol}. Approve in your wallet if prompted.`,
+          tag: `limit-${order.id}`,
+        });
         persist((prev) =>
           prev.map((o) =>
             o.id === order.id ? { ...o, status: "executing" as const } : o,
           ),
         );
-        dbUpdate(getTable(isDevnetRef.current), order.id, {
+        syncUpdate(order.id, {
           status: "executing",
         });
 
@@ -512,11 +538,17 @@ export function useLimitOrders() {
                   : o,
               ),
             );
-            dbUpdate(getTable(isDevnetRef.current), order.id, {
+            syncUpdate(order.id, {
               status: "executed",
               executed_at: executedAt,
               signature: sig,
               explorer_url: explorerUrl,
+            });
+            void showSystemNotification({
+              title: "Limit Order Executed",
+              body: `${order.inputToken.symbol} → ${order.outputToken.symbol}`,
+              tag: `limit-${order.id}`,
+              url: explorerUrl,
             });
             notify.success({
               title: "Limit Order Executed",
@@ -534,9 +566,14 @@ export function useLimitOrders() {
                   : o,
               ),
             );
-            dbUpdate(getTable(isDevnetRef.current), order.id, {
+            syncUpdate(order.id, {
               status: "failed",
               error: errorMsg,
+            });
+            void showSystemNotification({
+              title: "Limit Order Failed",
+              body: `${order.inputToken.symbol} → ${order.outputToken.symbol}: ${errorMsg}`,
+              tag: `limit-${order.id}`,
             });
             notify.error({
               title: "Limit Order Failed",
@@ -552,7 +589,7 @@ export function useLimitOrders() {
     tick();
     const id = setInterval(tick, POLL_MS);
     return () => clearInterval(id);
-  }, [connected, walletAddress, persist]);
+  }, [connected, walletAddress, persist, syncUpdate]);
 
   const currentNetwork = isDevnet ? "devnet" : "mainnet";
   const filteredOrders = orders.filter(
