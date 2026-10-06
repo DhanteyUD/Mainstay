@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { IoShieldCheckmarkOutline } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
-import { DIALECT_PROXY } from "../config";
+import { JUPITER_PRICE_API } from "../config";
 import { useNetwork } from "../contexts/NetworkContext";
 import config from "../config/index";
 import type { Token, SwapResult } from "../types";
@@ -353,7 +353,7 @@ export default function PostTradeCard({
       let resolvedInputUSD: number | null = null;
       try {
         const res = await fetch(
-          `${DIALECT_PROXY}/api.jup.ag/price/v3?ids=${inputToken.mint}`,
+          `${JUPITER_PRICE_API}?ids=${inputToken.mint}`,
         );
         if (!res.ok) throw new Error("price fetch failed");
         const data = await res.json();

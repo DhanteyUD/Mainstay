@@ -56,11 +56,11 @@
   - [Onboarding](#-onboarding)
   - [PWA Support](#-pwa-support)
 - [Deployment](#-deployment)
-  - [Via Eitherway (recommended)](#-via-eitherway-recommended)
   - [Via Vercel CLI](#-via-vercel-cli)
   - [Environment Variables in Production](#-environment-variables-in-production)
   - [API Proxy Setup](#️-api-proxy-setup)
 - [Integrations](#-integrations)
+- [Telegram Alerts](#-telegram-limit-order-alerts)
 - [Supabase Schema](#️-supabase-schema)
 - [Roadmap](#-roadmap)
   - [v1.0 — Hackathon Submission](#-v10--hackathon-submission)
@@ -145,23 +145,24 @@ The cumulative savings dashboard turns individual receipts into a running total 
 ┌─────────────────────────────────────────────────────┐
 │                Browser (React App)                  │
 │                                                     │
-│  SwapInterface → useSwap → DFlow Proxy → DFlow API  │
-│  LimitOrders   → useLimitOrders → price polling     │
+│  SwapInterface → useSwap → /api/dflow → DFlow API   │
+│  LimitOrders   → useLimitOrders → Jupiter prices    │
 │  WalletBalance → useWalletBalance → Helius RPC      │
 │  TradeHistory  → useTrades → Supabase               │
 └────────────────────┬────────────────────────────────┘
                      │ relative /api/* requests
          ┌───────────▼────────────┐
-         │  Vercel Edge (proxy)   │
-         │  /api/dialect/*        │──► api.eitherway.ai (Jupiter prices)
-         │  /api/dflow/*          │──► api.eitherway.ai (DFlow quotes/swaps)
-         │  /api/solana/rpc       │──► Solana mainnet RPC
+         │ Vercel Functions       │
+         │  /api/dflow/order      │──► DFlow Quote API (adds DFLOW_API_KEY)
+         │  /api/solana/rpc       │──► Solana mainnet RPC (SOLANA_RPC_URL)
          └────────────────────────┘
+
+Jupiter prices (lite-api.jup.ag) are fetched directly from the browser.
 ```
 
 > On **devnet**, the app routes directly through Jupiter v6's public API.
 >
-> On **mainnet**, all quote and swap transactions go through the DFlow proxy, which provides private order routing and MEV protection.
+> On **mainnet**, all quote and swap transactions go through the `/api/dflow/order` function, which provides private order routing and MEV protection.
 
 ---
 
@@ -231,7 +232,7 @@ Every trade passes through exactly **3 steps** — and MEV is blocked at all 3.
 
 ## 🚀 Getting Started
 
-Mainstay is built and deployed via [Eitherway](https://eitherway.ai) — no local setup required to use the live app.
+The live app needs no setup. To run your own instance, see the steps below.
 
 **To use Mainstay:**
 
@@ -247,7 +248,7 @@ Mainstay is built and deployed via [Eitherway](https://eitherway.ai) — no loca
 - **npm** or **yarn**
 - A [Supabase](https://supabase.com) project (optional — app works without it, but trade history and auth are disabled)
 - A [Helius](https://helius.dev) API key (optional — falls back to public RPC)
-- Access to the Eitherway API host URL (for DFlow and dialect proxies)
+- A [DFlow](https://pond.dflow.net) API key (optional — without it the keyless dev quote host is used, limited to 60 req/min)
 
 ### 👨🏾‍💻 Installation
 
@@ -278,8 +279,9 @@ npm run dev
 | `VITE_SUPABASE_URL` | ⚠️ | Supabase project URL — enables auth and trade history |
 | `VITE_SUPABASE_ANON_KEY` | ⚠️ | Supabase anon key |
 | `VITE_HELIUS_RPC_URL` | ⚠️ | Helius RPC endpoint — improves balance reliability |
-| `VITE_EITHERWAY_HOST_URL` | ✅ | Base URL for the API proxy host |
-| `VITE_EITHERWAY_APP_ID` | ✅ | App ID for the Eitherway platform |
+| `VITE_SOLANA_RPC_URL` | ➖ | Mainnet RPC used in local dev (defaults to publicnode) |
+| `SOLANA_RPC_URL` | ⚠️ | Server-side mainnet RPC used by `/api/solana/rpc` — set a Helius URL in production |
+| `DFLOW_API_KEY` | ⚠️ | Server-side DFlow key used by `/api/dflow/order` — falls back to the dev host if unset |
 | `VITE_SENTRY_DSN` | ➖ | Sentry DSN for error tracking |
 | `VITE_AUTH_REDIRECT_URL` | ➖ | OAuth redirect URL |
 | `SENTRY_ORG` | ➖ | Sentry org slug (build-time) |
@@ -303,7 +305,7 @@ npm run build
 npm run preview
 ```
 
-The dev server starts at `http://localhost:5173`. API proxy requests are handled by Vite's proxy config (Sentry tunnel) and point to `api.eitherway.ai` for DFlow and Jupiter data.
+The dev server starts at `http://localhost:5173`. In development the browser calls Jupiter and DFlow's public dev host directly; Vite's proxy only handles the Sentry tunnel.
 
 ---
 
@@ -382,7 +384,7 @@ mainstay/
 ├── .env.example
 ├── tsconfig.json                                   # TypeScript project config
 ├── tsconfig.node.json                              # TypeScript config for Vite/Node tooling
-├── vercel.json                                     # Rewrite rules for API proxying
+├── vercel.json                                     # SPA fallback rewrite and API CORS headers
 ├── vite.config.ts
 └── package.json
 ```
@@ -414,15 +416,14 @@ Devnet mode uses real Solana devnet transactions (no real funds) and routes via 
 
 ### 🏗️ Proxy Architecture
 
-In production, all external API calls are routed through Vercel rewrites defined in `vercel.json`. This avoids CORS issues and keeps API keys server-side:
+In production, requests that need server-side secrets go through Vercel Functions in `api/`:
 
-| Path | Destination |
-| --- | --- |
-| `/api/solana/rpc` | Solana mainnet RPC |
-| `/api/dialect/*` | Jupiter Price API v3 |
-| `/api/dflow/*` | DFlow Quote/Swap API |
+| Path | Destination | Secret |
+| --- | --- | --- |
+| `/api/dflow/order` | DFlow Quote API (`quote-api.dflow.net`, or `dev-quote-api.dflow.net` without a key) | `DFLOW_API_KEY` |
+| `/api/solana/rpc` | `SOLANA_RPC_URL` (defaults to `solana-rpc.publicnode.com`) | `SOLANA_RPC_URL` |
 
-In development, `src/config.js` points directly to `https://api.eitherway.ai` as the API base, which handles proxying and CORS for the dev environment.
+Jupiter prices (`lite-api.jup.ag/price/v3`) need no key and allow browser CORS, so they are fetched directly. In development, `src/config.ts` calls the DFlow dev host and the RPC directly, since Vercel Functions aren't running.
 
 ---
 
@@ -597,13 +598,6 @@ Mainstay is installable as a Progressive Web App:
 
 Mainstay deploys automatically via Vercel. To deploy your own instance:
 
-### 🪢 Via Eitherway (recommended)
-
-1. Open [eitherway.ai/chat](https://eitherway.ai/chat)
-2. Prompt: *"Deploy Mainstay to Vercel"*
-3. Connect your Vercel account in Eitherway Settings → Services Hub
-4. Eitherway handles build config and deployment automatically
-
 ### 🔼 Via Vercel CLI
 
 ```bash
@@ -614,7 +608,7 @@ npm i -g vercel
 vercel --prod
 ```
 
-The `vercel.json` rewrite rules handle all API proxying automatically. No additional server configuration is needed.
+The functions in `api/` are deployed automatically. Set `DFLOW_API_KEY` and `SOLANA_RPC_URL` (below) for production-grade quote and RPC access.
 
 ### 🔑 Environment Variables in Production
 
@@ -626,8 +620,8 @@ VITE_APP_URL=https://your-domain.com
 VITE_SUPABASE_URL=https://xxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_HELIUS_RPC_URL=https://mainnet.helius-rpc.com/?api-key=your-key
-VITE_EITHERWAY_HOST_URL=https://api.eitherway.ai
-VITE_EITHERWAY_APP_ID=your-app-id
+DFLOW_API_KEY=your-dflow-key
+SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=your-key
 VITE_AUTH_REDIRECT_URL=https://your-domain.com
 VITE_SENTRY_DSN=https://xxx@ingest.de.sentry.io/xxx
 SENTRY_ORG=your-org
@@ -637,26 +631,17 @@ SENTRY_AUTH_TOKEN=your-token
 
 ### ⚙️ API Proxy Setup
 
-The `vercel.json` rewrites proxy all API traffic so CORS never blocks your production origin:
+`vercel.json` only contains the SPA fallback rewrite and CORS headers for `/api/*`. The proxies are serverless functions:
 
-```json
-{
-  "rewrites": [
-    { "source": "/api/solana/rpc",      "destination": "https://..." },
-    { "source": "/api/dialect/:path*",  "destination": "https://api.eitherway.ai/api/dialect/:path*" },
-    { "source": "/api/dflow/:path*",    "destination": "https://api.eitherway.ai/api/dflow/:path*" },
-    { "source": "/(.*)",                "destination": "/index.html" }
-  ]
-}
-```
-For the Solana RPC endpoint specifically, use the `api/solana-rpc.js` serverless function (included in the `api/` directory) to proxy directly to `https://api.mainnet-beta.solana.com`, avoiding CORS restrictions from third-party proxies.
+- `api/dflow/order.ts` forwards the quote query string to DFlow, attaching `x-api-key: $DFLOW_API_KEY`. With no key it targets the public dev host.
+- `api/solana/rpc.js` forwards JSON-RPC bodies to `$SOLANA_RPC_URL`, so your RPC key never reaches the browser.
 
 ---
 
 ## 🔗 Integrations
 
 | Service | Purpose | Docs |
-|---|---|---|
+| --- | --- | --- |
 | **DFlow Protocol** | MEV-protected order routing | [dflow.net](https://dflow.net) |
 | **Jupiter Aggregator** | Devnet swap routing + price data | [jup.ag](https://jup.ag) |
 | **Helius** | High-reliability Solana RPC | [helius.dev](https://helius.dev) |
@@ -666,6 +651,10 @@ For the Solana RPC endpoint specifically, use the `api/solana-rpc.js` serverless
 | **Resend** | Waitlist confirmation emails | [resend.com](https://resend.com) |
 
 ---
+
+## 🔔 Telegram Limit-Order Alerts
+
+Users can connect a Telegram chat from the Limit tab and get alerts when an order's target is hit, executes or fails, even with the app closed. Orders and Telegram links are authorised by a wallet signature, and alerts are produced server-side (Supabase Edge Functions + `pg_cron`). Full architecture and setup: [docs/TELEGRAM_ALERTS.md](docs/TELEGRAM_ALERTS.md).
 
 ## ⚡️ Supabase Schema
 
@@ -690,6 +679,10 @@ devLimitOrders (...)
 
 -- Saved recipient addresses
 recipients (id, wallet_address, address, label, last_used_at)
+
+-- Telegram alerts (server-side only, no public access)
+telegram_links (wallet_address, chat_id, username, link_token_hash, link_expires_at, muted, ...)
+notification_outbox (id, wallet_address, order_id, event, payload, sent_at, attempts, ...)
 
 -- Prediction market waitlist
 waitingList (id, email, created_at)

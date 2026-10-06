@@ -1,6 +1,6 @@
 import https from 'https';
 
-const UPSTREAM = 'https://api.eitherway.ai/api/solana/rpc';
+const UPSTREAM = process.env.SOLANA_RPC_URL || 'https://solana-rpc.publicnode.com';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -38,7 +38,7 @@ export default async function handler(req, res) {
       const options = {
         hostname: url.hostname,
         port: 443,
-        path: url.pathname,
+        path: url.pathname + url.search,
         method: req.method,
         headers: forwardHeaders,
       };

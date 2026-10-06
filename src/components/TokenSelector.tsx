@@ -4,7 +4,7 @@ import { ChevronDown, Search, X } from "lucide-react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { TOKEN_LIST, DIALECT_PROXY } from "../config";
+import { TOKEN_LIST, JUPITER_PRICE_API } from "../config";
 import { isMobile } from "../lib/device";
 import type { Token } from "../types";
 
@@ -91,7 +91,7 @@ export default function TokenSelector({
 
       try {
         const res = await fetch(
-          `${DIALECT_PROXY}/api.jup.ag/price/v3?ids=${ids}`,
+          `${JUPITER_PRICE_API}?ids=${ids}`,
         );
         if (res.ok) {
           const data = await res.json();
