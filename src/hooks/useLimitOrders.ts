@@ -15,7 +15,7 @@ import {
 import { useNetwork } from "../contexts/NetworkContext";
 import { supabase } from "../lib/supabase";
 import type { LimitOrder } from "../types";
-import { insertOrder, updateOrder } from "../lib/ordersApi";
+import { editOrderRemote, insertOrder, updateOrder } from "../lib/ordersApi";
 import { functionsEnabled } from "../lib/walletAuth";
 import type { MessageSigner } from "../lib/walletAuth";
 import {
@@ -24,6 +24,7 @@ import {
 } from "../lib/pushNotifications";
 
 const STORAGE_KEY = "mainstay_limit_orders_v1";
+const LAST_WALLET_KEY = "mainstay_last_wallet";
 const POLL_MS = 30_000;
 const DB_ENABLED = supabase !== null;
 
@@ -293,26 +294,30 @@ export function useLimitOrders() {
   const warnedRef = useRef(false);
 
   const enqueueWrite = useCallback(
-    (op: (signer: MessageSigner, network: "mainnet" | "devnet") => Promise<boolean>) => {
+    (
+      op: (signer: MessageSigner, network: "mainnet" | "devnet") => Promise<boolean>,
+    ): Promise<boolean> => {
       const address = addrRef.current;
-      if (!functionsEnabled || !address) return;
+      // Nothing to sync (no backend configured): treat as success.
+      if (!functionsEnabled || !address) return Promise.resolve(true);
       const signer: MessageSigner = {
         address,
         signMessage: walletRef.current.signMessage,
       };
       const network = isDevnetRef.current ? "devnet" : "mainnet";
-      writeChain.current = writeChain.current
+      const result = writeChain.current
         .then(() => op(signer, network))
-        .then((ok) => {
-          if (ok || warnedRef.current) return;
-          warnedRef.current = true;
-          notify.warning({
-            title: "Order not synced",
-            description:
-              "Sign in with your wallet to sync orders and enable Telegram alerts.",
-          });
-        })
-        .catch(() => {});
+        .catch(() => false);
+      writeChain.current = result.then((ok) => {
+        if (ok || warnedRef.current) return;
+        warnedRef.current = true;
+        notify.warning({
+          title: "Order not synced",
+          description:
+            "Sign in with your wallet to sync orders and enable Telegram alerts.",
+        });
+      });
+      return result;
     },
     [],
   );
@@ -333,9 +338,18 @@ export function useLimitOrders() {
 
   useEffect(() => {
     if (!walletAddress) {
-      setOrders([]);
+      // Keep the last wallet's orders on screen (read-only) after a disconnect
+      // so a pending order doesn't look like it vanished. They only execute
+      // while the wallet is connected.
+      try {
+        const last = localStorage.getItem(LAST_WALLET_KEY);
+        if (last && ordersRef.current.length === 0) setOrders(loadStored(last));
+      } catch {}
       return;
     }
+    try {
+      localStorage.setItem(LAST_WALLET_KEY, walletAddress);
+    } catch {}
 
     if (!DB_ENABLED) {
       setOrders(loadStored(walletAddress));
@@ -419,6 +433,13 @@ export function useLimitOrders() {
 
   const cancelOrder = useCallback(
     (id: string) => {
+      if (!addrRef.current) {
+        notify.warning({
+          title: "Wallet disconnected",
+          description: "Connect your wallet to cancel an order.",
+        });
+        return;
+      }
       persist((prev) =>
         prev.map((o) =>
           o.id === id && o.status === "pending"
@@ -429,6 +450,68 @@ export function useLimitOrders() {
       syncUpdate(id, { status: "cancelled" });
     },
     [persist, syncUpdate],
+  );
+
+  const editOrder = useCallback(
+    async (
+      id: string,
+      { targetPrice, inputAmount }: { targetPrice: string; inputAmount: string },
+    ): Promise<{ ok: boolean; error?: string }> => {
+      if (!addrRef.current) {
+        return { ok: false, error: "Connect your wallet to edit orders." };
+      }
+      const editable = () => {
+        const o = ordersRef.current.find((x) => x.id === id);
+        return o?.status === "pending" && !executingSet.current.has(id) ? o : null;
+      };
+      const order = editable();
+      if (!order) return { ok: false, error: "This order can no longer be edited." };
+
+      const target = Number(targetPrice);
+      const amount = Number(inputAmount);
+      if (!(Number.isFinite(target) && target > 0)) {
+        return { ok: false, error: "Enter a valid target price." };
+      }
+      if (!(Number.isFinite(amount) && amount > 0)) {
+        return { ok: false, error: "Enter a valid amount." };
+      }
+
+      let price: number | null = null;
+      try {
+        price = await fetchTokenPriceUsd(order.inputToken.mint);
+      } catch {}
+      if (price == null) {
+        return { ok: false, error: "Could not fetch the current price. Try again." };
+      }
+      // Same rule as the order form: target at or above the price waits for a rise.
+      const direction: "above" | "below" = target >= price ? "above" : "below";
+
+      // The price fetch is async, so make sure nothing started executing meanwhile.
+      if (!editable()) return { ok: false, error: "This order can no longer be edited." };
+
+      const synced = await enqueueWrite((signer, network) =>
+        editOrderRemote(signer, network, id, {
+          target_price: target,
+          input_amount: String(inputAmount),
+          direction,
+        }),
+      );
+      if (!synced) return { ok: false, error: "Could not save the change. Try again." };
+
+      persist((prev) =>
+        prev.map((o) =>
+          o.id === id && o.status === "pending"
+            ? { ...o, targetPrice: target, inputAmount: String(inputAmount), direction }
+            : o,
+        ),
+      );
+      notify.info({
+        title: "Limit Order Updated",
+        description: `${order.inputToken.symbol} → ${order.outputToken.symbol} at $${target}`,
+      });
+      return { ok: true };
+    },
+    [persist, enqueueWrite],
   );
 
   useEffect(() => {
@@ -597,10 +680,12 @@ export function useLimitOrders() {
   );
 
   return {
+    walletConnected: connected,
     orders: filteredOrders,
     currentPrices,
     addOrder,
     cancelOrder,
+    editOrder,
     pendingCount: filteredOrders.filter((o) => o.status === "pending").length,
   };
 }

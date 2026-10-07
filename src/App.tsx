@@ -9,7 +9,7 @@ import {
   Target,
 } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";import { motion, AnimatePresence } from "framer-motion";
 
 import { useAuth } from "./lib/auth-context";
 import FeedbackButton from "./components/FeedbackButton";
@@ -181,8 +181,15 @@ function MainApp() {
   } = useTrades(walletAddress);
   const { received, fetchReceived } = useReceivedTransfers(walletAddress);
   const savedReceivedSigs = useRef(new Set<string>());
-  const { orders, currentPrices, addOrder, cancelOrder, pendingCount } =
-    useLimitOrders();
+  const {
+    orders,
+    currentPrices,
+    addOrder,
+    cancelOrder,
+    editOrder,
+    pendingCount,
+  } = useLimitOrders();
+  const { setVisible: openWalletModal } = useWalletModal();
   const { solPrice, priceLoading, uptimePct, riskLevel } = useNetworkStats();
   const { balance: solBalance } = useWalletBalance();
 
@@ -376,11 +383,32 @@ function MainApp() {
                           </span>
                         )}
                       </div>
+                      {!connected && (
+                        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-terminal-yellow/30 bg-terminal-yellow/5 px-3 py-2.5 font-mono text-xs">
+                          <div className="min-w-0 flex-1">
+                            <div className="font-bold text-terminal-yellow">
+                              Wallet disconnected
+                            </div>
+                            <div className="text-terminal-dim">
+                              {pendingCount > 0
+                                ? "Pending orders only execute while your wallet is connected. Reconnect to keep them active."
+                                : "Connect your wallet to place and manage limit orders."}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => openWalletModal(true)}
+                            className="rounded-lg border border-terminal-yellow/40 bg-terminal-yellow/10 px-3 py-1.5 font-bold text-terminal-yellow hover:bg-terminal-yellow/20"
+                          >
+                            Connect Wallet
+                          </button>
+                        </div>
+                      )}
                       <TelegramConnect />
                       <LimitOrderList
                         orders={orders}
                         currentPrices={currentPrices}
                         onCancel={cancelOrder}
+                        onEdit={editOrder}
                       />
                     </div>
                   </motion.div>
