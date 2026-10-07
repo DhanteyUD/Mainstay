@@ -39,3 +39,12 @@ export function updateOrder(
 ) {
   return send(signer, { op: "update", network, id, patch });
 }
+
+export function editOrderRemote(
+  signer: MessageSigner,
+  network: Network,
+  id: string,
+  patch: { target_price: number; input_amount: string; direction: "above" | "below" },
+) {
+  return send(signer, { op: "edit", network, id, patch });
+}

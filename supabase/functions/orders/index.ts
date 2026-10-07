@@ -18,13 +18,12 @@ const str = (v: unknown, max: number) =>
 const decimals = (v: unknown) =>
   typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= 18 ? v : null;
 
-function validateInsert(o: Record<string, unknown>, wallet: string, network: string) {
+function validateInsert(o: Record<string, unknown>, wallet: string) {
   const amount = Number(o.input_amount);
   const price = Number(o.target_price);
   const row = {
     id: typeof o.id === "string" && ID_RE.test(o.id) ? o.id : null,
     wallet_address: wallet,
-    network,
     status: "pending",
     direction: o.direction === "above" || o.direction === "below" ? o.direction : null,
     input_token_mint: typeof o.input_token_mint === "string" && MINT_RE.test(o.input_token_mint) ? o.input_token_mint : null,
@@ -55,7 +54,7 @@ serve(async (req) => {
   const table = TABLES[network];
 
   if (body.op === "insert") {
-    const parsed = validateInsert((body.order ?? {}) as Record<string, unknown>, wallet, network);
+    const parsed = validateInsert((body.order ?? {}) as Record<string, unknown>, wallet);
     if ("error" in parsed) return json({ error: parsed.error }, 400);
 
     const { count } = await db.from(table).select("id", { count: "exact", head: true })
@@ -93,6 +92,39 @@ serve(async (req) => {
     // The status guard makes the transition atomic if two tabs race.
     const { data: updated, error } = await db.from(table).update(update)
       .eq("id", id).eq("wallet_address", wallet).eq("status", current.status).select("id");
+    if (error) return json({ error: "Could not update order" }, 500);
+    if (!updated?.length) return json({ error: "Order changed, retry" }, 409);
+    return json({ ok: true });
+  }
+
+  if (body.op === "edit") {
+    const id = typeof body.id === "string" && ID_RE.test(body.id) ? body.id : null;
+    const patch = (body.patch ?? {}) as Record<string, unknown>;
+    const price = Number(patch.target_price);
+    const amount = Number(patch.input_amount);
+    const direction = patch.direction === "above" || patch.direction === "below" ? patch.direction : null;
+    if (!id || !direction || !(Number.isFinite(price) && price > 0) || !(Number.isFinite(amount) && amount > 0)) {
+      return json({ error: "Invalid edit" }, 400);
+    }
+
+    const { data: current } = await db.from(table).select("status, target_price, direction")
+      .eq("id", id).eq("wallet_address", wallet).maybeSingle();
+    if (!current) return json({ error: "Order not found" }, 404);
+    if (current.status !== "pending") return json({ error: "Only pending orders can be edited" }, 409);
+
+    const update: Record<string, unknown> = {
+      target_price: price,
+      input_amount: String(patch.input_amount),
+      direction,
+    };
+    // Re-arm the Telegram "target hit" alert if the trigger condition changed.
+    if (network === "mainnet" && (Number(current.target_price) !== price || current.direction !== direction)) {
+      update.notified_at = null;
+    }
+
+    // The status guard means an order that just started executing can't be edited.
+    const { data: updated, error } = await db.from(table).update(update)
+      .eq("id", id).eq("wallet_address", wallet).eq("status", "pending").select("id");
     if (error) return json({ error: "Could not update order" }, 500);
     if (!updated?.length) return json({ error: "Order changed, retry" }, 409);
     return json({ ok: true });
