@@ -60,8 +60,8 @@
 - [Telegram Alerts](#-telegram-limit-order-alerts)
 - [Supabase Schema](#️-supabase-schema)
 - [Roadmap](#-roadmap)
-  - [v1.0 — Hackathon Submission](#-v10--hackathon-submission)
-  - [v1.1 — Post-Hackathon](#-v10--hackathon-submission)
+  - [v1.0 — Launch](#-v10--launch)
+  - [v1.1 — Next](#-v11--next)
   - [v2.0 — Q3 2026](#-v20--q3-2026)
   - [Long Term](#-long-term)
 - [Contributing](#-contributing)
@@ -202,11 +202,11 @@ Every trade passes through exactly **3 steps** — and MEV is blocked at all 3.
 
 | Layer | Technology | Purpose |
 | --- | --- | --- |
-| **App Platform** | [Eitherway](https://eitherway.ai) | Full-stack generation & deployment |
 | **Swap Execution** | [DFlow Declarative Trade API](https://pond.dflow.net) | MEV-protected order routing |
 | **Price Discovery** | DFlow Quote API | Pre-trade quotes & risk scoring |
 | **Blockchain Data** | [Helius RPC](https://docs.helius.dev) | Fast on-chain confirmation & congestion |
-| **Database** | [Supabase (PostgreSQL)](https://supabase.com) | Trade history, limit order, transactions & waitlists |
+| **Database & Functions** | [Supabase (PostgreSQL + Edge Functions)](https://supabase.com) | Trade history, limit orders, Telegram alerts, transactions & waitlists |
+| **Alerts** | [Telegram Bot API](https://core.telegram.org/bots/api) | Server-side limit-order notifications |
 | **Email Service** | [Resend](https://resend.com/) | For prediction market waitlist registration |
 | **Wallet** | Solflare / Phantom | Transaction signing |
 | **Deployment** | [Vercel](https://vercel.com) | Production hosting |
@@ -503,6 +503,7 @@ The limit order system (`useLimitOrders.ts`) polls prices every 30 seconds and e
 - Persisted to Supabase with localStorage fallback; synced via `useEffect` to be React 19 Strict Mode compliant
 - Separate order history tabs: All, Pending, Executed, Cancelled
 - On devnet, executes via Jupiter; on mainnet, via DFlow
+- Optional Telegram alerts when a target is hit, executed or failed (see [Telegram Alerts](#-telegram-limit-order-alerts))
 
 ### 🌗 Prediction Markets (devnet)
 
@@ -651,7 +652,24 @@ SENTRY_AUTH_TOKEN=your-token
 
 ## 🔔 Telegram Limit-Order Alerts
 
-Users can connect a Telegram chat from the Limit tab and get alerts when an order's target is hit, executes or fails, even with the app closed. Orders and Telegram links are authorised by a wallet signature, and alerts are produced server-side (Supabase Edge Functions + `pg_cron`). Full architecture and setup: [docs/TELEGRAM_ALERTS.md](docs/TELEGRAM_ALERTS.md).
+Connect a Telegram chat from the Limit tab and get notified when a limit order's target price is hit, or when it executes or fails, even with Mainstay closed.
+
+| Alert | Trigger |
+| --- | --- |
+| 🎯 **Target hit** | A server-side watcher sees a pending mainnet order's price condition met (checked every minute) |
+| ✅ **Executed** | The order's status changes to `executed` |
+| ❌ **Failed** | The order's status changes to `failed` |
+
+**Bot commands:** `/orders` (pending limit orders), `/mute`, `/unmute`, `/stop` (disconnect the chat).
+
+**How it works:**
+
+- Connecting requires a wallet signature; the app then opens a `t.me/<bot>?start=<one-time token>` deep link that binds the chat to the wallet.
+- Limit orders are created, updated and cancelled through the `orders` Edge Function using a wallet-signed session (12h), so nobody can edit another wallet's orders or subscribe to its alerts.
+- `executed` / `failed` alerts come from a database trigger into a `notification_outbox`; "target hit" comes from the `notifier` function, run by `pg_cron` every minute, which batches price lookups for all linked wallets and dispatches queued messages with retries and de-duplication.
+- Users who block the bot are unlinked automatically. The bot can alert but never execute: swaps still need your wallet signature.
+
+Edge Functions: `wallet-auth`, `orders`, `telegram-link`, `telegram-webhook`, `notifier`. Full architecture and setup: [docs/TELEGRAM_ALERTS.md](docs/TELEGRAM_ALERTS.md).
 
 ## ⚡️ Supabase Schema
 
@@ -689,7 +707,7 @@ waitingList (id, email, created_at)
 
 ## 🗺 Roadmap
 
-### ✅ v1.0 — Hackathon Submission
+### ✅ v1.0 — Launch
 
 - [x] MEV risk meter (LOW / MEDIUM / HIGH)
 - [x] DFlow JIT swap execution on Solana mainnet
@@ -701,11 +719,13 @@ waitingList (id, email, created_at)
 - [x] Solflare + Phantom wallet support
 - [x] Mobile-optimized layout
 - [x] Limit orders with DFlow-protected execution
+- [x] Wallet-signed sessions for order management
+- [x] Telegram alerts for limit orders (target hit, executed, failed)
 
-### 🔄 v1.1 — Post-Hackathon
+### 🔄 v1.1 — Next
 
 - [ ] Solflare transaction scanner whitelisting
-- [ ] Telegram trade alerts for watched tokens
+- [ ] Telegram price alerts for watched tokens
 - [ ] Expanded token pair support
 - [ ] Mainnet prediction markets
 
@@ -769,9 +789,7 @@ MIT License © 2025 Mainstay — see [LICENSE](LICENSE) for details.
 - [DFlow](https://dflow.net) — for building the MEV-resistant execution layer that makes Mainstay possible
 - [Helius](https://helius.dev) — for fast, reliable Solana RPC and blockchain data
 - [Supabase](https://supabase.com) — for seamless trade history persistence
-- [Eitherway](https://eitherway.ai) — for the platform that made building this possible in days, not months
 - [Solflare](https://solflare.com) — for the recommended wallet integration
-- [Superteam](https://superteam.fun) — for the Frontier Hackathon
 
 ---
 
@@ -785,6 +803,6 @@ MIT License © 2025 Mainstay — see [LICENSE](LICENSE) for details.
 
 [![Live App](https://img.shields.io/badge/Try_Mainstay-mainstay.pro-00C2A8?style=for-the-badge)](https://mainstay.pro)
 
-Built with ❤️ on [Eitherway](https://eitherway.ai) · Powered by [DFlow](https://dflow.net) · Running on [Solana](https://solana.com)
+Powered by [DFlow](https://dflow.net) · Running on [Solana](https://solana.com)
 
 </div>
