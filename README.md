@@ -7,7 +7,6 @@
 **MEV-protected token swaps on Solana, powered by DFlow Protocol**
 
 [![Live App](https://img.shields.io/badge/Live_App-mainstay.pro-0a0b0f?style=for-the-badge&logo=vercel&logoColor=00e5ff)](https://mainstay.pro)
-[![Built on Eitherway](https://img.shields.io/badge/Built_on-Eitherway-0d00ff?style=for-the-badge)](https://eitherway.ai)
 [![DFlow](https://img.shields.io/badge/Powered_by-DFlow-66c5f6?style=for-the-badge)](https://pond.dflow.net)
 [![Solana](https://img.shields.io/badge/Network-Solana_Mainnet-9945FF?style=for-the-badge&logo=solana&logoColor=white)](https://solana.com)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
