@@ -13,8 +13,6 @@
 
 ---
 
-*Frontier Hackathon 2026 · DFlow Track · Superteam Earn*
-
 </div>
 
 ---
