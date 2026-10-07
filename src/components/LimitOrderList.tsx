@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ExternalLink,
+  Pencil,
   X,
   Clock,
   CheckCircle2,
@@ -94,12 +95,17 @@ interface LimitOrderListProps {
   orders: LimitOrder[];
   currentPrices: Record<string, { usdPrice?: number }>;
   onCancel: (id: string) => void;
+  onEdit: (
+    id: string,
+    values: { targetPrice: string; inputAmount: string },
+  ) => Promise<{ ok: boolean; error?: string }>;
 }
 
 export default function LimitOrderList({
   orders,
   currentPrices,
   onCancel,
+  onEdit,
 }: LimitOrderListProps) {
   const [activeTab, setActiveTab] = useState("all");
 
@@ -189,6 +195,7 @@ export default function LimitOrderList({
                       currentPrices[order.inputToken.mint]?.usdPrice
                     }
                     onCancel={onCancel}
+                    onEdit={onEdit}
                   />
                 </motion.div>
               ))}
@@ -204,11 +211,41 @@ interface OrderRowProps {
   order: LimitOrder;
   currentPrice: number | undefined;
   onCancel: (id: string) => void;
+  onEdit: LimitOrderListProps["onEdit"];
 }
 
-function OrderRow({ order, currentPrice, onCancel }: OrderRowProps) {
+function OrderRow({ order, currentPrice, onCancel, onEdit }: OrderRowProps) {
   const cfg = STATUS[order.status] ?? STATUS.pending;
   const { Icon } = cfg;
+
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [draftTarget, setDraftTarget] = useState("");
+  const [draftAmount, setDraftAmount] = useState("");
+
+  useEffect(() => {
+    if (order.status !== "pending") setEditing(false);
+  }, [order.status]);
+
+  const startEdit = () => {
+    setDraftTarget(String(order.targetPrice));
+    setDraftAmount(String(order.inputAmount));
+    setEditError(null);
+    setEditing(true);
+  };
+
+  const saveEdit = async () => {
+    setSaving(true);
+    setEditError(null);
+    const res = await onEdit(order.id, {
+      targetPrice: draftTarget,
+      inputAmount: draftAmount,
+    });
+    setSaving(false);
+    if (res.ok) setEditing(false);
+    else setEditError(res.error ?? "Could not save the change.");
+  };
 
   const progressPct =
     currentPrice != null && order.targetPrice > 0
@@ -345,6 +382,55 @@ function OrderRow({ order, currentPrice, onCancel }: OrderRowProps) {
         </div>
       )}
 
+      {editing && (
+        <div className="mb-2.5 rounded-lg border border-terminal-border bg-terminal-surface p-3 font-mono text-xs">
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="mb-1 block text-terminal-dim">
+                Amount ({order.inputToken.symbol})
+              </span>
+              <input
+                type="number"
+                min="0"
+                value={draftAmount}
+                onChange={(e) => setDraftAmount(e.target.value)}
+                className="w-full rounded-md border border-terminal-border bg-terminal-bg px-2 py-1.5 text-terminal-text outline-none focus:border-terminal-yellow/50"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-terminal-dim">
+                Target price (USD)
+              </span>
+              <input
+                type="number"
+                min="0"
+                value={draftTarget}
+                onChange={(e) => setDraftTarget(e.target.value)}
+                className="w-full rounded-md border border-terminal-border bg-terminal-bg px-2 py-1.5 text-terminal-text outline-none focus:border-terminal-yellow/50"
+              />
+            </label>
+          </div>
+          {editError && <div className="mt-2 text-terminal-red">{editError}</div>}
+          <div className="mt-3 flex justify-end gap-2">
+            <button
+              onClick={() => setEditing(false)}
+              disabled={saving}
+              className="rounded-md border border-terminal-border px-3 py-1 text-terminal-dim hover:text-terminal-text disabled:opacity-50"
+            >
+              Discard
+            </button>
+            <button
+              onClick={saveEdit}
+              disabled={saving}
+              className="inline-flex items-center gap-1.5 rounded-md bg-terminal-yellow px-3 py-1 font-bold text-black hover:bg-terminal-yellow/85 disabled:opacity-60"
+            >
+              {saving && <Loader2 size={10} className="animate-spin" />}
+              Save
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between pt-0.5">
         <span className="font-mono text-xs text-terminal-dim/50">
           {fmt(order.createdAt)}
@@ -360,6 +446,15 @@ function OrderRow({ order, currentPrice, onCancel }: OrderRowProps) {
               <ExternalLink size={10} />
               <span>View tx</span>
             </a>
+          )}
+          {order.status === "pending" && !editing && (
+            <button
+              onClick={startEdit}
+              className="flex items-center gap-1 text-terminal-dim hover:text-terminal-accent text-xs font-mono transition-colors"
+            >
+              <Pencil size={10} />
+              <span>Edit</span>
+            </button>
           )}
           {order.status === "pending" && (
             <button

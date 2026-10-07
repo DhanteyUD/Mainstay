@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import {
+  WalletMultiButton,
+  useWalletModal,
+} from "@solana/wallet-adapter-react-ui";
 import {
   Target,
   ArrowDown,
@@ -37,6 +40,7 @@ interface LimitOrderFormProps {
 
 export default function LimitOrderForm({ onAddOrder }: LimitOrderFormProps) {
   const { connected } = useWallet();
+  const { setVisible: openWalletModal } = useWalletModal();
   const { isDevnet, networkLabel } = useNetwork();
 
   const [inputToken, setInputToken] = useState<Token>(TOKENS.SOL);
@@ -125,6 +129,10 @@ export default function LimitOrderForm({ onAddOrder }: LimitOrderFormProps) {
   };
 
   const handleSubmit = () => {
+    if (!connected) {
+      openWalletModal(true);
+      return;
+    }
     if (!canSubmit) return;
     onAddOrder({
       inputToken,
@@ -162,7 +170,7 @@ export default function LimitOrderForm({ onAddOrder }: LimitOrderFormProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: "easeOut" }}
     >
-      <div className="bg-terminal-card border border-terminal-border rounded-2xl overflow-hidden shadow-2xl">
+      <div className="bg-terminal-card border border-terminal-border rounded-2xl shadow-2xl">
         <div className="px-4 py-3 border-b border-terminal-border">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 shrink-0">
@@ -176,7 +184,7 @@ export default function LimitOrderForm({ onAddOrder }: LimitOrderFormProps) {
                 / {networkLabel}
               </span>
             </div>
-            <div className="shrink-0 max-w-[180px] sm:max-w-none overflow-hidden">
+            <div className="shrink-0 max-w-[180px] sm:max-w-none">
               <WalletMultiButton />
             </div>
           </div>
@@ -352,14 +360,16 @@ export default function LimitOrderForm({ onAddOrder }: LimitOrderFormProps) {
 
           <motion.button
             onClick={handleSubmit}
-            disabled={!canSubmit}
+            disabled={connected && !canSubmit}
             className={`w-full py-4 rounded-xl font-mono font-bold text-sm tracking-wider transition-colors duration-200 flex items-center justify-center gap-2.5 relative overflow-hidden ${
-              canSubmit
-                ? "bg-terminal-yellow text-black hover:bg-terminal-yellow/85"
-                : "bg-terminal-surface border border-terminal-border text-terminal-dim cursor-not-allowed"
+              !connected
+                ? "bg-terminal-accent/15 border border-terminal-accent/40 text-terminal-accent hover:bg-terminal-accent/25"
+                : canSubmit
+                  ? "bg-terminal-yellow text-black hover:bg-terminal-yellow/85"
+                  : "bg-terminal-surface border border-terminal-border text-terminal-dim cursor-not-allowed"
             }`}
-            whileHover={canSubmit ? { scale: 1.01 } : {}}
-            whileTap={canSubmit ? { scale: 0.98 } : {}}
+            whileHover={!connected || canSubmit ? { scale: 1.01 } : {}}
+            whileTap={!connected || canSubmit ? { scale: 0.98 } : {}}
           >
             <Target size={15} className="shrink-0" />
             <span>{btnLabel}</span>
