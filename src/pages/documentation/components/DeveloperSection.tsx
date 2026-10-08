@@ -101,7 +101,7 @@ export default function DeveloperSection() {
           },
           {
             title: "Vercel rewrite",
-            desc: "The proxy rewrites the request to api.eitherway.ai — your production origin is never blocked by third-party CORS policies.",
+            desc: "The Vercel function api/dflow/order.ts forwards the request to the DFlow Quote API, attaching the server-side API key — your production origin is never blocked by third-party CORS policies.",
           },
           {
             title: "DFlow response",
@@ -175,15 +175,11 @@ export default function DeveloperSection() {
         rows={[
           [
             <Code>/api/solana/rpc</Code>,
-            "api/solana-rpc.ts (Vercel serverless) → api.mainnet-beta.solana.com",
+            "api/solana/rpc.js (Vercel serverless) → SOLANA_RPC_URL",
           ],
           [
-            <Code>/api/dialect/:path*</Code>,
-            "api.eitherway.ai/api/dialect/:path* — Jupiter Price API v3",
-          ],
-          [
-            <Code>/api/dflow/:path*</Code>,
-            "api.eitherway.ai/api/dflow/:path* — DFlow Quote + Swap API",
+            <Code>/api/dflow/order</Code>,
+            "api/dflow/order.ts (Vercel serverless) → DFlow Quote + Swap API",
           ],
           [<Code>/(.*)</Code>, "/index.html — SPA fallback for React Router"],
         ]}
@@ -343,16 +339,6 @@ export default function DeveloperSection() {
             <Code>VITE_APP_URL</Code>,
             "✅ Yes",
             "Deployed app URL, e.g. https://mainstay.pro",
-          ],
-          [
-            <Code>VITE_EITHERWAY_HOST_URL</Code>,
-            "✅ Yes",
-            "Base URL for the API proxy host",
-          ],
-          [
-            <Code>VITE_EITHERWAY_APP_ID</Code>,
-            "✅ Yes",
-            "App ID for the Eitherway platform",
           ],
           [
             <Code>VITE_SUPABASE_URL</Code>,
@@ -656,10 +642,10 @@ export default function DeveloperSection() {
               issue: "CORS error on /api/solana/rpc in production",
               fix: (
                 <>
-                  Ensure <B>api/solana-rpc.ts</B> exists and <B>vercel.json</B>{" "}
-                  routes <P>/api/solana/rpc</P> to <B>/api/solana-rpc</B> — not
-                  to the eitherway proxy. The eitherway proxy only allowlists
-                  localhost:5173 and its own domains.
+                  Ensure <B>api/solana/rpc.js</B> exists and that{" "}
+                  <B>SOLANA_RPC_URL</B> is set in your Vercel environment
+                  variables. Requests should go to <P>/api/solana/rpc</P> on
+                  your own origin, never directly to a third-party RPC.
                 </>
               ),
             },

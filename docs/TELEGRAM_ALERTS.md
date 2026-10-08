@@ -1,17 +1,18 @@
-# Telegram limit-order alerts
+# Telegram alerts
 
-Server-side alerts that work even when Mainstay is closed.
+Server-side alerts that work even when Mainstay is closed: limit-order events (target hit, executed, failed) and one-shot **price alerts** on any token.
 
 ```
 Browser ──signs in with wallet──► wallet-auth ──► session token (12h)
    │
    ├─ create / cancel / update orders ─► orders (verifies token + lifecycle) ─► limitOrders
+   ├─ create / delete price alerts ───► price-alerts (verifies token) ─► price_alerts
    └─ Connect Telegram ───────────────► telegram-link ─► t.me/<bot>?start=<one-time token>
                                                               │
 Telegram ──/start <token>──► telegram-webhook ◄───────────────┘ (binds chat to wallet)
 
 pg_cron (every minute) ─► notifier
-   ├─ watch():    batched Jupiter prices for pending orders of linked wallets → "target hit"
+   ├─ watch():    batched Jupiter prices for pending orders and active price alerts of linked wallets → "target hit" / "price alert"
    └─ dispatch(): sends outbox rows to Telegram (retries, dedupe, auto-unlink on block)
 
 limitOrders status → executed/failed ─(SQL trigger)─► notification_outbox
@@ -32,6 +33,7 @@ Why it is built this way:
 3. Optional: `/setdescription`, `/setuserpic`, and `/setcommands`:
    ```
    orders - Your pending limit orders
+   alerts - Your active price alerts
    mute - Pause alerts
    unmute - Resume alerts
    stop - Disconnect this chat
@@ -39,7 +41,7 @@ Why it is built this way:
 
 ### 2. Supabase
 1. **Extensions** (Dashboard → Database → Extensions): enable `pg_cron`, `pg_net`, `supabase_vault`.
-2. **Migration**: run `supabase db push` (or paste `supabase/migrations/20261006000000_notifications.sql` into the SQL editor).
+2. **Migrations**: run `supabase db push` (or paste `supabase/migrations/20261006000000_notifications.sql` and then `20261007000000_price_alerts.sql` into the SQL editor).
 3. **Generate secrets** (run locally, keep the output):
    ```bash
    openssl rand -hex 32   # SESSION_SECRET
@@ -60,7 +62,7 @@ Why it is built this way:
    `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are provided to functions automatically.
 5. **Deploy the functions.** All use their own auth (session token, webhook secret or cron secret), so skip the gateway JWT check:
    ```bash
-   supabase functions deploy wallet-auth orders telegram-link telegram-webhook notifier --no-verify-jwt
+   supabase functions deploy wallet-auth orders price-alerts telegram-link telegram-webhook notifier --no-verify-jwt
    ```
 
 ### 3. Connect Telegram to the function
@@ -96,4 +98,5 @@ After the new frontend is live and orders sync correctly, run `supabase/sql/lock
 - A user who blocks the bot is unlinked automatically; they can reconnect any time.
 - Failed sends retry up to 5 times, then stay in the outbox with `sent_at` null for inspection.
 - Only mainnet orders trigger "target hit" alerts. Devnet orders are not watched.
+- Price alerts are one-shot: each fires once when the token crosses the target, then shows as triggered in the app. Up to 5 active alerts per wallet (and the 5 most recent triggered ones are kept). Direction (≥ / ≤) is chosen automatically from the current price. Muted or unlinked wallets are not watched.
 - Rotate `SESSION_SECRET` to sign everyone out.
