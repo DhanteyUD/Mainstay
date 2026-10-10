@@ -24,7 +24,10 @@ export default function TelegramConnect() {
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-terminal-border bg-terminal-surface px-3 py-2.5 font-mono text-xs">
+      <div
+        data-tour="telegram"
+        className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-terminal-border bg-terminal-surface px-3 py-2.5 font-mono text-xs"
+      >
         <Send
           size={14}
           className={linked ? "text-terminal-green" : "text-terminal-accent"}

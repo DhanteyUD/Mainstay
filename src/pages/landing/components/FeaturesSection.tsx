@@ -37,8 +37,8 @@ export default function FeaturesSection() {
       icon: <Target size={16} />,
       title: "Prediction Markets",
       color: "#fb923c",
-      desc: "Trade outcome tokens (YES/NO) with the same MEV protection as spot swaps. Devnet now — mainnet coming soon.",
-      soon: true,
+      desc: "Bet on real-world events with YES/NO outcome tokens, live on mainnet. Orders are filled through DFlow's auction, so they can't be sandwiched.",
+      soon: false,
     },
   ];
 

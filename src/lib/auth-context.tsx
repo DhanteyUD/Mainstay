@@ -14,6 +14,9 @@ interface AuthContextValue {
   session: Session | null;
   loading: boolean;
   signedOut: boolean;
+  mfaRequired: boolean;
+  mfaPending: boolean;
+  refreshMfa: () => Promise<void>;
   signUp: (email: string, password: string) => Promise<unknown>;
   signIn: (email: string, password: string) => Promise<unknown>;
   signInWithGoogle: () => Promise<void>;
@@ -37,6 +40,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [signedOut, setSignedOut] = useState(false);
+  const [mfa, setMfa] = useState<{ token: string | null; required: boolean }>({
+    token: null,
+    required: false,
+  });
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -61,6 +68,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkMfa = React.useCallback(async () => {
+    if (!supabase) return;
+    const token = session?.access_token ?? null;
+    if (!token) return setMfa({ token: null, required: false });
+    const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    const required = error
+      ? true
+      : data.nextLevel === "aal2" && data.currentLevel !== "aal2";
+    setMfa({ token, required });
+  }, [session?.access_token]);
+
+  useEffect(() => {
+    checkMfa();
+  }, [checkMfa]);
+
+  const mfaPending = !!session && mfa.token !== session.access_token;
+  const mfaRequired = !!session && !mfaPending && mfa.required;
 
   useEffect(() => {
     if (!user || !supabase) return;
@@ -148,6 +173,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session,
         loading,
         signedOut,
+        mfaRequired,
+        mfaPending,
+        refreshMfa: checkMfa,
         signUp,
         signIn,
         signInWithGoogle,

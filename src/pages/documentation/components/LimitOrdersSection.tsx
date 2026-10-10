@@ -1,5 +1,11 @@
 import { TrendingUp } from "lucide-react";
-import { SectionHeader, SubHeading, Steps, CallOut } from "./ui";
+import {
+  SectionHeader,
+  SubHeading,
+  Steps,
+  CallOut,
+  NamedBulletList,
+} from "./ui";
 
 export default function LimitOrdersSection() {
   return (
@@ -14,11 +20,26 @@ export default function LimitOrdersSection() {
       <SubHeading>Placing an order</SubHeading>
       <Steps
         items={[
-          { title: "Switch to Limit Orders tab", desc: 'Click "Limit Orders" in the main tab bar.' },
-          { title: "Select token pair", desc: "Choose the input and output tokens." },
-          { title: "Set amount", desc: "Enter the amount of input token to sell." },
-          { title: "Set target price", desc: "Enter the price at which the order should execute." },
-          { title: "Confirm", desc: "Click Place Order and approve the transaction in your wallet." },
+          {
+            title: "Switch to Limit Orders tab",
+            desc: 'Click "Limit Orders" in the main tab bar.',
+          },
+          {
+            title: "Select token pair",
+            desc: "Choose the input and output tokens.",
+          },
+          {
+            title: "Set amount",
+            desc: "Enter the amount of input token to sell.",
+          },
+          {
+            title: "Set target price",
+            desc: "Enter the price at which the order should execute.",
+          },
+          {
+            title: "Confirm",
+            desc: "Click Place Order and approve the transaction in your wallet.",
+          },
         ]}
       />
 
@@ -29,11 +50,43 @@ export default function LimitOrdersSection() {
         Click Cancel to remove an unfilled order.
       </p>
 
+      <SubHeading>Telegram alerts</SubHeading>
+      <p className="text-xs md:text-sm text-terminal-dim leading-relaxed mb-4">
+        On the Limit Orders tab, click Connect Telegram, sign the message with
+        your wallet and tap Start in the chat that opens. You will then get a
+        message when an order&apos;s target is hit, and when it executes or
+        fails, even with Mainstay closed. Alerts only notify; swaps still need
+        your wallet signature. In the bot, send /orders, /alerts, /mute, /unmute
+        or /stop.
+      </p>
+
+      <SubHeading>Price alerts</SubHeading>
+      <NamedBulletList
+        items={[
+          {
+            name: "Any token",
+            desc: "Pick a token and a target USD price. The direction (rises to / drops to) is set from the current price.",
+          },
+          {
+            name: "One-shot",
+            desc: "Each alert fires once, then moves to a short triggered history you can dismiss.",
+          },
+          {
+            name: "Limit",
+            desc: "Up to 5 active alerts per wallet; the 5 most recent triggered ones are kept.",
+          },
+          {
+            name: "Mainnet only",
+            desc: "Prices are checked about once a minute for connected, unmuted Telegram chats.",
+          },
+        ]}
+      />
+
       <CallOut type="info">
         Orders are persisted to Mainstay's database, with localStorage as a
         fallback when the database is unavailable. The price monitor polls every
-        30 seconds and executes automatically when your target is reached.
-        Keep the app open — execution runs in the browser tab.
+        30 seconds and executes automatically when your target is reached. Keep
+        the app open — execution runs in the browser tab.
       </CallOut>
     </section>
   );
