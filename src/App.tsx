@@ -30,7 +30,12 @@ import MobileWalletBanner from "./components/MobileWalletBanner";
 import WalletCard from "./components/WalletCard";
 import EdgeStatusCard from "./components/EdgeStatusCard";
 import ProtectionPanel from "./components/ProtectionPanel";
-import PredictionComingSoon from "./components/PredictionComingSoon";
+// Waitlist / "coming soon" screen is paused while mainnet prediction markets are live.
+// import PredictionComingSoon from "./components/PredictionComingSoon";
+import PredictionMarkets from "./components/PredictionMarkets";
+import MfaChallenge from "./components/security/MfaChallenge";
+import Walkthrough from "./components/walkthrough/Walkthrough";
+import type { TourId } from "./components/walkthrough/tours";
 import PredictionMarketsInterface from "./components/PredictionMarketsInterface";
 import { MainTabBtn, TabBtn } from "./components/TabButtons";
 import { useNetwork } from "./contexts/NetworkContext";
@@ -91,7 +96,13 @@ export default function App() {
 }
 
 function AppInner() {
-  const { user, loading: authLoading, signedOut } = useAuth();
+  const {
+    user,
+    loading: authLoading,
+    signedOut,
+    mfaRequired,
+    mfaPending,
+  } = useAuth();
   const { dismissed, dismiss } = useOnboarding();
   const isWalletBrowser = useIsWalletBrowser();
 
@@ -112,7 +123,7 @@ function AppInner() {
     setAppLaunched(true);
   }
 
-  if (authLoading) {
+  if (authLoading || (user && mfaPending)) {
     return (
       <div className="fixed inset-0 bg-terminal-bg flex items-center justify-center">
         <div
@@ -129,6 +140,8 @@ function AppInner() {
       </div>
     );
   }
+
+  if (user && mfaRequired) return <MfaChallenge />;
 
   if (!user && !appLaunched && !(isMobile && isWalletBrowser)) {
     return (
@@ -194,6 +207,28 @@ function MainApp() {
   const { balance: solBalance } = useWalletBalance();
 
   const [mainTab, setMainTab] = useState(TAB_MAIN_SWAP);
+  const tabBarRef = useRef<HTMLDivElement>(null);
+  const [tabsStuck, setTabsStuck] = useState(false);
+  useEffect(() => {
+    let raf = 0;
+    const check = () => {
+      raf = 0;
+      const top = tabBarRef.current?.getBoundingClientRect().top;
+      setTabsStuck(top != null && top <= 74);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(check);
+    };
+    check();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+  const [tour, setTour] = useState<TourId | null>(null);
   const [rightTab, setRightTab] = useState(TAB_INFO);
   const [chartTokens, setChartTokens] = useState<{
     inputToken: Token;
@@ -245,6 +280,7 @@ function MainApp() {
       return (
         <motion.div
           key="wallet"
+          data-tour="wallet"
           layout
           transition={{ type: "spring", damping: 25, stiffness: 220 }}
         >
@@ -267,6 +303,7 @@ function MainApp() {
       return (
         <motion.div
           key="chart"
+          data-tour="chart"
           layout
           transition={{ type: "spring", damping: 25, stiffness: 220 }}
         >
@@ -287,7 +324,8 @@ function MainApp() {
           transition={{ type: "spring", damping: 25, stiffness: 220 }}
         >
           <motion.div
-            className="flex gap-1 mb-6 bg-terminal-card border border-terminal-border rounded-xl p-1 w-full sm:w-full"
+            ref={tabBarRef}
+            className="sticky top-[73px] z-[999] flex gap-1 mb-6 bg-terminal-card border border-terminal-border rounded-xl p-1 w-full shadow-[0_8px_16px_-8px_rgba(0,0,0,0.6)]"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.3 }}
@@ -297,12 +335,14 @@ function MainApp() {
               onClick={() => setMainTab(TAB_MAIN_SWAP)}
               icon={<ArrowRightLeft size={13} />}
               label="Token Swap"
+              tour="tab-swap"
             />
             <MainTabBtn
               active={mainTab === TAB_MAIN_LIMIT}
               onClick={() => setMainTab(TAB_MAIN_LIMIT)}
               icon={<TrendingUp size={13} />}
               label="Limit Orders"
+              tour="tab-limit"
               badge={pendingCount > 0 ? pendingCount : null}
             />
             <MainTabBtn
@@ -310,16 +350,20 @@ function MainApp() {
               onClick={() => setMainTab(TAB_MAIN_PREDICT)}
               icon={<Target size={13} />}
               label="Prediction Market"
-              soon={!isDevnet}
+              tour="tab-predict"
+              // soon={!isDevnet}
             />
           </motion.div>
 
           <div className="flex flex-col lg:flex-row gap-6 items-start justify-center mb-5">
-            <div className="w-full lg:max-w-lg mx-auto lg:mx-0 shrink-0">
+            <div
+              className={`w-full lg:max-w-lg mx-auto lg:mx-0 shrink-0 max-h-[calc(100dvh-10rem)] ${tabsStuck ? "overflow-y-auto" : "overflow-y-hidden"} overflow-x-hidden px-1 -mx-1 pb-2 [scrollbar-width:thin]`}
+            >
               <AnimatePresence mode="wait">
                 {mainTab === TAB_MAIN_SWAP ? (
                   <motion.div
                     key="swap"
+                    data-tour="swap-panel"
                     initial={{ opacity: 0, x: -12 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -12 }}
@@ -351,14 +395,17 @@ function MainApp() {
                     {isDevnet ? (
                       <PredictionMarketsInterface onSaveTrade={undefined} />
                     ) : (
-                      <PredictionComingSoon />
+                      <PredictionMarkets />
                     )}
+                    {/* {!isDevnet && <PredictionComingSoon />} */}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            <div className="w-full lg:max-w-lg mx-auto lg:mx-0">
+            <div
+              className={`w-full lg:max-w-lg mx-auto lg:mx-0 max-h-[calc(100dvh-10rem)] ${tabsStuck ? "overflow-y-auto" : "overflow-y-hidden"} overflow-x-hidden px-1 -mx-1 pb-2 [scrollbar-width:thin]`}
+            >
               <AnimatePresence mode="wait">
                 {mainTab === TAB_MAIN_LIMIT ? (
                   <motion.div
@@ -425,6 +472,7 @@ function MainApp() {
                 ) : (
                   <motion.div
                     key="info-history-panel"
+                    data-tour="right-panel"
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
@@ -511,7 +559,14 @@ function MainApp() {
         }}
       />
 
-      <AppHeader balanceHidden={balanceHidden} />
+      <AppHeader balanceHidden={balanceHidden} onStartTour={setTour} />
+      {tour && (
+        <Walkthrough
+          tour={tour}
+          onClose={() => setTour(null)}
+          onTab={setMainTab}
+        />
+      )}
       <AnimatePresence>
         {isMobile && !isWalletBrowser && !connected && <MobileWalletBanner />}
       </AnimatePresence>

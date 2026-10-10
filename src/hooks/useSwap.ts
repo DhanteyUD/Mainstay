@@ -7,6 +7,7 @@ import {
   SOLANA_DEVNET_RPC,
   JUPITER_QUOTE_API,
   JUPITER_SWAP_API,
+  DFLOW_ORDER_STATUS_API,
 } from "../config";
 import { useNetwork } from "../contexts/NetworkContext";
 import type { Token, SwapResult } from "../types";
@@ -23,6 +24,7 @@ interface FetchQuoteParams {
   prioritizationFeeLamports?: string | null;
   slippageBps?: string;
   autoSlippage?: boolean;
+  extraParams?: Record<string, string>;
 }
 
 interface ExecuteSwapParams {
@@ -142,6 +144,33 @@ async function confirmTransactionPolling(
   );
 }
 
+async function waitForOrderFill(signature: string, lastValidBlockHeight?: number) {
+  const qs = new URLSearchParams({ signature });
+  if (lastValidBlockHeight) qs.set("lastValidBlockHeight", String(lastValidBlockHeight));
+  for (let i = 0; i < 40; i++) {
+    try {
+      const res = await fetch(`${DFLOW_ORDER_STATUS_API}?${qs}`, {
+        signal: AbortSignal.timeout(8000),
+      });
+      if (res.ok) {
+        const { status } = await res.json();
+        if (status === "closed") return;
+        if (status === "expired" || status === "failed") {
+          throw new Error(
+            status === "expired"
+              ? "Order expired before it was filled. Your funds were returned."
+              : "Order failed. Your funds were returned.",
+          );
+        }
+      }
+    } catch (e) {
+      if ((e as Error).message.startsWith("Order ")) throw e;
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  throw new Error("Order is still pending. Check your wallet in a moment.");
+}
+
 function isSecurityCheckError(msg: string | undefined): boolean {
   if (!msg) return false;
   const m = msg.toLowerCase();
@@ -243,6 +272,7 @@ export function useSwap() {
       prioritizationFeeLamports,
       slippageBps = "50",
       autoSlippage = false,
+      extraParams,
     } = params;
     setQuoteLoading(true);
     setQuoteError(null);
@@ -276,6 +306,9 @@ export function useSwap() {
             if (walletPublicKey)
               urlParams.set("userPublicKey", walletPublicKey);
             if (feeBps != null) urlParams.set("feeBps", String(feeBps));
+            if (extraParams) {
+              for (const [k, v] of Object.entries(extraParams)) urlParams.set(k, v);
+            }
             if (autoSlippage) {
               urlParams.set("autoSlippage", "true");
               urlParams.set("maxAutoSlippageBps", "500");
@@ -472,6 +505,12 @@ export function useSwap() {
           }
 
           await confirmTransactionPolling(connection, signature);
+          if (quote.executionMode === "async") {
+            await waitForOrderFill(
+              signature,
+              quote.lastValidBlockHeight as number | undefined,
+            );
+          }
           explorerUrl = `https://solscan.io/tx/${signature}`;
         }
 

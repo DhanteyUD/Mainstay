@@ -1,19 +1,27 @@
 import React, { useState } from "react";
-import { ShieldCheck, Wallet, RefreshCw, LogOut } from "lucide-react";
+import { ShieldCheck, Wallet, RefreshCw, LogOut, Lock } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWalletBalance } from "../hooks/useWalletBalance";
 import { useAuth } from "../lib/auth-context";
 import logo from "../assets/mainstay-logo.png";
+import GuideMenu from "./walkthrough/GuideMenu";
+import SecurityModal from "./security/SecurityModal";
+import type { TourId } from "./walkthrough/tours";
 
 interface AppHeaderProps {
   balanceHidden?: boolean;
+  onStartTour?: (id: TourId) => void;
 }
 
-export default function AppHeader({ balanceHidden = false }: AppHeaderProps) {
+export default function AppHeader({
+  balanceHidden = false,
+  onStartTour,
+}: AppHeaderProps) {
   const { connected } = useWallet();
   const { signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
+  const [showSecurity, setShowSecurity] = useState(false);
   const {
     balance,
     loading: balLoading,
@@ -91,6 +99,19 @@ export default function AppHeader({ balanceHidden = false }: AppHeaderProps) {
             )}
           </AnimatePresence>
 
+          {onStartTour && <GuideMenu onStart={onStartTour} />}
+
+          <button
+            onClick={() => setShowSecurity(true)}
+            title="Security (2FA)"
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-terminal-border bg-terminal-card px-2.5 py-1.5 text-terminal-dim transition-all duration-200 hover:border-terminal-accent/40 hover:text-terminal-accent"
+          >
+            <Lock size={11} />
+            <span className="hidden font-mono text-xs tracking-wider sm:inline">
+              2FA
+            </span>
+          </button>
+
           <div className="flex items-center gap-1.5 bg-terminal-card border border-terminal-border rounded-lg px-2.5 py-1.5">
             <ShieldCheck
               size={11}
@@ -114,6 +135,7 @@ export default function AppHeader({ balanceHidden = false }: AppHeaderProps) {
           </button>
         </div>
       </div>
+      {showSecurity && <SecurityModal onClose={() => setShowSecurity(false)} />}
     </motion.header>
   );
 }

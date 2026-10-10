@@ -5,13 +5,17 @@
     "framer",
     "gsap",
     "helius",
+    "KALSHI",
     "lucide",
     "mainstay",
+    "maxage",
     "mempool",
+    "noopener",
     "OHLCV",
     "solana",
     "solscan",
     "supabase",
+    "Totp",
     "Vercel"
   ]
 }
