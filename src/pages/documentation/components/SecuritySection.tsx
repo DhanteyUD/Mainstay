@@ -1,4 +1,4 @@
-import { Lock, Shield, AlertTriangle, Server } from "lucide-react";
+import { Lock, Shield, AlertTriangle, Server, KeyRound } from "lucide-react";
 import { SectionHeader, FeatureGrid, CallOut } from "./ui";
 
 export default function SecuritySection() {
@@ -23,6 +23,11 @@ export default function SecuritySection() {
             desc: "Login uses email/password or OAuth (Google, GitHub) via Supabase. Sessions expire after 5 minutes of inactivity. No seed phrase is ever requested.",
           },
           {
+            icon: <KeyRound size={14} className="text-terminal-green" />,
+            title: "Two-factor authentication",
+            desc: "Add an authenticator app (Google Authenticator, Authy, 1Password) from the 2FA button in the top bar. Once on, the app stays locked after sign-in until you enter a 6-digit code.",
+          },
+          {
             icon: <AlertTriangle size={14} className="text-terminal-yellow" />,
             title: "Phishing awareness",
             desc: "Always verify the URL is mainstay.pro. Mainstay will never DM you asking for a seed phrase.",
@@ -35,11 +40,15 @@ export default function SecuritySection() {
         ]}
       />
 
+      <CallOut type="info">
+        Keep access to your authenticator app. Mainstay does not issue recovery
+        codes, so if you lose it you will need support to reset 2FA.
+      </CallOut>
+
       <CallOut type="warning">
         If a site asks for your seed phrase or private key while claiming to be
         Mainstay, it is a scam. Close the tab immediately.
       </CallOut>
-
     </section>
   );
 }

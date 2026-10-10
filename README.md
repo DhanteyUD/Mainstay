@@ -45,7 +45,9 @@
   - [Token Swap](#-token-swap)
   - [Limit Orders](#-limit-orders)
   - [Price Alerts](#-price-alerts)
-  - [Prediction Markets (devnet)](#-prediction-markets-devnet)
+  - [Prediction Markets](#-prediction-markets)
+  - [Two-Factor Authentication](#-two-factor-authentication-2fa)
+  - [Guided Walkthroughs](#-guided-walkthroughs)
   - [Wallet Card & Portfolio](#-wallet-card--portfolio)
   - [Trade History](#-trade-history)
   - [MEV Risk Badge](#️-mev-risk-badge)
@@ -122,8 +124,10 @@ The cumulative savings dashboard turns individual receipts into a running total 
 | 🛡️ **MEV-Protected Swaps** | All mainnet swaps route through DFlow's JIT auction, bypassing the public mempool |
 | 📊 **MEV Risk Scoring** | Per-trade risk assessment based on order size, pool liquidity, and network TPS |
 | 🎯 **Limit Orders** | Price-triggered orders that monitor markets every 30 seconds and execute automatically |
+| 🔐 **Two-Factor Auth** | Optional authenticator-app (TOTP) code required after sign-in |
+| 🧭 **Guided Tours** | On-request walkthroughs of the app and prediction markets (react-joyride) |
 | 🔔 **Telegram Alerts** | Limit-order and price alerts delivered to Telegram, even when the app is closed |
-| 🔮 **Prediction Markets** `Coming soon` | Trade outcome tokens (YES/NO) with the same MEV protection as spot swaps |
+| 🔮 **Prediction Markets** | Trade live Kalshi event contracts as YES/NO outcome tokens through DFlow's sandwich-resistant routing, with positions and redemption |
 | 💼 **Portfolio Dashboard** | Real-time SOL balance, USD value, and trade count |
 | 📜 **Trade History** | Full record of swaps, limit executions, sends, and received transfers |
 | 📈 **Execution Grade** | Post-trade `A+` `–F` quality score based on slippage delta vs quoted price |
@@ -219,6 +223,7 @@ Every trade passes through exactly **3 steps** — and MEV is blocked at all 3.
 | **Animation** | Framer Motion + GSAP | Framer Motion handles component transitions; GSAP drives complex sequences on the landing page and onboarding |
 | **Data Fetching** | `@tanstack/react-query` v5 | Server-state management, automatic caching, and query invalidation for trade history |
 | **HTTP Client** | `axios` | API requests to DFlow and Jupiter endpoints with timeout and error handling |
+| **Walkthroughs** | [`react-joyride`](https://react-joyride.com) | On-request guided tours of the app and prediction markets |
 | **Notifications** | `react-toastify` | Non-blocking toast notifications for trade confirmations, limit order events, and errors |
 | **Solana SDK** | `@solana/web3.js`, `@solana/wallet-adapter-react` | Enables blockchain interaction and wallet connectivity for Solana |
 | **Wallet UI** | `@solana/wallet-adapter-react-ui` | Provides prebuilt UI components for wallet connection flows |
@@ -333,7 +338,11 @@ mainstay/
 │   │   ├── LimitOrderList.tsx                      # Pending/executed orders
 │   │   ├── TelegramConnect.tsx                     # Connect / test / disconnect Telegram
 │   │   ├── PriceAlerts.tsx                         # Create and manage price alerts
-│   │   ├── PredictionMarketsInterface.tsx
+│   │   ├── PredictionMarketsInterface.tsx          # Devnet prediction market demo
+│   │   ├── PredictionMarkets.tsx                   # Live mainnet prediction markets
+│   │   ├── predict/                                # Market card, trade sheet, My bets
+│   │   ├── walkthrough/                            # Guide menu + react-joyride tours
+│   │   ├── security/                               # 2FA setup dialog + login code prompt
 │   │   ├── PostTradeCard.tsx                       # Execution analytics modal
 │   │   ├── TradeHistory.tsx                        # Full history dashboard
 │   │   ├── WalletCard.tsx                          # Portfolio overview
@@ -363,6 +372,9 @@ mainstay/
 │   │   ├── useSwap.ts                              # Quote fetch + swap execution
 │   │   ├── useLimitOrders.ts                       # Order management + price polling
 │   │   ├── useTelegramLink.ts                      # Telegram link state + polling
+│   │   ├── usePredictionMarkets.ts                 # Live DFlow events/markets
+│   │   ├── usePredictionPositions.ts               # Held outcome tokens → markets
+│   │   ├── useProofStatus.ts                       # DFlow Proof (KYC) status + verify link
 │   │   ├── useMevRisk.ts                           # Per-quote MEV risk scoring
 │   │   ├── useNetworkStats.ts                      # SOL price + TPS + uptime
 │   │   ├── useTrades.ts                            # Supabase trade persistence
@@ -379,6 +391,8 @@ mainstay/
 │   │   ├── walletAuth.ts                           # Wallet-signed sessions for Edge Functions
 │   │   ├── ordersApi.ts                            # Limit order writes via the orders function
 │   │   ├── priceAlertsApi.ts                       # Price alert list / create / delete
+│   │   ├── mfa.ts                                  # TOTP enrol / verify / remove (Supabase MFA)
+│   │   ├── predictionApi.ts                        # DFlow prediction markets client
 │   │   └── device.ts                               # Mobile / wallet browser detection
 │   ├── App.tsx                                     # Root component + auth gate
 │   ├── main.tsx                                    # React entry, wallet providers
@@ -440,6 +454,8 @@ In production, requests that need server-side secrets go through Vercel Function
 | Path | Destination | Secret |
 | --- | --- | --- |
 | `/api/dflow/order` | DFlow Quote API (`quote-api.dflow.net`, or `dev-quote-api.dflow.net` without a key) | `DFLOW_API_KEY` |
+| `/api/dflow/order-status` | DFlow order status (polled for async prediction orders) | `DFLOW_API_KEY` |
+| `/api/dflow/prediction` | DFlow Prediction Markets metadata API (`prediction-markets-api.dflow.net`); allowlisted read-only paths. **Requires `DFLOW_API_KEY`** (there is no keyless host); locally the Vite dev server serves the same route from `.env` | `DFLOW_API_KEY` |
 | `/api/solana/rpc` | `SOLANA_RPC_URL` (defaults to `solana-rpc.publicnode.com`) | `SOLANA_RPC_URL` |
 
 Jupiter prices (`lite-api.jup.ag/price/v3`) need no key and allow browser CORS, so they are fetched directly. In development, `src/config.ts` calls the DFlow dev host and the RPC directly, since Vercel Functions aren't running.
@@ -538,15 +554,45 @@ Get a Telegram message when any token crosses a price you choose, without placin
 - A server-side watcher (`notifier`, every minute) checks all active alerts of linked, unmuted wallets in one batched price request, then queues and delivers the message. `/alerts` in the bot lists your active alerts
 - Alerts only notify: they never trade. Pair them with a limit order if you want execution
 
-### 🌗 Prediction Markets (devnet)
+### 🌗 Prediction Markets
 
-Trade outcome tokens (YES/NO) for curated Solana ecosystem markets:
+Trade real-world event contracts ([Kalshi](https://kalshi.com) markets tokenized on Solana by DFlow) as YES/NO outcome tokens.
 
-- Market probability meter with 24h volume
-- Same DFlow MEV protection as spot swaps
-- Dynamic priority fee scaling based on MEV risk level
-- Outcome tokens are real SPL tokens (e.g. JUP vs RAY, jitoSOL vs mSOL)
-- Waitlist signup for users on mainnet (launches soon)
+**Mainnet (live, real USDC)**
+
+- **Built to be understood at a glance.** Each market is a card with one yes/no question, a bar showing the Yes price, and two big answers priced in cents ("Yes costs 62¢ / No costs 39¢"). A card also shows contracts traded in the last 24 hours and a close date (a calendar date for markets more than 90 days out). Tap one to open a bottom-sheet ticket
+- **See the whole bet before you place it, with no estimates:** pick an amount ($5/$10/$25/$50 or custom) and two boxes show what you gain if you're right and what you lose if you're not. Every figure comes from DFlow's live quote (the guaranteed minimum after fees and slippage); nothing is guessed from the displayed price. After the fill, the success screen shows the tokens actually received, read from your wallet. Card prices, the bar and the buttons all use the same Yes/No ask prices, so they never disagree
+- Live events and markets from the DFlow Prediction Markets API, searchable and filterable by category, with the bar and the Yes button both taken from the live Yes ask price
+- Buy YES or NO with USDC. Orders go through DFlow's `/order` endpoint, so they are filled by its JIT auction and never sit in the public mempool, which is what protects them from sandwich attacks and front-running
+- Prediction orders are asynchronous: the transaction lands as an intent and a liquidity provider fills it afterwards. Mainstay polls `/order-status` and only reports success once the order is actually `closed`, and tells you if it `expired` or `failed` (funds are returned)
+- **Identity check:** DFlow requires Proof (KYC) verification before buying. Mainstay reads `proof.dflow.net/verify/<wallet>`, and if the wallet isn't verified, the buy button becomes **Verify identity to trade** and opens DFlow's verification flow with a wallet-signed request
+- **My bets:** outcome tokens held by your wallet (SPL and Token-2022) are resolved back to their markets and shown as Open, You won or Lost, in plain words. Once a market settles, winning bets show **Collect**, which swaps each token for $1 USDC
+- Real USDC is used. Markets are provided by Kalshi (CFTC-regulated) and availability depends on your jurisdiction
+- **Preview mode:** until a DFlow API key is configured (or if it's rejected), the market list falls back to Kalshi's public read-only prices with a visible "Preview" banner and betting disabled, because outcome-token mints can only come from DFlow. Market data (`/api/dflow/prediction`) and order status (`/api/dflow/order-status`) go through Vercel Functions so `DFLOW_API_KEY` never reaches the browser; the prediction proxy only allows a fixed set of read-only paths
+
+**Devnet:** a curated demo of YES/NO outcome tokens for Solana ecosystem markets (JUP vs RAY, jitoSOL vs mSOL), swapped through Jupiter. Devnet has no real prediction markets.
+
+The previous waitlist and "coming soon" screen are commented out (not deleted) in `App.tsx` and the landing page, so they can be restored if markets are ever paused.
+
+### 🔐 Two-Factor Authentication (2FA)
+
+Accounts can add an authenticator-app code (TOTP) on top of their normal sign-in (email/password, Google or GitHub).
+
+- **Turn it on:** click **2FA** in the top bar, scan the QR code with Google Authenticator, Authy, 1Password or similar, and enter the 6-digit code to confirm. A "copy setup key" link covers devices that can't scan
+- **Signing in:** if 2FA is on, the app stays locked after login and shows a code prompt. Nothing else renders until a valid code is entered; the check is the session's authenticator assurance level (`aal2`), so it covers every login method. Entering the sixth digit submits automatically
+- **Turn it off:** from the same 2FA dialog, with a confirmation step
+- Built on Supabase Auth's MFA (`auth.mfa.*`), so secrets and verification live on the server, not in the browser. If the assurance check itself fails, the user is kept out rather than let through
+
+**Setup:** enable TOTP in your Supabase project under *Authentication → Sign In / Providers → Multi-Factor*. Supabase does not issue recovery codes, so a user who loses their authenticator must be reset by an admin (delete the factor in the dashboard under *Authentication → Users*).
+
+### 🧭 Guided Walkthroughs
+
+Nothing starts on its own. The **Guide** button in the top bar opens a menu with two on-request walkthroughs:
+
+- **Tour of Mainstay:** wallet, swaps and MEV risk, chart, limit orders, Telegram alerts, prediction markets, protection and history
+- **How prediction markets work:** questions and categories, reading a market card, choosing an amount, the one-time identity check, sandwich protection, and collecting winnings
+
+Tours are powered by [react-joyride](https://react-joyride.com) (`src/components/walkthrough/`), themed to the terminal UI, with progress, Back/Next and an "End tour" option. Each step opens the right tab first, and steps with no on-screen anchor show as a centered card. Steps are plain data in `tours.ts`, anchored with `data-tour` attributes.
 
 ### 💼 Wallet Card & Portfolio
 
@@ -753,6 +799,7 @@ waitingList (id, email, created_at)
 - [x] Trade history with Supabase persistence
 - [x] Cumulative savings dashboard
 - [x] Prediction markets tab
+- [x] Live mainnet prediction markets via DFlow (Proof-gated buying, async fill tracking, positions and redemption)
 - [x] MEV education onboarding
 - [x] Solflare + Phantom wallet support
 - [x] Mobile-optimized layout
@@ -765,7 +812,6 @@ waitingList (id, email, created_at)
 
 - [ ] Solflare transaction scanner whitelisting
 - [ ] Expanded token pair support
-- [ ] Mainnet prediction markets
 
 ### 🔮 v2.0 — Q3 2026
 

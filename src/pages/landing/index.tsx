@@ -6,7 +6,8 @@ import FeaturesSection from "./components/FeaturesSection";
 import QuotesSection from "./components/QuotesSection";
 import ComparisonSection from "./components/ComparisonSection";
 import PartnersSection from "./components/PartnersSection";
-import WaitlistSection from "./components/WaitlistSection";
+// Waitlist paused: prediction markets are live on mainnet.
+// import WaitlistSection from "./components/WaitlistSection";
 import PageFooter from "./components/PageFooter";
 import type { Props } from "./types";
 
@@ -61,7 +62,7 @@ export default function LandingPage({ onLaunch }: Props) {
         <QuotesSection />
         <ComparisonSection />
         <PartnersSection />
-        <WaitlistSection onLaunch={onLaunch} />
+        {/* <WaitlistSection onLaunch={onLaunch} /> */}
       </main>
 
       <PageFooter />

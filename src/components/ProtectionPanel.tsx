@@ -30,7 +30,10 @@ export default function ProtectionPanel({
           <div className="mt-3 space-y-1.5">
             <Feature label="YES tokens: pay out if the event occurs" />
             <Feature label="NO tokens: pay out if the event doesn't occur" />
-            <Feature label="DFlow JIT auction prevents front-running" />
+            <Feature label="DFlow JIT auction prevents front-running and sandwiches" />
+            <Feature label="Kalshi event contracts, tokenized on Solana" />
+            <Feature label="Identity verification (Proof) required to buy" />
+            <Feature label="Winners redeem for $1 per token" />
             <Feature label="feeBps: 8 with dynamic priority fee" />
           </div>
         </InfoCard>

@@ -3,16 +3,19 @@ import type { Token } from './types'
 const DEFAULT_MAINNET_RPC = 'https://solana-rpc.publicnode.com';
 
 export const JUPITER_PRICE_API = 'https://lite-api.jup.ag/price/v3';
-// Prod goes through /api/dflow so DFLOW_API_KEY stays server-side; dev uses the
-// keyless public host directly.
 export const DFLOW_QUOTE_API = import.meta.env.PROD
   ? `${typeof window !== 'undefined' ? window.location.origin : ''}/api/dflow`
   : 'https://dev-quote-api.dflow.net';
-// Prod goes through our own /api/solana/rpc function so the upstream RPC (and
-// any API key) stays server-side; dev talks to the RPC directly.
 export const SOLANA_RPC_PROXY = import.meta.env.PROD
   ? `${typeof window !== 'undefined' ? window.location.origin : ''}/api/solana/rpc`
   : (import.meta.env.VITE_SOLANA_RPC_URL as string | undefined) || DEFAULT_MAINNET_RPC;
+
+export const DFLOW_PREDICTION_API = '/api/dflow/prediction';
+export const DFLOW_ORDER_STATUS_API = import.meta.env.PROD
+  ? `${typeof window !== 'undefined' ? window.location.origin : ''}/api/dflow/order-status`
+  : 'https://dev-quote-api.dflow.net/order-status';
+export const PROOF_API = 'https://proof.dflow.net';
+export const PROOF_VERIFY_URL = 'https://dflow.net/proof';
 export const SOLANA_DEVNET_RPC = 'https://api.devnet.solana.com';
 
 export const JUPITER_QUOTE_API = 'https://quote-api.jup.ag/v6/quote';
@@ -162,6 +165,23 @@ export interface PredictionMarket {
   volume24h: number
   yesToken: Token
   noToken: Token
+  /** Present on live DFlow markets only. */
+  live?: {
+    ticker: string
+    eventTitle: string
+    /** Settlement mint the outcome tokens redeem into (USDC). */
+    settlementMint: string
+    yesBid: number | null
+    yesAsk: number | null
+    noBid: number | null
+    noAsk: number | null
+    closeTime: number | null
+    status: string
+    redemptionOpen: boolean
+    /** False in preview mode: prices are real but there are no DFlow mints to buy. */
+    tradable: boolean
+    result: string
+  }
 }
 
 export const PREDICTION_MARKETS: PredictionMarket[] = [

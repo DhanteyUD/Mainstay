@@ -8,6 +8,8 @@ interface MainTabBtnProps {
   label: string;
   badge?: number | null;
   soon?: boolean;
+  /** data-tour anchor for the walkthrough. */
+  tour?: string;
 }
 
 export function MainTabBtn({
@@ -17,9 +19,11 @@ export function MainTabBtn({
   label,
   badge,
   soon,
+  tour,
 }: MainTabBtnProps) {
   return (
     <button
+      data-tour={tour}
       onClick={onClick}
       aria-label={label}
       className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2.5 px-2 sm:px-3 rounded-lg font-mono text-xs font-bold tracking-wider transition-all duration-150 border ${

@@ -41,7 +41,7 @@ export default function OverviewSection() {
           {
             icon: <Target size={14} className="text-terminal-red" />,
             title: "Prediction Market",
-            desc: "On-chain prediction markets on Solana Devnet — mainnet launch coming soon.",
+            desc: "Bet Yes/No on real-world events with real USDC on Mainnet. Orders are filled through DFlow's auction, so they can't be sandwiched.",
           },
         ]}
       />
